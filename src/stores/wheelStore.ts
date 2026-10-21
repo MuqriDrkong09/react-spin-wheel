@@ -8,6 +8,7 @@ import type {
   WheelItem,
   WheelItemId,
   WheelSettings,
+  WheelSnapshot,
 } from '@/types/wheel';
 import { createId, nowIso } from '@/utils/id';
 import {
@@ -32,12 +33,6 @@ export type CreateWheelInput = Omit<WheelDraft, 'items' | 'settings'> & {
 };
 
 export type WheelPatch = Partial<Pick<Wheel, 'name' | 'description' | 'conditions'>>;
-
-interface WheelSnapshot {
-  items: WheelItem[];
-  settings: WheelSettings;
-  conditions?: Wheel['conditions'];
-}
 
 interface WheelStoreState {
   wheels: Wheel[];

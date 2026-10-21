@@ -111,6 +111,12 @@ export interface Wheel extends Identifiable<WheelId>, Timestamps {
   conditions?: ItemCondition[];
 }
 
+export interface WheelSnapshot {
+  items: WheelItem[];
+  settings: WheelSettings;
+  conditions?: Wheel['conditions'];
+}
+
 export type WheelDraft = Draft<Wheel>;
 
 export interface WheelPreset extends Identifiable<WheelPresetId>, Timestamps {

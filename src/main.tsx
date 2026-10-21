@@ -2,8 +2,11 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from '@/app/App';
+import { startStorePersistence } from '@/services/storage/storePersistence';
 
 import './index.css';
+
+startStorePersistence();
 
 const rootElement = document.getElementById('root');
 

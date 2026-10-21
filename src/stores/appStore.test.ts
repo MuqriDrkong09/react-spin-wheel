@@ -1,13 +1,10 @@
 import { COLOR_MODE } from '@/types/colorMode';
 
-import { useAppStore } from './appStore';
+import { resetAppStore, useAppStore } from './appStore';
 
 describe('useAppStore', () => {
   beforeEach(() => {
-    useAppStore.setState({
-      colorMode: COLOR_MODE.light,
-      sidebarOpen: false,
-    });
+    resetAppStore();
   });
 
   it('toggles color mode', () => {
