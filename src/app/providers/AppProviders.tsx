@@ -1,8 +1,8 @@
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { useMemo, type ReactNode } from 'react';
 
-import { useColorMode } from '@/shared/hooks';
-import { createAppTheme } from '@/shared/theme';
+import { createAppTheme } from '@/app/theme/createAppTheme';
+import { useColorMode } from '@/hooks/useColorMode';
 
 interface AppProvidersProps {
   children: ReactNode;

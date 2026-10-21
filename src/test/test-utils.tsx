@@ -2,8 +2,8 @@ import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 
-import { AppProviders } from '@/app/providers';
-import { appRoutes } from '@/app/router';
+import { AppProviders } from '@/app/providers/AppProviders';
+import { appRoutes } from '@/app/router/routes';
 
 interface AppRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   initialEntries?: string[];

@@ -49,19 +49,25 @@ npm install
 
 ```text
 src/
-  app/           App shell, providers, and routing
-  features/      Domain features
-  pages/         Route-level screens
-  shared/        Reusable components, hooks, stores, theme, and libraries
+  app/           Router, providers, and theme
+  components/    Shared UI (common, layout, feedback)
+  features/      Domain screens and future feature logic
+  pages/         Thin route wrappers
+  hooks/         Shared hooks
+  stores/        Global Zustand stores
+  types/         Shared types
+  utils/         Shared helpers
+  constants/     App constants and routes
+  data/          Static app data
   test/          Test setup and helpers
 ```
 
-Shared code lives in `src/shared`. Domain work belongs in `src/features/<feature-name>`.
+Pages stay thin and render feature screens. Feature-specific hooks, stores, and helpers belong next to the screen they support.
 
 Path alias:
 
 ```ts
-import { useAppStore } from '@/shared/stores';
+import { useAppStore } from '@/stores/appStore';
 ```
 
 `@/` maps to `src/`.
