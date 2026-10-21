@@ -1,8 +1,6 @@
 # Spinflow
 
-Production-ready React + TypeScript application foundation built with Vite.
-
-Business features are not implemented yet. This repository contains the application shell, shared architecture, and development tooling.
+React + TypeScript application built with Vite.
 
 ## Tech stack
 
@@ -49,18 +47,16 @@ npm install
 
 ## Architecture
 
-The project uses a feature-based source layout:
-
 ```text
 src/
   app/           App shell, providers, and routing
-  features/      Domain features (empty until business work begins)
+  features/      Domain features
   pages/         Route-level screens
   shared/        Reusable components, hooks, stores, theme, and libraries
   test/          Test setup and helpers
 ```
 
-Shared code lives in `src/shared`. Upcoming domain work should go in `src/features/<feature-name>` with feature-specific components, hooks, and stores.
+Shared code lives in `src/shared`. Domain work belongs in `src/features/<feature-name>`.
 
 Path alias:
 
@@ -69,4 +65,3 @@ import { useAppStore } from '@/shared/stores';
 ```
 
 `@/` maps to `src/`.
-"# react-spin-wheel" 

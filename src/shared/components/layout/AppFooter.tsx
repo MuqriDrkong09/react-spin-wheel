@@ -14,7 +14,7 @@ export function AppFooter() {
       }}
     >
       <Typography variant="body2" color="text.secondary">
-        {APP_NAME} application foundation
+        {APP_NAME}
       </Typography>
     </Box>
   );
