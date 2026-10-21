@@ -33,17 +33,18 @@ npm install
 
 ## Scripts
 
-| Command                | Description                              |
-| ---------------------- | ---------------------------------------- |
-| `npm run dev`          | Start the Vite development server        |
-| `npm run build`        | Type-check and create a production build |
-| `npm run preview`      | Preview the production build locally     |
-| `npm run lint`         | Run ESLint                               |
-| `npm run lint:fix`     | Run ESLint and apply automatic fixes     |
-| `npm run format`       | Format files with Prettier               |
-| `npm run format:check` | Check Prettier formatting                |
-| `npm run test`         | Run unit tests once                      |
-| `npm run test:watch`   | Run unit tests in watch mode             |
+| Command                 | Description                              |
+| ----------------------- | ---------------------------------------- |
+| `npm run dev`           | Start the Vite development server        |
+| `npm run build`         | Type-check and create a production build |
+| `npm run preview`       | Preview the production build locally     |
+| `npm run lint`          | Run ESLint                               |
+| `npm run lint:fix`      | Run ESLint and apply automatic fixes     |
+| `npm run format`        | Format files with Prettier               |
+| `npm run format:check`  | Check Prettier formatting                |
+| `npm run test`          | Run unit tests once                      |
+| `npm run test:watch`    | Run unit tests in watch mode             |
+| `npm run test:coverage` | Run unit tests and generate coverage     |
 
 ## Architecture
 
