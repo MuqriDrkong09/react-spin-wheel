@@ -60,6 +60,10 @@ export function subscribeStoresToStorage(): () => void {
   };
 }
 
+export function persistStores(): boolean {
+  return savePersistedState(collectPersistedState());
+}
+
 export function startStorePersistence(): () => void {
   hydrateStoresFromStorage();
   return subscribeStoresToStorage();

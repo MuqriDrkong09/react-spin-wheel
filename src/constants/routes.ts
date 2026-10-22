@@ -3,6 +3,7 @@ import type { WheelId } from '@/types/wheel';
 export const ROUTES = {
   dashboard: '/',
   wheels: '/wheels',
+  createWheel: '/create-wheel',
   wheelEditor: '/editor',
   spin: '/spin',
   history: '/history',

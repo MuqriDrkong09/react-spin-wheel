@@ -62,17 +62,13 @@ describe('DashboardScreen', () => {
     expect(screen.getByText('No selected results yet.')).toBeInTheDocument();
   });
 
-  it('creates a wheel and opens the editor', async () => {
+  it('opens the create wheel page', async () => {
     const user = userEvent.setup();
     renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Create Wheel' }));
-    await user.type(await screen.findByLabelText(/name/i), 'Team Lunch');
-    await user.click(screen.getByRole('button', { name: 'Create' }));
 
-    expect(useWheelStore.getState().wheels[0]?.name).toBe('Team Lunch');
-    expect(useWheelStore.getState().activeWheelId).toBe(useWheelStore.getState().wheels[0]?.id);
-    expect(await screen.findByRole('heading', { name: 'Wheel editor', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Create wheel', level: 1 })).toBeInTheDocument();
   });
 
   it('renders stats, lists, search, filter, favorite, open, edit, and delete', async () => {

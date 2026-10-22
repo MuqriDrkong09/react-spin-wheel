@@ -1,8 +1,8 @@
-export const WHEEL_CATEGORIES = ['General', 'Food', 'Games', 'Decisions', 'Custom'] as const;
-
-export type WheelCategory = (typeof WHEEL_CATEGORIES)[number];
-
-export const DEFAULT_WHEEL_CATEGORY: WheelCategory = 'General';
+export {
+  DEFAULT_WHEEL_CATEGORY,
+  WHEEL_CATEGORIES,
+  type WheelCategory,
+} from '@/constants/wheel';
 
 export const CATEGORY_FILTER_ALL = 'all';
 

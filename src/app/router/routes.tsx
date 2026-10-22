@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 
 import { AppLayout } from '@/components/layout/AppLayout';
+import { CreateWheelPage } from '@/pages/CreateWheelPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { HistoryPage } from '@/pages/HistoryPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -19,6 +20,7 @@ export const appRoutes: RouteObject[] = [
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'wheels', element: <WheelsPage /> },
+      { path: 'create-wheel', element: <CreateWheelPage /> },
       { path: 'editor', element: <WheelEditorPage /> },
       { path: 'spin', element: <SpinPage /> },
       { path: 'history', element: <HistoryPage /> },

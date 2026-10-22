@@ -5,7 +5,6 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { APP_DESCRIPTION } from '@/constants/app';
-import { CreateWheelDialog } from '@/features/dashboard/components/CreateWheelDialog';
 import { DashboardStatsCards } from '@/features/dashboard/components/DashboardStats';
 import { DashboardToolbar } from '@/features/dashboard/components/DashboardToolbar';
 import { DeleteWheelDialog } from '@/features/dashboard/components/DeleteWheelDialog';
@@ -83,11 +82,6 @@ export function DashboardScreen() {
           <RecentResultsCard results={dashboard.recentResults} onOpen={dashboard.openWheel} />
         </Box>
       </Stack>
-      <CreateWheelDialog
-        open={dashboard.createOpen}
-        onClose={dashboard.closeCreate}
-        onSubmit={dashboard.submitCreate}
-      />
       <DeleteWheelDialog
         wheel={dashboard.pendingDeleteWheel}
         onCancel={dashboard.cancelDelete}

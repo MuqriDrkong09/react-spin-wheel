@@ -102,6 +102,7 @@ const wheelSchema: z.ZodType<Wheel> = z.object({
   name: z.string(),
   description: z.string().optional(),
   category: z.string().optional(),
+  icon: z.string().optional(),
   items: z.array(wheelItemSchema),
   settings: wheelSettingsSchema,
   conditions: z.array(itemConditionSchema).optional(),

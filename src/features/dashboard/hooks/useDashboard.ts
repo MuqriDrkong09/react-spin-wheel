@@ -2,13 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES, withWheelId } from '@/constants/routes';
-import {
-  CATEGORY_FILTER_ALL,
-  DEFAULT_WHEEL_CATEGORY,
-  WHEEL_SORT,
-  type WheelSort,
-} from '@/features/dashboard/constants';
-import type { CreateWheelFormValues } from '@/features/dashboard/schema';
+import { CATEGORY_FILTER_ALL, WHEEL_SORT, type WheelSort } from '@/features/dashboard/constants';
 import {
   getCategoryOptions,
   selectDashboardStats,
@@ -17,7 +11,6 @@ import {
   selectRecentResults,
   selectRecentlyUsedWheels,
 } from '@/features/dashboard/utils/selectDashboardData';
-import { useDisclosure } from '@/hooks/useDisclosure';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -27,7 +20,6 @@ import type { Wheel, WheelId } from '@/types/wheel';
 export function useDashboard() {
   const navigate = useNavigate();
   const wheels = useWheelStore((state) => state.wheels);
-  const createWheel = useWheelStore((state) => state.createWheel);
   const deleteWheel = useWheelStore((state) => state.deleteWheel);
   const setActiveWheel = useWheelStore((state) => state.setActiveWheel);
   const spinHistory = useHistoryStore((state) => state.spinHistory);
@@ -35,7 +27,6 @@ export function useDashboard() {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const removeFavorite = useFavoritesStore((state) => state.removeFavorite);
   const confirmBeforeDelete = useSettingsStore((state) => state.settings.confirmBeforeDelete);
-  const createDialog = useDisclosure();
 
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState(CATEGORY_FILTER_ALL);
@@ -66,16 +57,8 @@ export function useDashboard() {
 
   const recentResults = useMemo(() => selectRecentResults(spinHistory), [spinHistory]);
 
-  const submitCreate = (values: CreateWheelFormValues) => {
-    const wheel = createWheel({
-      name: values.name,
-      description: values.description || undefined,
-      category: values.category || DEFAULT_WHEEL_CATEGORY,
-    });
-
-    createDialog.close();
-    setActiveWheel(wheel.id);
-    void navigate(withWheelId(ROUTES.wheelEditor, wheel.id));
+  const openCreate = () => {
+    void navigate(ROUTES.createWheel);
   };
 
   const openWheel = (wheelId: WheelId) => {
@@ -127,10 +110,7 @@ export function useDashboard() {
     categoryOptions,
     sort,
     setSort,
-    createOpen: createDialog.isOpen,
-    openCreate: createDialog.open,
-    closeCreate: createDialog.close,
-    submitCreate,
+    openCreate,
     openWheel,
     editWheel,
     requestDelete,
