@@ -5,12 +5,18 @@ interface EmptyStateProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  titleComponent?: 'h1' | 'h2' | 'h3';
 }
 
-export function EmptyState({ title, description, action }: EmptyStateProps) {
+export function EmptyState({
+  title,
+  description,
+  action,
+  titleComponent = 'h1',
+}: EmptyStateProps) {
   return (
     <Box sx={{ textAlign: 'center', py: { xs: 6, md: 8 } }}>
-      <Typography variant="h5" component="h1" gutterBottom>
+      <Typography variant="h5" component={titleComponent} gutterBottom>
         {title}
       </Typography>
       {description ? (

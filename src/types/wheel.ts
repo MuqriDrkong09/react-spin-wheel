@@ -106,6 +106,7 @@ export interface WheelSettings {
 export interface Wheel extends Identifiable<WheelId>, Timestamps {
   name: string;
   description?: string;
+  category?: string;
   items: WheelItem[];
   settings: WheelSettings;
   conditions?: ItemCondition[];

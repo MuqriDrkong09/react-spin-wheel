@@ -32,7 +32,7 @@ export type CreateWheelInput = Omit<WheelDraft, 'items' | 'settings'> & {
   settings?: Partial<WheelSettings>;
 };
 
-export type WheelPatch = Partial<Pick<Wheel, 'name' | 'description' | 'conditions'>>;
+export type WheelPatch = Partial<Pick<Wheel, 'name' | 'description' | 'category' | 'conditions'>>;
 
 interface WheelStoreState {
   wheels: Wheel[];
@@ -121,6 +121,7 @@ export const useWheelStore = create<WheelStore>((set, get) => ({
       id: input.id ?? createId(),
       name: input.name,
       description: input.description,
+      category: input.category,
       items: (input.items ?? []).map(materializeItem),
       settings: {
         ...DEFAULT_WHEEL_SETTINGS,

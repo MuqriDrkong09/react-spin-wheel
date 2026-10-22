@@ -1,3 +1,5 @@
+import type { WheelId } from '@/types/wheel';
+
 export const ROUTES = {
   dashboard: '/',
   wheels: '/wheels',
@@ -9,3 +11,7 @@ export const ROUTES = {
   settings: '/settings',
   randomGenerator: '/random-generator',
 } as const;
+
+export function withWheelId(path: string, wheelId: WheelId): string {
+  return `${path}?wheelId=${encodeURIComponent(wheelId)}`;
+}
