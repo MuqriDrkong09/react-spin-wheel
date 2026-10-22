@@ -19,8 +19,10 @@ export function FavoriteWheelsCard({ wheels, onOpen }: FavoriteWheelsCardProps) 
           {wheels.map((wheel) => (
             <ListItemButton
               key={wheel.id}
+              disableGutters
               onClick={() => onOpen(wheel.id)}
               aria-label={`Open favorite ${wheel.name}`}
+              sx={{ p: 0 }}
             >
               <ListItemIcon sx={{ minWidth: 36 }}>
                 <FavoriteBorderIcon fontSize="small" color="secondary" />
