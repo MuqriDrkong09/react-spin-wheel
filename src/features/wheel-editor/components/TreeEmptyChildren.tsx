@@ -14,8 +14,14 @@ export function TreeEmptyChildren({ name, onAddChild }: TreeEmptyChildrenProps) 
       <Typography color="text.secondary" variant="body2">
         {EDITOR_MESSAGES.emptyChildren(name)}
       </Typography>
-      <Button size="small" startIcon={<AddIcon />} onClick={onAddChild} sx={{ alignSelf: 'flex-start' }}>
-        Add child
+      <Button
+        size="small"
+        startIcon={<AddIcon />}
+        aria-label={`Add child to ${name}`}
+        onClick={onAddChild}
+        sx={{ alignSelf: 'flex-start' }}
+      >
+        Add Child
       </Button>
     </Stack>
   );

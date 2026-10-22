@@ -187,8 +187,15 @@ export function useWheelEditor() {
       }
 
       if (dialog.type === 'add') {
-        addChildItem(dialog.parentId, toItemDraft(values, siblingCount(wheel, dialog.parentId)));
+        const parent = findTreeNode(toEditorTree(wheel), dialog.parentId);
+        const created = addChildItem(
+          dialog.parentId,
+          toItemDraft(values, siblingCount(wheel, dialog.parentId)),
+        );
         ensureExpanded(dialog.parentId);
+        if (created && parent) {
+          setSuccessMessage(EDITOR_MESSAGES.childAdded(created.name, parent.name));
+        }
         setDialog(null);
         return;
       }

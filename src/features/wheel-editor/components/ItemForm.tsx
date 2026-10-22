@@ -6,6 +6,7 @@ import {
   Switch,
 } from '@mui/material';
 import { Controller } from 'react-hook-form';
+import type { ZodType } from 'zod';
 
 import { Form } from '@/components/common/Form';
 import { FormTextField } from '@/components/common/FormTextField';
@@ -20,25 +21,29 @@ import { useAppForm } from '@/hooks/useAppForm';
 interface ItemFormProps {
   defaultValues?: ItemFormValues;
   submitLabel: string;
+  nameLabel?: string;
   onSubmit: (values: ItemFormValues) => void;
   onCancel?: () => void;
   resetOnSubmit?: boolean;
   autoFocus?: boolean;
   formId?: string;
   ariaLabel?: string;
+  schema?: ZodType<ItemFormValues, ItemFormValues>;
 }
 
 export function ItemForm({
   defaultValues = defaultItemFormValues,
   submitLabel,
+  nameLabel = 'Name',
   onSubmit,
   onCancel,
   resetOnSubmit = false,
   autoFocus = true,
   formId,
   ariaLabel,
+  schema = itemFormSchema,
 }: ItemFormProps) {
-  const form = useAppForm(itemFormSchema, { defaultValues });
+  const form = useAppForm(schema, { defaultValues });
 
   const handleSubmit = (values: ItemFormValues) => {
     onSubmit(values);
@@ -51,7 +56,13 @@ export function ItemForm({
   return (
     <Form form={form} onSubmit={handleSubmit} id={formId} aria-label={ariaLabel}>
       <Stack spacing={2.5}>
-        <FormTextField<ItemFormValues> name="name" label="Name" autoFocus={autoFocus} required fullWidth />
+        <FormTextField<ItemFormValues>
+          name="name"
+          label={nameLabel}
+          autoFocus={autoFocus}
+          required
+          fullWidth
+        />
         <FormTextField<ItemFormValues>
           name="description"
           label="Description"

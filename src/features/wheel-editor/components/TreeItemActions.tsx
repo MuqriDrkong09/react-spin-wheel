@@ -4,7 +4,7 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { IconButton, Stack } from '@mui/material';
+import { Button, IconButton, Stack } from '@mui/material';
 
 import { TREE_NODE_KIND, type EditorTreeNode } from '@/features/wheel-editor/utils/toEditorTree';
 
@@ -37,13 +37,14 @@ export function TreeItemActions({ node, handlers }: TreeItemActionsProps) {
       <IconButton size="small" aria-label={`Edit ${node.name}`} onClick={() => handlers.onEdit(node.id)}>
         <EditOutlinedIcon fontSize="small" />
       </IconButton>
-      <IconButton
+      <Button
         size="small"
+        startIcon={<AddIcon />}
         aria-label={`Add child to ${node.name}`}
         onClick={() => handlers.onAddChild(node.id)}
       >
-        <AddIcon fontSize="small" />
-      </IconButton>
+        Add Child
+      </Button>
       {isItem ? (
         <IconButton
           size="small"

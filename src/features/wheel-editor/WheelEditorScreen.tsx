@@ -3,6 +3,7 @@ import { Alert, Button, Card, CardContent, Snackbar, Stack } from '@mui/material
 import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { AddChildDataDialog } from '@/features/wheel-editor/components/AddChildDataDialog';
 import { AddMainDataCard } from '@/features/wheel-editor/components/AddMainDataCard';
 import { DeleteItemDialog } from '@/features/wheel-editor/components/DeleteItemDialog';
 import { ItemFormDialog } from '@/features/wheel-editor/components/ItemFormDialog';
@@ -14,10 +15,7 @@ export function WheelEditorScreen() {
   const editor = useWheelEditor();
   const tree = editor.tree;
 
-  const dialogTitle =
-    editor.dialog?.type === 'add'
-      ? `Add child to ${editor.dialogParent?.name ?? 'item'}`
-      : `Edit ${editor.dialogNode?.name ?? 'item'}`;
+  const editTitle = `Edit ${editor.dialogNode?.name ?? 'item'}`;
 
   return (
     <PageContainer>
@@ -72,10 +70,17 @@ export function WheelEditorScreen() {
           />
         )}
       </Stack>
+      <AddChildDataDialog
+        open={editor.dialog?.type === 'add'}
+        parentName={editor.dialogParent?.name}
+        defaultValues={editor.formDefaults}
+        onClose={editor.closeDialog}
+        onSubmit={editor.submitDialog}
+      />
       <ItemFormDialog
-        open={Boolean(editor.dialog)}
-        title={dialogTitle}
-        submitLabel={editor.dialog?.type === 'add' ? 'Add item' : 'Save item'}
+        open={editor.dialog?.type === 'edit'}
+        title={editTitle}
+        submitLabel="Save item"
         defaultValues={editor.formDefaults}
         onClose={editor.closeDialog}
         onSubmit={editor.submitDialog}

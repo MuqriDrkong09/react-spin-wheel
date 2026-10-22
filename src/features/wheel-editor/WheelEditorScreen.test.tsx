@@ -110,25 +110,77 @@ describe('WheelEditorScreen', () => {
     expect(screen.getByText(EDITOR_MESSAGES.emptyChildren('Sushi'))).toBeInTheDocument();
     expect(
       within(screen.getByRole('group', { name: 'Children of Sushi' })).getByRole('button', {
-        name: 'Add child',
+        name: 'Add child to Sushi',
       }),
     ).toBeInTheDocument();
   });
 
-  it('adds a nested child through the item form', async () => {
+  it('adds child data under the selected parent', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
     renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Sushi' }));
-    const dialog = screen.getByRole('dialog', { name: 'Add child to Sushi' });
-    await user.type(within(dialog).getByLabelText(/^name/i), 'Salmon');
-    await user.click(within(dialog).getByRole('button', { name: 'Add item' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
+    expect(within(dialog).getByText('Parent')).toBeInTheDocument();
+    expect(within(dialog).getByText('Sushi')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText(/child name/i), 'Salmon');
+    await user.click(within(dialog).getByRole('button', { name: 'Add Child' }));
 
     expect(await screen.findByText('Salmon')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      EDITOR_MESSAGES.childAdded('Salmon', 'Sushi'),
+    );
     expect(useWheelStore.getState().getWheel('food')?.items.find((item) => item.id === 'sushi')?.children).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: 'Salmon' })]),
     );
+  });
+
+  it('stores a child under the parent children array at any nesting level', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Add child to Pizza' }));
+    let dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
+    expect(within(dialog).getByText('Pizza')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText(/child name/i), 'Hawaiian');
+    await user.click(within(dialog).getByRole('button', { name: 'Add Child' }));
+
+    expect(await screen.findByText('Hawaiian')).toBeInTheDocument();
+    const pizza = useWheelStore.getState().getWheel('food')?.items.find((item) => item.id === 'pizza');
+    expect(pizza?.children?.map((item) => item.name)).toEqual(
+      expect.arrayContaining(['Chicken Pepperoni', 'Beef Pepperoni', 'Hawaiian']),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Add child to Chicken Pepperoni' }));
+    dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
+    expect(within(dialog).getByText('Chicken Pepperoni')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText(/child name/i), 'Large');
+    await user.click(within(dialog).getByRole('button', { name: 'Add Child' }));
+
+    expect(await screen.findByText('Large')).toBeInTheDocument();
+    const chicken = useWheelStore
+      .getState()
+      .getWheel('food')
+      ?.items.find((item) => item.id === 'pizza')
+      ?.children?.find((item) => item.id === 'chicken');
+    expect(chicken?.children).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'Large' })]));
+  });
+
+  it('prevents adding child data without a name', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Add child to Pizza' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
+    await user.click(within(dialog).getByRole('button', { name: 'Add Child' }));
+
+    expect(await within(dialog).findByText(EDITOR_MESSAGES.childNameRequired)).toBeInTheDocument();
+    expect(
+      useWheelStore.getState().getWheel('food')?.items.find((item) => item.id === 'pizza')?.children,
+    ).toHaveLength(2);
   });
 
   it('edits an item in place', async () => {
@@ -186,9 +238,9 @@ describe('WheelEditorScreen', () => {
     renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Chicken Pepperoni' }));
-    const dialog = screen.getByRole('dialog', { name: 'Add child to Chicken Pepperoni' });
-    await user.type(within(dialog).getByLabelText(/^name/i), 'Extra spicy');
-    await user.click(within(dialog).getByRole('button', { name: 'Add item' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
+    await user.type(within(dialog).getByLabelText(/child name/i), 'Extra spicy');
+    await user.click(within(dialog).getByRole('button', { name: 'Add Child' }));
 
     expect(await screen.findByText('Extra spicy')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add child to Extra spicy' })).toBeInTheDocument();
