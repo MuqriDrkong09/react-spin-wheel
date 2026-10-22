@@ -1,16 +1,16 @@
 import { ITEM_COLORS } from '@/constants/wheel';
 import type { ItemFormValues } from '@/features/wheel-editor/schema';
-import type { NewWheelItemInput } from '@/utils/wheelTree';
 import type { HexColor } from '@/types/wheel';
+import type { NewWheelItemInput } from '@/utils/wheelTree';
 
 export function toItemDraft(values: ItemFormValues, siblingCount: number): NewWheelItemInput {
   return {
     name: values.name,
-    icon: values.icon || undefined,
     description: values.description || undefined,
+    icon: values.icon || undefined,
     color: toHexColor(values.color) ?? colorForIndex(siblingCount),
-    enabled: true,
-    weight: 1,
+    enabled: values.enabled,
+    weight: values.weight,
   };
 }
 

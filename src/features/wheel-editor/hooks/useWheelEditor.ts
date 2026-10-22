@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ROUTES } from '@/constants/routes';
+import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import type { ItemFormValues } from '@/features/wheel-editor/schema';
 import { defaultItemFormValues } from '@/features/wheel-editor/schema';
 import { colorForIndex, toItemDraft } from '@/features/wheel-editor/utils/itemDraft';
@@ -28,6 +29,7 @@ export function useWheelEditor() {
   const wheels = useWheelStore((state) => state.wheels);
   const activeWheelId = useWheelStore((state) => state.activeWheelId);
   const setActiveWheel = useWheelStore((state) => state.setActiveWheel);
+  const addItem = useWheelStore((state) => state.addItem);
   const addChildItem = useWheelStore((state) => state.addChildItem);
   const updateChildItem = useWheelStore((state) => state.updateChildItem);
   const deleteChildItem = useWheelStore((state) => state.deleteChildItem);
@@ -49,6 +51,7 @@ export function useWheelEditor() {
   );
   const [dialog, setDialog] = useState<EditorDialog | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (requestedId && wheel && requestedId !== activeWheelId) {
@@ -98,6 +101,8 @@ export function useWheelEditor() {
         icon: dialogNode.icon ?? '',
         description: dialogNode.description ?? '',
         color: dialogNode.color ?? defaultItemFormValues.color,
+        weight: dialogNode.weight,
+        enabled: dialogNode.enabled,
       };
     }
 
@@ -154,6 +159,27 @@ export function useWheelEditor() {
     setDialog(null);
   }, []);
 
+  const clearSuccessMessage = useCallback(() => {
+    setSuccessMessage(null);
+  }, []);
+
+  const addMainItem = useCallback(
+    (values: ItemFormValues) => {
+      if (!wheel) {
+        return;
+      }
+
+      const created = addItem(wheel.id, toItemDraft(values, wheel.items.length));
+      if (!created) {
+        return;
+      }
+
+      ensureExpanded(wheel.id);
+      setSuccessMessage(EDITOR_MESSAGES.itemAdded(created.name));
+    },
+    [addItem, ensureExpanded, wheel],
+  );
+
   const submitDialog = useCallback(
     (values: ItemFormValues) => {
       if (!wheel || !dialog) {
@@ -185,6 +211,8 @@ export function useWheelEditor() {
           icon: values.icon || undefined,
           description: values.description || undefined,
           color: toHexColor(values.color),
+          weight: values.weight,
+          enabled: values.enabled,
         });
       }
 
@@ -260,9 +288,11 @@ export function useWheelEditor() {
     dialogParent,
     dialogNode,
     formDefaults,
-    showColorField: dialog?.type === 'add' || dialogNode?.kind === TREE_NODE_KIND.item,
+    successMessage,
     pendingDelete,
     toggleExpand,
+    addMainItem,
+    clearSuccessMessage,
     openAddChild,
     openEdit,
     closeDialog,

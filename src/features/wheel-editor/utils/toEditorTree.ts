@@ -14,6 +14,7 @@ export interface EditorTreeNode {
   description?: string;
   color?: HexColor;
   enabled: boolean;
+  weight: number;
   kind: TreeNodeKind;
   children: EditorTreeNode[];
 }
@@ -25,6 +26,7 @@ export function toEditorTree(wheel: Wheel): EditorTreeNode {
     icon: wheel.icon || '📁',
     description: wheel.description,
     enabled: true,
+    weight: 1,
     kind: TREE_NODE_KIND.wheel,
     children: wheel.items.map(toItemNode),
   };
@@ -75,6 +77,7 @@ function toItemNode(item: WheelItem): EditorTreeNode {
     description: item.description,
     color: item.color,
     enabled: item.enabled,
+    weight: item.weight,
     kind: TREE_NODE_KIND.item,
     children: (item.children ?? []).map(toItemNode),
   };

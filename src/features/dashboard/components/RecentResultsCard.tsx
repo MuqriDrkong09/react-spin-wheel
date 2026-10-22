@@ -21,8 +21,10 @@ export function RecentResultsCard({ results, onOpen }: RecentResultsCardProps) {
           {results.map((result) => (
             <ListItemButton
               key={result.id}
+              disableGutters
               onClick={() => onOpen(result.wheelId)}
               aria-label={`Open result ${result.itemName}`}
+              sx={{ p: 0 }}
             >
               <ListItemIcon sx={{ minWidth: 36 }}>
                 <EmojiEventsOutlinedIcon fontSize="small" />

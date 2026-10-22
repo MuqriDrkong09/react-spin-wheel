@@ -1,6 +1,8 @@
 export const EDITOR_MESSAGES = {
   nameRequired: 'Enter an item name',
   nameMax: 'Name must be at most 100 characters',
+  weightMin: 'Weight must be at least 1',
+  itemAdded: (name: string) => `${name} added.`,
   noWheelTitle: 'No wheel selected',
   noWheelDescription: 'Create a wheel or open one from the dashboard to edit its items.',
   emptyChildren: (name: string) => `No child items under ${name} yet.`,

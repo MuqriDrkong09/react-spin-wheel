@@ -121,8 +121,9 @@ describe('WheelEditorScreen', () => {
     renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Sushi' }));
-    await user.type(screen.getByLabelText(/name/i), 'Salmon');
-    await user.click(screen.getByRole('button', { name: 'Add item' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add child to Sushi' });
+    await user.type(within(dialog).getByLabelText(/^name/i), 'Salmon');
+    await user.click(within(dialog).getByRole('button', { name: 'Add item' }));
 
     expect(await screen.findByText('Salmon')).toBeInTheDocument();
     expect(useWheelStore.getState().getWheel('food')?.items.find((item) => item.id === 'sushi')?.children).toEqual(
@@ -136,10 +137,11 @@ describe('WheelEditorScreen', () => {
     renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Edit Pizza' }));
-    const nameField = screen.getByLabelText(/name/i);
+    const dialog = screen.getByRole('dialog', { name: 'Edit Pizza' });
+    const nameField = within(dialog).getByLabelText(/^name/i);
     await user.clear(nameField);
     await user.type(nameField, 'Deep Dish');
-    await user.click(screen.getByRole('button', { name: 'Save item' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Save item' }));
 
     expect(await screen.findByText('🍕 Deep Dish')).toBeInTheDocument();
     expect(screen.queryByText('🍕 Pizza')).not.toBeInTheDocument();
@@ -184,8 +186,9 @@ describe('WheelEditorScreen', () => {
     renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Chicken Pepperoni' }));
-    await user.type(screen.getByLabelText(/name/i), 'Extra spicy');
-    await user.click(screen.getByRole('button', { name: 'Add item' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add child to Chicken Pepperoni' });
+    await user.type(within(dialog).getByLabelText(/^name/i), 'Extra spicy');
+    await user.click(within(dialog).getByRole('button', { name: 'Add item' }));
 
     expect(await screen.findByText('Extra spicy')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add child to Extra spicy' })).toBeInTheDocument();
@@ -202,4 +205,75 @@ describe('WheelEditorScreen', () => {
     expect(screen.queryByRole('dialog', { name: 'Delete item' })).not.toBeInTheDocument();
     expect(screen.queryByText('🍣 Sushi')).not.toBeInTheDocument();
   });
+
+  it('prevents adding main data without a name', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    const form = screen.getByRole('form', { name: 'Add Main Data' });
+    await user.click(within(form).getByRole('button', { name: 'Add item' }));
+
+    expect(await screen.findByText(EDITOR_MESSAGES.nameRequired)).toBeInTheDocument();
+    expect(useWheelStore.getState().getWheel('food')?.items).toHaveLength(3);
+  });
+
+  it('adds main data to the active wheel, resets the form, and shows success', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    const form = screen.getByRole('form', { name: 'Add Main Data' });
+    expect(within(form).getByRole('spinbutton', { name: 'Weight' })).toHaveValue(1);
+    expect(within(form).getByRole('switch', { name: 'Enabled' })).toBeChecked();
+
+    await user.type(within(form).getByLabelText(/^name/i), 'Taco');
+    await user.type(within(form).getByLabelText(/^description/i), 'Street food');
+    await user.type(within(form).getByLabelText(/^icon/i), '🌮');
+    await user.click(within(form).getByRole('button', { name: 'Add item' }));
+
+    expect(await screen.findByText('🌮 Taco')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(EDITOR_MESSAGES.itemAdded('Taco'));
+    expect(within(form).getByLabelText(/^name/i)).toHaveValue('');
+    expect(within(form).getByLabelText(/^description/i)).toHaveValue('');
+    expect(within(form).getByLabelText(/^icon/i)).toHaveValue('');
+    expect(within(form).getByRole('spinbutton', { name: 'Weight' })).toHaveValue(1);
+    expect(within(form).getByRole('switch', { name: 'Enabled' })).toBeChecked();
+
+    const added = useWheelStore.getState().getWheel('food')?.items.find((item) => item.name === 'Taco');
+    expect(added?.id).toEqual(expect.any(String));
+    expect(added?.id).not.toBe('food');
+    expect(added?.description).toBe('Street food');
+    expect(added?.icon).toBe('🌮');
+    expect(added?.enabled).toBe(true);
+    expect(added?.weight).toBe(1);
+    expect(useWheelStore.getState().getWheel('food')?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining([added?.id]),
+    );
+  });
+
+  it('assigns a unique id for each main item', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    const form = screen.getByRole('form', { name: 'Add Main Data' });
+    await user.type(within(form).getByLabelText(/^name/i), 'Taco');
+    await user.click(within(form).getByRole('button', { name: 'Add item' }));
+    expect(await screen.findByText('Taco')).toBeInTheDocument();
+    await user.type(within(form).getByLabelText(/^name/i), 'Salad');
+    await user.click(within(form).getByRole('button', { name: 'Add item' }));
+    expect(await screen.findByText('Salad')).toBeInTheDocument();
+
+    const names = useWheelStore.getState().getWheel('food')?.items ?? [];
+    const taco = names.find((item) => item.name === 'Taco');
+    const salad = names.find((item) => item.name === 'Salad');
+    const ids = names.map((item) => item.id);
+
+    expect(taco?.id).toBeTruthy();
+    expect(salad?.id).toBeTruthy();
+    expect(taco?.id).not.toBe(salad?.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
 });
+

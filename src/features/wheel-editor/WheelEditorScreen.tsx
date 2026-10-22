@@ -1,9 +1,9 @@
-import AddIcon from '@mui/icons-material/Add';
-import { Button, Card, CardContent, Stack } from '@mui/material';
+import { Alert, Button, Card, CardContent, Snackbar, Stack } from '@mui/material';
 
 import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { AddMainDataCard } from '@/features/wheel-editor/components/AddMainDataCard';
 import { DeleteItemDialog } from '@/features/wheel-editor/components/DeleteItemDialog';
 import { ItemFormDialog } from '@/features/wheel-editor/components/ItemFormDialog';
 import { WheelTree } from '@/features/wheel-editor/components/WheelTree';
@@ -29,35 +29,27 @@ export function WheelEditorScreen() {
               ? `Edit items in ${editor.wheel.name}.`
               : 'Design wheel segments and settings.'
           }
-          action={
-            tree ? (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => editor.openAddChild(tree.id)}
-              >
-                Add item
-              </Button>
-            ) : undefined
-          }
         />
         {tree ? (
-          <Card variant="outlined">
-            <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-              <WheelTree
-                root={tree}
-                expandedIds={editor.expandedIds}
-                handlers={{
-                  onEdit: editor.openEdit,
-                  onDelete: editor.requestDelete,
-                  onAddChild: editor.openAddChild,
-                  onToggleEnabled: editor.toggleEnabled,
-                  onDuplicate: editor.duplicate,
-                }}
-                onToggleExpand={editor.toggleExpand}
-              />
-            </CardContent>
-          </Card>
+          <>
+            <AddMainDataCard onSubmit={editor.addMainItem} />
+            <Card variant="outlined">
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <WheelTree
+                  root={tree}
+                  expandedIds={editor.expandedIds}
+                  handlers={{
+                    onEdit: editor.openEdit,
+                    onDelete: editor.requestDelete,
+                    onAddChild: editor.openAddChild,
+                    onToggleEnabled: editor.toggleEnabled,
+                    onDuplicate: editor.duplicate,
+                  }}
+                  onToggleExpand={editor.toggleExpand}
+                />
+              </CardContent>
+            </Card>
+          </>
         ) : (
           <EmptyState
             titleComponent="h2"
@@ -84,7 +76,6 @@ export function WheelEditorScreen() {
         open={Boolean(editor.dialog)}
         title={dialogTitle}
         submitLabel={editor.dialog?.type === 'add' ? 'Add item' : 'Save item'}
-        showColor={editor.showColorField}
         defaultValues={editor.formDefaults}
         onClose={editor.closeDialog}
         onSubmit={editor.submitDialog}
@@ -94,6 +85,16 @@ export function WheelEditorScreen() {
         onCancel={editor.cancelDelete}
         onConfirm={editor.confirmDelete}
       />
+      <Snackbar
+        open={Boolean(editor.successMessage)}
+        autoHideDuration={4000}
+        onClose={editor.clearSuccessMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" variant="filled" onClose={editor.clearSuccessMessage}>
+          {editor.successMessage}
+        </Alert>
+      </Snackbar>
     </PageContainer>
   );
 }

@@ -11,6 +11,8 @@ interface FormProps<TFieldValues extends FieldValues> {
   onSubmit: SubmitHandler<TFieldValues>;
   children: ReactNode;
   id?: string;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
 }
 
 export function Form<TFieldValues extends FieldValues>({
@@ -18,6 +20,8 @@ export function Form<TFieldValues extends FieldValues>({
   onSubmit,
   children,
   id,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
 }: FormProps<TFieldValues>) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     void form.handleSubmit(onSubmit)(event);
@@ -25,7 +29,13 @@ export function Form<TFieldValues extends FieldValues>({
 
   return (
     <FormProvider {...form}>
-      <form id={id} onSubmit={handleSubmit} noValidate>
+      <form
+        id={id}
+        onSubmit={handleSubmit}
+        noValidate
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+      >
         {children}
       </form>
     </FormProvider>

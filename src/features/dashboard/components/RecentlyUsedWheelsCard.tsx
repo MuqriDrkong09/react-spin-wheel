@@ -21,8 +21,10 @@ export function RecentlyUsedWheelsCard({ wheels, onOpen }: RecentlyUsedWheelsCar
           {wheels.map(({ wheel, lastUsedAt }) => (
             <ListItemButton
               key={wheel.id}
+              disableGutters
               onClick={() => onOpen(wheel.id)}
               aria-label={`Open recently used ${wheel.name}`}
+              sx={{ p: 0 }}
             >
               <ListItemIcon sx={{ minWidth: 36 }}>
                 <HistoryIcon fontSize="small" />
