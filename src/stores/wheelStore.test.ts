@@ -455,6 +455,72 @@ describe('useWheelStore', () => {
     ).toEqual(['Large', 'Small']);
   });
 
+  describe('moveItem hierarchy safety', () => {
+    it('reorders root items immutably', () => {
+      const wheel = pizzaWheel();
+      const chicken = wheel.items[0];
+      const beef = wheel.items[1];
+      expect(chicken).toBeDefined();
+      expect(beef).toBeDefined();
+      if (!chicken || !beef) {
+        throw new Error('Expected topping items');
+      }
+
+      const moved = useWheelStore.getState().moveItem('pizza', beef.id, null, 0);
+      const next = useWheelStore.getState().getWheel('pizza')?.items ?? [];
+
+      expect(moved?.id).toBe(beef.id);
+      expect(next.map((item) => item.name)).toEqual(['Beef Pepperoni', 'Chicken Pepperoni']);
+      expect(wheel.items[0]?.name).toBe('Chicken Pepperoni');
+    });
+
+    it('moves an item under another parent and keeps descendants', () => {
+      pizzaWheel();
+      const chicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      const beef = useWheelStore.getState().getWheel('pizza')?.items[1];
+      expect(chicken).toBeDefined();
+      expect(beef).toBeDefined();
+      if (!chicken || !beef) {
+        throw new Error('Expected topping items');
+      }
+
+      const small = useWheelStore.getState().addChildItem(chicken.id, draft('Small'));
+      expect(small).toBeDefined();
+      if (!small) {
+        throw new Error('Expected small item');
+      }
+
+      useWheelStore.getState().moveItem('pizza', chicken.id, beef.id, 0);
+      const next = useWheelStore.getState().getWheel('pizza')?.items ?? [];
+
+      expect(next.map((item) => item.name)).toEqual(['Beef Pepperoni']);
+      expect(next[0]?.children?.map((item) => item.name)).toEqual(['Chicken Pepperoni']);
+      expect(next[0]?.children?.[0]?.children?.map((item) => item.name)).toEqual(['Small']);
+    });
+
+    it('does not let an item become its own descendant', () => {
+      pizzaWheel();
+      const chicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      const beef = useWheelStore.getState().getWheel('pizza')?.items[1];
+      expect(chicken).toBeDefined();
+      expect(beef).toBeDefined();
+      if (!chicken || !beef) {
+        throw new Error('Expected topping items');
+      }
+
+      const small = useWheelStore.getState().addChildItem(chicken.id, draft('Small'));
+      expect(small).toBeDefined();
+      if (!small) {
+        throw new Error('Expected small item');
+      }
+
+      const before = useWheelStore.getState().getWheel('pizza')?.items;
+      expect(useWheelStore.getState().moveItem('pizza', chicken.id, small.id, 0)).toBeUndefined();
+      expect(useWheelStore.getState().moveItem('pizza', chicken.id, chicken.id, 0)).toBeUndefined();
+      expect(useWheelStore.getState().getWheel('pizza')?.items).toBe(before);
+    });
+  });
+
   it('toggleItem flips enabled on a nested item', () => {
     const wheel = pizzaWheel();
     const chicken = wheel.items[0];

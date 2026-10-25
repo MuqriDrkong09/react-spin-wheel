@@ -245,3 +245,158 @@ export function patchItem(item: WheelItem, patch: WheelItemPatch): WheelItem {
     updatedAt: nowIso(),
   };
 }
+
+export interface ItemLocation {
+  parentId: WheelItemId | null;
+  index: number;
+}
+
+export interface ItemMove {
+  itemId: WheelItemId;
+  targetParentId: WheelItemId | null;
+  index: number;
+}
+
+export function findItemLocation(
+  items: WheelItem[],
+  itemId: WheelItemId,
+  parentId: WheelItemId | null = null,
+): ItemLocation | undefined {
+  const index = items.findIndex((entry) => entry.id === itemId);
+  if (index !== -1) {
+    return { parentId, index };
+  }
+
+  for (const entry of items) {
+    if (!entry.children?.length) {
+      continue;
+    }
+
+    const nested = findItemLocation(entry.children, itemId, entry.id);
+    if (nested) {
+      return nested;
+    }
+  }
+
+  return undefined;
+}
+
+export function collectDescendantIds(item: WheelItem): WheelItemId[] {
+  return (item.children ?? []).flatMap((child) => [child.id, ...collectDescendantIds(child)]);
+}
+
+export function canMoveItem(
+  items: WheelItem[],
+  itemId: WheelItemId,
+  targetParentId: WheelItemId | null,
+): boolean {
+  const item = findItem(items, itemId);
+  if (!item) {
+    return false;
+  }
+
+  if (targetParentId === null) {
+    return true;
+  }
+
+  if (targetParentId === itemId) {
+    return false;
+  }
+
+  if (!findItem(items, targetParentId)) {
+    return false;
+  }
+
+  return !collectDescendantIds(item).includes(targetParentId);
+}
+
+export function moveItemInTree(
+  items: WheelItem[],
+  itemId: WheelItemId,
+  targetParentId: WheelItemId | null,
+  toIndex: number,
+): WheelItem[] {
+  if (!canMoveItem(items, itemId, targetParentId)) {
+    return items;
+  }
+
+  const location = findItemLocation(items, itemId);
+  const item = findItem(items, itemId);
+  if (!location || !item) {
+    return items;
+  }
+
+  if (location.parentId === targetParentId) {
+    const siblings = getChildren(items, location.parentId);
+    const nextIndex = clampIndex(toIndex, siblings.length - 1);
+    if (nextIndex === location.index) {
+      return items;
+    }
+
+    return replaceChildren(items, location.parentId, moveIndex(siblings, location.index, nextIndex));
+  }
+
+  const withoutItem = removeItemFromTree(items, itemId);
+  const destination = getChildren(withoutItem, targetParentId);
+  const nextIndex = clampIndex(toIndex, destination.length);
+  const nextSiblings = [...destination.slice(0, nextIndex), item, ...destination.slice(nextIndex)];
+
+  return replaceChildren(withoutItem, targetParentId, nextSiblings);
+}
+
+function getChildren(items: WheelItem[], parentId: WheelItemId | null): WheelItem[] {
+  if (parentId === null) {
+    return items;
+  }
+
+  return findItem(items, parentId)?.children ?? [];
+}
+
+function replaceChildren(
+  items: WheelItem[],
+  parentId: WheelItemId | null,
+  children: WheelItem[],
+): WheelItem[] {
+  if (parentId === null) {
+    return children;
+  }
+
+  return mapItemTree(items, parentId, (parent) => {
+    if (parent.children === children) {
+      return parent;
+    }
+
+    return {
+      ...parent,
+      children,
+      updatedAt: nowIso(),
+    };
+  });
+}
+
+function moveIndex<T>(list: T[], fromIndex: number, toIndex: number): T[] {
+  if (fromIndex === toIndex) {
+    return list;
+  }
+
+  const next = [...list];
+  const [entry] = next.splice(fromIndex, 1);
+  if (entry === undefined) {
+    return list;
+  }
+
+  next.splice(toIndex, 0, entry);
+  return next;
+}
+
+function clampIndex(index: number, max: number): number {
+  if (max < 0) {
+    return 0;
+  }
+
+  if (index < 0) {
+    return 0;
+  }
+
+  return index > max ? max : index;
+}

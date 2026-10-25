@@ -1,5 +1,11 @@
 import type { WheelItem } from '@/types/wheel';
-import { mapItemTree, patchItem, removeItemFromTree } from '@/utils/wheelTree';
+import {
+  canMoveItem,
+  mapItemTree,
+  moveItemInTree,
+  patchItem,
+  removeItemFromTree,
+} from '@/utils/wheelTree';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -93,5 +99,58 @@ describe('removeItemFromTree', () => {
     expect(nextChicken?.name).toBe('Chicken Pepperoni');
     expect(nextChicken?.children).toEqual([large]);
     expect(nextChicken?.children?.[0]).toBe(large);
+  });
+});
+
+describe('moveItemInTree', () => {
+  const extra = item('Extra cheese');
+  const chicken = item('Chicken', { children: [extra] });
+  const beef = item('Beef');
+  const burger = item('Burger');
+  const items = [item('Pizza', { children: [chicken, beef] }), burger];
+
+  it('reorders siblings without changing parents', () => {
+    const next = moveItemInTree(items, beef.id, 'pizza', 0);
+    const pizza = next[0];
+
+    expect(pizza?.children?.map((entry) => entry.id)).toEqual(['beef', 'chicken']);
+    expect(pizza?.children?.[1]?.children).toEqual([extra]);
+    expect(next[1]).toBe(burger);
+  });
+
+  it('reorders root items without flattening nested children', () => {
+    const next = moveItemInTree(items, burger.id, null, 0);
+
+    expect(next.map((entry) => entry.id)).toEqual(['burger', 'pizza']);
+    expect(next[1]?.children?.map((entry) => entry.id)).toEqual(['chicken', 'beef']);
+    expect(next[1]?.children?.[0]?.children).toEqual([extra]);
+  });
+
+  it('moves an item under another parent and preserves its descendants', () => {
+    const next = moveItemInTree(items, chicken.id, burger.id, 0);
+
+    expect(next[0]?.children?.map((entry) => entry.id)).toEqual(['beef']);
+    expect(next[1]?.children?.map((entry) => entry.id)).toEqual(['chicken']);
+    expect(next[1]?.children?.[0]?.children).toEqual([extra]);
+  });
+
+  it('rejects moving an item into itself', () => {
+    expect(canMoveItem(items, 'pizza', 'pizza')).toBe(false);
+    expect(moveItemInTree(items, 'pizza', 'pizza', 0)).toBe(items);
+  });
+
+  it('rejects moving an item into its own descendant', () => {
+    expect(canMoveItem(items, 'pizza', 'chicken')).toBe(false);
+    expect(canMoveItem(items, 'pizza', extra.id)).toBe(false);
+    expect(moveItemInTree(items, 'pizza', extra.id, 0)).toBe(items);
+    expect(moveItemInTree(items, 'chicken', extra.id, 0)).toBe(items);
+  });
+
+  it('allows moving a descendant out to another parent', () => {
+    expect(canMoveItem(items, extra.id, burger.id)).toBe(true);
+
+    const next = moveItemInTree(items, extra.id, burger.id, 0);
+    expect(next[0]?.children?.[0]?.children).toEqual([]);
+    expect(next[1]?.children?.map((entry) => entry.id)).toEqual(['extra-cheese']);
   });
 });

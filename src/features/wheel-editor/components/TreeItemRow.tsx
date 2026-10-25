@@ -1,9 +1,12 @@
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Box, Chip, IconButton, Stack, Typography } from '@mui/material';
+import type { ReactNode } from 'react';
 
 import { TreeItemActions, type TreeItemHandlers } from '@/features/wheel-editor/components/TreeItemActions';
 import { TREE_NODE_KIND, type EditorTreeNode } from '@/features/wheel-editor/utils/toEditorTree';
+import { CSS, useSortable } from '@/utils/dnd';
 
 interface TreeItemRowProps {
   node: EditorTreeNode;
@@ -13,6 +16,73 @@ interface TreeItemRowProps {
 }
 
 export function TreeItemRow({ node, isExpanded, handlers, onToggleExpand }: TreeItemRowProps) {
+  if (node.kind === TREE_NODE_KIND.wheel) {
+    return (
+      <TreeItemRowLayout
+        node={node}
+        isExpanded={isExpanded}
+        handlers={handlers}
+        onToggleExpand={onToggleExpand}
+      />
+    );
+  }
+
+  return (
+    <SortableTreeItemRow
+      node={node}
+      isExpanded={isExpanded}
+      handlers={handlers}
+      onToggleExpand={onToggleExpand}
+    />
+  );
+}
+
+function SortableTreeItemRow({ node, isExpanded, handlers, onToggleExpand }: TreeItemRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: node.id,
+  });
+
+  return (
+    <Box
+      ref={setNodeRef}
+      sx={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+      }}
+    >
+      <TreeItemRowLayout
+        node={node}
+        isExpanded={isExpanded}
+        handlers={handlers}
+        onToggleExpand={onToggleExpand}
+        dragHandle={
+          <IconButton
+            {...attributes}
+            {...listeners}
+            size="small"
+            aria-label={`Reorder ${node.name}`}
+            sx={{ cursor: 'grab', touchAction: 'none' }}
+          >
+            <DragIndicatorIcon fontSize="small" />
+          </IconButton>
+        }
+      />
+    </Box>
+  );
+}
+
+interface TreeItemRowLayoutProps extends TreeItemRowProps {
+  dragHandle?: ReactNode;
+}
+
+function TreeItemRowLayout({
+  node,
+  isExpanded,
+  handlers,
+  onToggleExpand,
+  dragHandle,
+}: TreeItemRowLayoutProps) {
   const isWheel = node.kind === TREE_NODE_KIND.wheel;
 
   return (
@@ -30,6 +100,7 @@ export function TreeItemRow({ node, isExpanded, handlers, onToggleExpand }: Tree
       }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
+        {dragHandle}
         <IconButton
           size="small"
           aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${node.name}`}

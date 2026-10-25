@@ -19,6 +19,7 @@ import {
   findItem,
   mapItemTree,
   materializeItem,
+  moveItemInTree,
   patchItem,
   removeItemFromTree,
   reorderSiblings,
@@ -68,6 +69,12 @@ interface WheelStoreActions {
     parentItemId: WheelItemId | null,
     orderedIds: WheelItemId[],
   ) => void;
+  moveItem: (
+    wheelId: WheelId,
+    itemId: WheelItemId,
+    targetParentId: WheelItemId | null,
+    index: number,
+  ) => WheelItem | undefined;
   toggleItem: (wheelId: WheelId, itemId: WheelItemId) => WheelItem | undefined;
   updateWheelSettings: (
     wheelId: WheelId,
@@ -368,6 +375,28 @@ export const useWheelStore = create<WheelStore>((set, get) => ({
         };
       }),
     }));
+  },
+
+  moveItem: (wheelId, itemId, targetParentId, index) => {
+    let moved: WheelItem | undefined;
+
+    set((state) => ({
+      wheels: replaceWheel(state.wheels, wheelId, (wheel) => {
+        const items = moveItemInTree(wheel.items, itemId, targetParentId, index);
+        if (items === wheel.items) {
+          return wheel;
+        }
+
+        moved = findItem(items, itemId);
+        return {
+          ...wheel,
+          items,
+          updatedAt: nowIso(),
+        };
+      }),
+    }));
+
+    return moved;
   },
 
   toggleItem: (wheelId, itemId) => {

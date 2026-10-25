@@ -1,5 +1,16 @@
 import { createTheme, type PaletteMode, type Theme } from '@mui/material/styles';
 
+const testComponents =
+  import.meta.env.MODE === 'test'
+    ? {
+        MuiButtonBase: {
+          defaultProps: {
+            disableRipple: true,
+          },
+        },
+      }
+    : {};
+
 export function createAppTheme(mode: PaletteMode): Theme {
   return createTheme({
     palette: {
@@ -66,6 +77,7 @@ export function createAppTheme(mode: PaletteMode): Theme {
           },
         },
       },
+      ...testComponents,
     },
   });
 }

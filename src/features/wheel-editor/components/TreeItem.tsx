@@ -3,17 +3,30 @@ import { Box } from '@mui/material';
 import { TreeEmptyChildren } from '@/features/wheel-editor/components/TreeEmptyChildren';
 import type { TreeItemHandlers } from '@/features/wheel-editor/components/TreeItemActions';
 import { TreeItemRow } from '@/features/wheel-editor/components/TreeItemRow';
+import { toDroppableId } from '@/features/wheel-editor/utils/dndTree';
 import type { EditorTreeNode } from '@/features/wheel-editor/utils/toEditorTree';
+import { useDroppable } from '@/utils/dnd';
 
 export interface TreeItemProps {
   node: EditorTreeNode;
   expandedIds: ReadonlySet<string>;
   handlers: TreeItemHandlers;
   onToggleExpand: (id: string) => void;
+  blockedParentIds?: ReadonlySet<string>;
 }
 
-export function TreeItem({ node, expandedIds, handlers, onToggleExpand }: TreeItemProps) {
+export function TreeItem({
+  node,
+  expandedIds,
+  handlers,
+  onToggleExpand,
+  blockedParentIds,
+}: TreeItemProps) {
   const isExpanded = expandedIds.has(node.id);
+  const { setNodeRef, isOver } = useDroppable({
+    id: toDroppableId(node.id),
+    disabled: !isExpanded || Boolean(blockedParentIds?.has(node.id)),
+  });
 
   return (
     <Box component="li" sx={{ listStyle: 'none' }}>
@@ -25,13 +38,17 @@ export function TreeItem({ node, expandedIds, handlers, onToggleExpand }: TreeIt
       />
       {isExpanded ? (
         <Box
+          ref={setNodeRef}
           role="group"
           aria-label={`Children of ${node.name}`}
           sx={{
             ml: { xs: 1.25, sm: 2 },
             pl: { xs: 1.25, sm: 2 },
             borderLeft: '2px solid',
-            borderColor: 'divider',
+            borderColor: isOver ? 'primary.main' : 'divider',
+            bgcolor: isOver ? 'action.selected' : 'transparent',
+            borderRadius: 1,
+            minHeight: 12,
           }}
         >
           {node.children.length === 0 ? (
@@ -45,6 +62,7 @@ export function TreeItem({ node, expandedIds, handlers, onToggleExpand }: TreeIt
                   expandedIds={expandedIds}
                   handlers={handlers}
                   onToggleExpand={onToggleExpand}
+                  blockedParentIds={blockedParentIds}
                 />
               ))}
             </Box>

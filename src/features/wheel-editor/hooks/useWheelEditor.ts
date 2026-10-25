@@ -15,7 +15,7 @@ import {
 import { persistStores } from '@/services/storage/storePersistence';
 import { useWheelStore } from '@/stores/wheelStore';
 import type { Wheel, WheelItemId } from '@/types/wheel';
-import { findItem } from '@/utils/wheelTree';
+import { findItem, type ItemMove } from '@/utils/wheelTree';
 
 export type EditorDialog =
   | { type: 'add'; parentId: string }
@@ -36,6 +36,7 @@ export function useWheelEditor() {
   const duplicateItem = useWheelStore((state) => state.duplicateItem);
   const toggleItem = useWheelStore((state) => state.toggleItem);
   const updateWheel = useWheelStore((state) => state.updateWheel);
+  const moveItemInStore = useWheelStore((state) => state.moveItem);
 
   const wheelId = requestedId ?? activeWheelId;
   const wheel = useMemo(
@@ -269,6 +270,23 @@ export function useWheelEditor() {
     [duplicateItem, wheel],
   );
 
+  const moveItem = useCallback(
+    (move: ItemMove) => {
+      if (!wheel) {
+        return;
+      }
+
+      const moved = moveItemInStore(wheel.id, move.itemId, move.targetParentId, move.index);
+      if (!moved) {
+        return;
+      }
+
+      ensureExpanded(move.targetParentId ?? wheel.id);
+      persistStores();
+    },
+    [ensureExpanded, moveItemInStore, wheel],
+  );
+
   const goToCreate = useCallback(() => {
     void navigate(ROUTES.createWheel);
   }, [navigate]);
@@ -301,6 +319,7 @@ export function useWheelEditor() {
     cancelDelete,
     toggleEnabled,
     duplicate,
+    moveItem,
     goToCreate,
     goToDashboard,
   };

@@ -44,6 +44,7 @@ export function WheelEditorScreen() {
                     onDuplicate: editor.duplicate,
                   }}
                   onToggleExpand={editor.toggleExpand}
+                  onMove={editor.moveItem}
                 />
               </CardContent>
             </Card>

@@ -104,6 +104,9 @@ describe('WheelEditorScreen', () => {
     expect(screen.getByRole('button', { name: 'Collapse Pizza' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Expand Sushi' })).toBeInTheDocument();
     expect(screen.queryByText(EDITOR_MESSAGES.emptyChildren('Sushi'))).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reorder Pizza' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reorder Chicken Pepperoni' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reorder Food Wheel' })).not.toBeInTheDocument();
   });
 
   it('collapses and expands nested children', async () => {
