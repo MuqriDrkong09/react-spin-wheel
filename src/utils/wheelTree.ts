@@ -87,7 +87,6 @@ export function mapItemTree(
     return {
       ...item,
       children,
-      updatedAt: nowIso(),
     };
   });
 
@@ -241,6 +240,7 @@ export function patchItem(item: WheelItem, patch: WheelItemPatch): WheelItem {
     ...item,
     ...patch,
     id: item.id,
+    children: item.children,
     createdAt: item.createdAt,
     updatedAt: nowIso(),
   };

@@ -3,6 +3,7 @@ import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { renderApp, screen, userEvent, within } from '@/test/test-utils';
+import { findItem } from '@/utils/wheelTree';
 
 function seedFoodWheel() {
   const store = useWheelStore.getState();
@@ -53,6 +54,20 @@ function seedFoodWheel() {
 
 function renderEditor() {
   return renderApp({ initialEntries: [withWheelId(ROUTES.wheelEditor, 'food')] });
+}
+
+function foodItem(id: string) {
+  return findItem(useWheelStore.getState().getWheel('food')?.items ?? [], id);
+}
+
+async function saveEditedName(user: ReturnType<typeof userEvent.setup>, itemName: string, nextName: string) {
+  await user.click(screen.getByRole('button', { name: `Edit ${itemName}` }));
+  const dialog = screen.getByRole('dialog', { name: `Edit ${itemName}` });
+  const nameField = within(dialog).getByLabelText(/^name/i);
+  expect(nameField).toHaveValue(itemName);
+  await user.clear(nameField);
+  await user.type(nameField, nextName);
+  await user.click(within(dialog).getByRole('button', { name: 'Save item' }));
 }
 
 describe('WheelEditorScreen', () => {
@@ -183,20 +198,109 @@ describe('WheelEditorScreen', () => {
     ).toHaveLength(2);
   });
 
-  it('edits an item in place', async () => {
+  it('edits a root item from the same form and preserves its children', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
+    const before = foodItem('pizza');
     renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Edit Pizza' }));
     const dialog = screen.getByRole('dialog', { name: 'Edit Pizza' });
+    expect(within(dialog).getByLabelText(/^name/i)).toHaveValue('Pizza');
+    expect(within(dialog).getByLabelText(/^description/i)).toHaveValue('');
+    expect(within(dialog).getByLabelText(/^icon/i)).toHaveValue('🍕');
+    expect(within(dialog).getByRole('spinbutton', { name: /weight/i })).toHaveValue(1);
+    expect(within(dialog).getByRole('switch', { name: 'Enabled' })).toBeChecked();
+
     const nameField = within(dialog).getByLabelText(/^name/i);
     await user.clear(nameField);
     await user.type(nameField, 'Deep Dish');
+    await user.type(within(dialog).getByLabelText(/^description/i), 'Oven baked');
     await user.click(within(dialog).getByRole('button', { name: 'Save item' }));
 
     expect(await screen.findByText('🍕 Deep Dish')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(EDITOR_MESSAGES.itemUpdated('Deep Dish'));
     expect(screen.queryByText('🍕 Pizza')).not.toBeInTheDocument();
+    expect(screen.getByText('🍗 Chicken Pepperoni')).toBeInTheDocument();
+    expect(screen.getByText('🥩 Beef Pepperoni')).toBeInTheDocument();
+
+    const pizza = foodItem('pizza');
+    expect(pizza?.name).toBe('Deep Dish');
+    expect(pizza?.description).toBe('Oven baked');
+    expect(pizza?.createdAt).toBe(before?.createdAt);
+    expect(pizza?.updatedAt).not.toBe(before?.updatedAt);
+    expect(pizza?.children?.map((item) => item.id)).toEqual(['chicken', 'beef']);
+    expect(foodItem('burger')?.name).toBe('Burger');
+  });
+
+  it('edits a child item without changing its siblings', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    const before = foodItem('chicken');
+    const beefBefore = foodItem('beef');
+    renderEditor();
+
+    await saveEditedName(user, 'Chicken Pepperoni', 'Chicken Deluxe');
+
+    expect(await screen.findByText('🍗 Chicken Deluxe')).toBeInTheDocument();
+    expect(screen.getByText('🍕 Pizza')).toBeInTheDocument();
+    expect(screen.getByText('🥩 Beef Pepperoni')).toBeInTheDocument();
+
+    const chicken = foodItem('chicken');
+    expect(chicken?.name).toBe('Chicken Deluxe');
+    expect(chicken?.createdAt).toBe(before?.createdAt);
+    expect(chicken?.updatedAt).not.toBe(before?.updatedAt);
+    expect(foodItem('beef')).toEqual(beefBefore);
+    expect(foodItem('pizza')?.name).toBe('Pizza');
+  });
+
+  it('edits a deeply nested item without changing ancestors or siblings', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    useWheelStore.getState().addChildItem('chicken', {
+      id: 'large',
+      name: 'Large',
+      color: '#16a34a',
+      enabled: true,
+      weight: 2,
+    });
+    useWheelStore.getState().addChildItem('chicken', {
+      id: 'small',
+      name: 'Small',
+      color: '#2563eb',
+      enabled: true,
+      weight: 1,
+    });
+    const before = foodItem('large');
+    const smallBefore = foodItem('small');
+    const chickenBefore = foodItem('chicken');
+    const pizzaBefore = foodItem('pizza');
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Edit Large' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit Large' });
+    expect(within(dialog).getByLabelText(/^name/i)).toHaveValue('Large');
+    expect(within(dialog).getByRole('spinbutton', { name: /weight/i })).toHaveValue(2);
+    const nameField = within(dialog).getByLabelText(/^name/i);
+    await user.clear(nameField);
+    await user.type(nameField, 'Extra Large');
+    await user.click(within(dialog).getByRole('button', { name: 'Save item' }));
+
+    expect(await screen.findByText('Extra Large')).toBeInTheDocument();
+    expect(screen.getByText('Small')).toBeInTheDocument();
+    expect(screen.getByText('🍗 Chicken Pepperoni')).toBeInTheDocument();
+    expect(screen.getByText('🍕 Pizza')).toBeInTheDocument();
+
+    const large = foodItem('large');
+    expect(large?.name).toBe('Extra Large');
+    expect(large?.weight).toBe(2);
+    expect(large?.createdAt).toBe(before?.createdAt);
+    expect(large?.updatedAt).not.toBe(before?.updatedAt);
+    expect(foodItem('small')).toEqual(smallBefore);
+    expect(foodItem('chicken')?.name).toBe(chickenBefore?.name);
+    expect(foodItem('chicken')?.updatedAt).toBe(chickenBefore?.updatedAt);
+    expect(foodItem('pizza')?.updatedAt).toBe(pizzaBefore?.updatedAt);
+    expect(foodItem('beef')?.name).toBe('Beef Pepperoni');
   });
 
   it('duplicates, disables, and deletes an item with confirmation', async () => {

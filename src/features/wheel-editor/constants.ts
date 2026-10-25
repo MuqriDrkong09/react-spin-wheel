@@ -5,6 +5,7 @@ export const EDITOR_MESSAGES = {
   weightMin: 'Weight must be at least 1',
   itemAdded: (name: string) => `${name} added.`,
   childAdded: (name: string, parentName: string) => `${name} added under ${parentName}.`,
+  itemUpdated: (name: string) => `${name} updated.`,
   noWheelTitle: 'No wheel selected',
   noWheelDescription: 'Create a wheel or open one from the dashboard to edit its items.',
   emptyChildren: (name: string) => `No child items under ${name} yet.`,

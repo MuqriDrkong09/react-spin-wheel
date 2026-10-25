@@ -116,6 +116,128 @@ describe('useWheelStore', () => {
     expect(useWheelStore.getState().getWheel('pizza')?.items[0]?.name).toBe('Chicken Deluxe');
   });
 
+  describe('item editing', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('updates a root item while preserving children and createdAt', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-01T08:00:00.000Z'));
+      pizzaWheel();
+      const chicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      expect(chicken).toBeDefined();
+      if (!chicken) {
+        throw new Error('Expected chicken item');
+      }
+
+      useWheelStore.getState().addChildItem(chicken.id, draft('Small'));
+      const before = useWheelStore.getState().getWheel('pizza')?.items[0];
+      expect(before).toBeDefined();
+      if (!before) {
+        throw new Error('Expected chicken with children');
+      }
+
+      vi.setSystemTime(new Date('2026-03-01T08:00:08.000Z'));
+      const updated = useWheelStore.getState().updateItem('pizza', before.id, {
+        name: 'Chicken Deluxe',
+        description: 'Spicy topping',
+      });
+      const next = useWheelStore.getState().getWheel('pizza')?.items[0];
+      const beef = useWheelStore.getState().getWheel('pizza')?.items[1];
+
+      expect(updated?.name).toBe('Chicken Deluxe');
+      expect(updated?.description).toBe('Spicy topping');
+      expect(updated?.createdAt).toBe(before.createdAt);
+      expect(updated?.updatedAt).toBe('2026-03-01T08:00:08.000Z');
+      expect(updated?.children).toEqual(before.children);
+      expect(next?.children?.[0]?.name).toBe('Small');
+      expect(beef?.name).toBe('Beef Pepperoni');
+    });
+
+    it('updates a child without changing its siblings', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-01T09:00:00.000Z'));
+      pizzaWheel();
+      const chicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      expect(chicken).toBeDefined();
+      if (!chicken) {
+        throw new Error('Expected chicken item');
+      }
+
+      const small = useWheelStore.getState().addChildItem(chicken.id, draft('Small'));
+      const large = useWheelStore.getState().addChildItem(chicken.id, draft('Large'));
+      expect(small).toBeDefined();
+      expect(large).toBeDefined();
+      if (!small || !large) {
+        throw new Error('Expected size items');
+      }
+
+      const parentBefore = useWheelStore.getState().getWheel('pizza')?.items[0];
+      vi.setSystemTime(new Date('2026-03-01T09:00:04.000Z'));
+      const updated = useWheelStore.getState().updateChildItem(small.id, { name: 'Personal' });
+      const parentAfter = useWheelStore.getState().getWheel('pizza')?.items[0];
+
+      expect(updated?.name).toBe('Personal');
+      expect(updated?.createdAt).toBe(small.createdAt);
+      expect(updated?.updatedAt).toBe('2026-03-01T09:00:04.000Z');
+      expect(parentAfter?.name).toBe('Chicken Pepperoni');
+      expect(parentAfter?.updatedAt).toBe(parentBefore?.updatedAt);
+      expect(parentAfter?.children?.[1]).toEqual(large);
+    });
+
+    it('updates a deeply nested item without changing ancestors or siblings', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-01T10:00:00.000Z'));
+      pizzaWheel();
+      const chicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      const beef = useWheelStore.getState().getWheel('pizza')?.items[1];
+      expect(chicken).toBeDefined();
+      expect(beef).toBeDefined();
+      if (!chicken || !beef) {
+        throw new Error('Expected topping items');
+      }
+
+      const small = useWheelStore.getState().addChildItem(chicken.id, draft('Small'));
+      expect(small).toBeDefined();
+      if (!small) {
+        throw new Error('Expected small item');
+      }
+
+      const extra = useWheelStore.getState().addChildItem(small.id, draft('Extra spicy'));
+      const mild = useWheelStore.getState().addChildItem(small.id, draft('Mild'));
+      expect(extra).toBeDefined();
+      expect(mild).toBeDefined();
+      if (!extra || !mild) {
+        throw new Error('Expected nested items');
+      }
+
+      const before = useWheelStore.getState().getWheel('pizza');
+      vi.setSystemTime(new Date('2026-03-01T10:00:09.000Z'));
+      const updated = useWheelStore.getState().updateChildItem(extra.id, {
+        name: 'Extra cheese',
+        weight: 4,
+      });
+      const after = useWheelStore.getState().getWheel('pizza');
+      const nextChicken = after?.items[0];
+      const nextSmall = nextChicken?.children?.[0];
+
+      expect(updated?.name).toBe('Extra cheese');
+      expect(updated?.weight).toBe(4);
+      expect(updated?.createdAt).toBe(extra.createdAt);
+      expect(updated?.updatedAt).toBe('2026-03-01T10:00:09.000Z');
+      expect(updated?.children).toBe(extra.children);
+      expect(after?.items[1]).toBe(beef);
+      expect(nextChicken?.name).toBe('Chicken Pepperoni');
+      expect(nextChicken?.createdAt).toBe(before?.items[0]?.createdAt);
+      expect(nextChicken?.updatedAt).toBe(before?.items[0]?.updatedAt);
+      expect(nextSmall?.name).toBe('Small');
+      expect(nextSmall?.updatedAt).toBe(before?.items[0]?.children?.[0]?.updatedAt);
+      expect(nextSmall?.children?.[1]).toEqual(mild);
+      expect(nextSmall?.children?.[0]?.name).toBe('Extra cheese');
+    });
+  });
+
   it('deleteItem removes a root item', () => {
     const wheel = pizzaWheel();
     const chicken = wheel.items[0];

@@ -5,7 +5,7 @@ import { ROUTES } from '@/constants/routes';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import type { ItemFormValues } from '@/features/wheel-editor/schema';
 import { defaultItemFormValues } from '@/features/wheel-editor/schema';
-import { colorForIndex, toItemDraft } from '@/features/wheel-editor/utils/itemDraft';
+import { colorForIndex, toItemDraft, toItemPatch } from '@/features/wheel-editor/utils/itemDraft';
 import {
   collectExpandedIds,
   findTreeNode,
@@ -14,7 +14,7 @@ import {
 } from '@/features/wheel-editor/utils/toEditorTree';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useWheelStore } from '@/stores/wheelStore';
-import type { HexColor, Wheel, WheelItemId } from '@/types/wheel';
+import type { Wheel, WheelItemId } from '@/types/wheel';
 import { findItem } from '@/utils/wheelTree';
 
 export type EditorDialog =
@@ -207,20 +207,17 @@ export function useWheelEditor() {
       }
 
       if (node.kind === TREE_NODE_KIND.wheel) {
+        const patch = toItemPatch(values);
         updateWheel(wheel.id, {
-          name: values.name,
-          icon: values.icon || undefined,
-          description: values.description || undefined,
+          name: patch.name,
+          icon: patch.icon,
+          description: patch.description,
         });
       } else {
-        updateChildItem(dialog.nodeId, {
-          name: values.name,
-          icon: values.icon || undefined,
-          description: values.description || undefined,
-          color: toHexColor(values.color),
-          weight: values.weight,
-          enabled: values.enabled,
-        });
+        const updated = updateChildItem(dialog.nodeId, toItemPatch(values));
+        if (updated) {
+          setSuccessMessage(EDITOR_MESSAGES.itemUpdated(updated.name));
+        }
       }
 
       setDialog(null);
@@ -320,8 +317,4 @@ function siblingCount(wheel: Wheel, parentId: string): number {
   }
 
   return findItem(wheel.items, parentId)?.children?.length ?? 0;
-}
-
-function toHexColor(value: string): HexColor | undefined {
-  return value.startsWith('#') ? (value as HexColor) : undefined;
 }

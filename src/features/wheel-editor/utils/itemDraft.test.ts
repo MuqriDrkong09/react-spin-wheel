@@ -1,5 +1,5 @@
 import { defaultItemFormValues } from '@/features/wheel-editor/schema';
-import { toItemDraft } from '@/features/wheel-editor/utils/itemDraft';
+import { toItemDraft, toItemPatch } from '@/features/wheel-editor/utils/itemDraft';
 
 describe('toItemDraft', () => {
   it('maps form values onto a new wheel item', () => {
@@ -31,6 +31,29 @@ describe('toItemDraft', () => {
       name: 'Sushi',
       enabled: true,
       weight: 1,
+    });
+  });
+});
+
+describe('toItemPatch', () => {
+  it('maps form values without children or timestamps', () => {
+    expect(
+      toItemPatch({
+        ...defaultItemFormValues,
+        name: 'Deep Dish',
+        description: 'Thick crust',
+        icon: '🍕',
+        color: '#ea580c',
+        weight: 2,
+        enabled: false,
+      }),
+    ).toEqual({
+      name: 'Deep Dish',
+      description: 'Thick crust',
+      icon: '🍕',
+      color: '#ea580c',
+      weight: 2,
+      enabled: false,
     });
   });
 });

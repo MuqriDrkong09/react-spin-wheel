@@ -40,6 +40,7 @@ export function ItemFormDialog({
           key={`${title}-${defaultValues.name}-${defaultValues.color}`}
           defaultValues={defaultValues}
           submitLabel={submitLabel}
+          ariaLabel={title}
           onSubmit={onSubmit}
           onCancel={onClose}
         />
