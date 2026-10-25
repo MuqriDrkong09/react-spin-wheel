@@ -253,6 +253,81 @@ describe('useWheelStore', () => {
     expect(items[0]?.name).toBe('Beef Pepperoni');
   });
 
+  describe('item deletion', () => {
+    it('deletes a leaf without changing siblings', () => {
+      pizzaWheel();
+      const chicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      expect(chicken).toBeDefined();
+      if (!chicken) {
+        throw new Error('Expected chicken item');
+      }
+
+      const small = useWheelStore.getState().addChildItem(chicken.id, draft('Small'));
+      const large = useWheelStore.getState().addChildItem(chicken.id, draft('Large'));
+      expect(small).toBeDefined();
+      expect(large).toBeDefined();
+      if (!small || !large) {
+        throw new Error('Expected size items');
+      }
+
+      useWheelStore.getState().deleteChildItem(small.id);
+      const nextChicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      const beef = useWheelStore.getState().getWheel('pizza')?.items[1];
+
+      expect(nextChicken?.children).toHaveLength(1);
+      expect(nextChicken?.children?.[0]?.id).toBe(large.id);
+      expect(beef?.name).toBe('Beef Pepperoni');
+    });
+
+    it('deletes a parent and every descendant', () => {
+      pizzaWheel();
+      const chicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      const beef = useWheelStore.getState().getWheel('pizza')?.items[1];
+      expect(chicken).toBeDefined();
+      expect(beef).toBeDefined();
+      if (!chicken || !beef) {
+        throw new Error('Expected topping items');
+      }
+
+      useWheelStore.getState().addChildItem(chicken.id, draft('Small'));
+      useWheelStore.getState().addChildItem(chicken.id, draft('Large'));
+      useWheelStore.getState().deleteItem('pizza', chicken.id);
+
+      const items = useWheelStore.getState().getWheel('pizza')?.items ?? [];
+      expect(items).toEqual([beef]);
+      expect(items.map((entry) => entry.name)).toEqual(['Beef Pepperoni']);
+    });
+
+    it('deletes a deeply nested parent without changing siblings', () => {
+      pizzaWheel();
+      const chicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      const beef = useWheelStore.getState().getWheel('pizza')?.items[1];
+      expect(chicken).toBeDefined();
+      expect(beef).toBeDefined();
+      if (!chicken || !beef) {
+        throw new Error('Expected topping items');
+      }
+
+      const small = useWheelStore.getState().addChildItem(chicken.id, draft('Small'));
+      const large = useWheelStore.getState().addChildItem(chicken.id, draft('Large'));
+      expect(small).toBeDefined();
+      expect(large).toBeDefined();
+      if (!small || !large) {
+        throw new Error('Expected size items');
+      }
+
+      useWheelStore.getState().addChildItem(small.id, draft('Extra cheese'));
+      useWheelStore.getState().deleteChildItem(small.id);
+
+      const nextChicken = useWheelStore.getState().getWheel('pizza')?.items[0];
+      expect(useWheelStore.getState().getWheel('pizza')?.items[1]).toBe(beef);
+      expect(nextChicken?.name).toBe('Chicken Pepperoni');
+      expect(nextChicken?.children).toHaveLength(1);
+      expect(nextChicken?.children?.[0]?.id).toBe(large.id);
+      expect(nextChicken?.children?.[0]?.name).toBe('Large');
+    });
+  });
+
   it('duplicateItem inserts a copy beside the original', () => {
     const wheel = pizzaWheel();
     const chicken = wheel.items[0];

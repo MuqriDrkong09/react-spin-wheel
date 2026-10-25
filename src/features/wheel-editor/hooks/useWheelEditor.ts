@@ -12,7 +12,7 @@ import {
   toEditorTree,
   TREE_NODE_KIND,
 } from '@/features/wheel-editor/utils/toEditorTree';
-import { useSettingsStore } from '@/stores/settingsStore';
+import { persistStores } from '@/services/storage/storePersistence';
 import { useWheelStore } from '@/stores/wheelStore';
 import type { Wheel, WheelItemId } from '@/types/wheel';
 import { findItem } from '@/utils/wheelTree';
@@ -36,7 +36,6 @@ export function useWheelEditor() {
   const duplicateItem = useWheelStore((state) => state.duplicateItem);
   const toggleItem = useWheelStore((state) => state.toggleItem);
   const updateWheel = useWheelStore((state) => state.updateWheel);
-  const confirmBeforeDelete = useSettingsStore((state) => state.settings.confirmBeforeDelete);
 
   const wheelId = requestedId ?? activeWheelId;
   const wheel = useMemo(
@@ -231,19 +230,15 @@ export function useWheelEditor() {
         return;
       }
 
-      if (confirmBeforeDelete) {
-        setPendingDeleteId(itemId);
-        return;
-      }
-
-      deleteChildItem(itemId);
+      setPendingDeleteId(itemId);
     },
-    [confirmBeforeDelete, deleteChildItem, wheel],
+    [wheel],
   );
 
   const confirmDelete = useCallback(() => {
     if (pendingDeleteId) {
       deleteChildItem(pendingDeleteId);
+      persistStores();
     }
     setPendingDeleteId(null);
   }, [deleteChildItem, pendingDeleteId]);

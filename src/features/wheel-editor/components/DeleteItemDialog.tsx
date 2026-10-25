@@ -23,14 +23,18 @@ export function DeleteItemDialog({ node, onCancel, onConfirm }: DeleteItemDialog
       transitionDuration={0}
       closeAfterTransition={false}
       aria-labelledby="delete-item-title"
+      aria-describedby="delete-item-description"
     >
       <DialogTitle id="delete-item-title">Delete item</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          {descendantCount > 0
-            ? EDITOR_MESSAGES.deleteItemWithChildren(node.name, descendantCount)
-            : EDITOR_MESSAGES.deleteItem(node.name)}
+        <DialogContentText id="delete-item-description">
+          {EDITOR_MESSAGES.deleteItem(node.name)}
         </DialogContentText>
+        {descendantCount > 0 ? (
+          <DialogContentText sx={{ mt: 1.5 }}>
+            {EDITOR_MESSAGES.deleteDescendantsWarning(descendantCount)}
+          </DialogContentText>
+        ) : null}
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel}>Cancel</Button>

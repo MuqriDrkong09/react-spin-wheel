@@ -1,5 +1,5 @@
 import type { WheelItem } from '@/types/wheel';
-import { mapItemTree, patchItem } from '@/utils/wheelTree';
+import { mapItemTree, patchItem, removeItemFromTree } from '@/utils/wheelTree';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -60,5 +60,38 @@ describe('mapItemTree', () => {
     expect(next[0]?.children?.[0]?.children).toBe(large.children);
     expect(next[0]?.children?.[0]?.createdAt).toBe(large.createdAt);
     expect(next[0]?.children?.[0]?.updatedAt).not.toBe(large.updatedAt);
+  });
+});
+
+describe('removeItemFromTree', () => {
+  const extra = item('Extra cheese');
+  const large = item('Large');
+  const small = item('Small', { children: [extra] });
+  const chicken = item('Chicken Pepperoni', { children: [small, large] });
+  const beef = item('Beef Pepperoni');
+  const items = [chicken, beef];
+
+  it('removes a leaf and keeps its siblings', () => {
+    const next = removeItemFromTree(items, large.id);
+
+    expect(next[1]).toBe(beef);
+    expect(next[0]?.children).toEqual([small]);
+  });
+
+  it('removes a parent and every descendant', () => {
+    const next = removeItemFromTree(items, chicken.id);
+
+    expect(next).toEqual([beef]);
+    expect(next[0]).toBe(beef);
+  });
+
+  it('removes a deeply nested parent without changing siblings', () => {
+    const next = removeItemFromTree(items, small.id);
+    const nextChicken = next[0];
+
+    expect(next[1]).toBe(beef);
+    expect(nextChicken?.name).toBe('Chicken Pepperoni');
+    expect(nextChicken?.children).toEqual([large]);
+    expect(nextChicken?.children?.[0]).toBe(large);
   });
 });

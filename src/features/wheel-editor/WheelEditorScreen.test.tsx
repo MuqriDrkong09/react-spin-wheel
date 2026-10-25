@@ -1,6 +1,8 @@
 import { ROUTES, withWheelId } from '@/constants/routes';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
-import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
+import { loadPersistedState } from '@/services/storage/persistedState';
+import { storageService } from '@/services/storage/storageService';
+import { resetSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { renderApp, screen, userEvent, within } from '@/test/test-utils';
 import { findItem } from '@/utils/wheelTree';
@@ -68,6 +70,10 @@ async function saveEditedName(user: ReturnType<typeof userEvent.setup>, itemName
   await user.clear(nameField);
   await user.type(nameField, nextName);
   await user.click(within(dialog).getByRole('button', { name: 'Save item' }));
+}
+
+function deleteDialog() {
+  return screen.getByRole('dialog', { name: 'Delete item' });
 }
 
 describe('WheelEditorScreen', () => {
@@ -322,18 +328,112 @@ describe('WheelEditorScreen', () => {
     expect(screen.queryByText('🍣 Sushi copy')).not.toBeInTheDocument();
   });
 
-  it('warns that nested children are deleted with their parent', async () => {
+  it('deletes a leaf after confirmation and keeps siblings', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Delete Sushi' }));
+    const dialog = deleteDialog();
+    expect(within(dialog).getByText(EDITOR_MESSAGES.deleteItem('Sushi'))).toBeInTheDocument();
+    expect(within(dialog).queryByText(/all descendants will also be deleted/i)).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(screen.queryByText('🍣 Sushi')).not.toBeInTheDocument();
+    expect(screen.getByText('🍕 Pizza')).toBeInTheDocument();
+    expect(screen.getByText('🍔 Burger')).toBeInTheDocument();
+    expect(foodItem('sushi')).toBeUndefined();
+    expect(foodItem('pizza')?.name).toBe('Pizza');
+    expect(foodItem('burger')?.name).toBe('Burger');
+  });
+
+  it('deletes a parent and all descendants after an explicit warning', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
     renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Delete Pizza' }));
-
-    expect(screen.getByText(EDITOR_MESSAGES.deleteItemWithChildren('Pizza', 2))).toBeInTheDocument();
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
+    const dialog = deleteDialog();
+    expect(within(dialog).getByText(EDITOR_MESSAGES.deleteItem('Pizza'))).toBeInTheDocument();
+    expect(within(dialog).getByText(EDITOR_MESSAGES.deleteDescendantsWarning(2))).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
     expect(screen.queryByText('🍕 Pizza')).not.toBeInTheDocument();
     expect(screen.queryByText('🍗 Chicken Pepperoni')).not.toBeInTheDocument();
+    expect(screen.queryByText('🥩 Beef Pepperoni')).not.toBeInTheDocument();
+    expect(screen.getByText('🍔 Burger')).toBeInTheDocument();
+    expect(screen.getByText('Chicken Burger')).toBeInTheDocument();
+    expect(foodItem('pizza')).toBeUndefined();
+    expect(foodItem('chicken')).toBeUndefined();
+    expect(foodItem('beef')).toBeUndefined();
+    expect(foodItem('burger')?.name).toBe('Burger');
+  });
+
+  it('deletes a deep parent recursively without changing siblings', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    useWheelStore.getState().addChildItem('chicken', {
+      id: 'large',
+      name: 'Large',
+      color: '#16a34a',
+      enabled: true,
+      weight: 1,
+    });
+    useWheelStore.getState().addChildItem('large', {
+      id: 'extra',
+      name: 'Extra cheese',
+      color: '#ea580c',
+      enabled: true,
+      weight: 1,
+    });
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Delete Chicken Pepperoni' }));
+    const dialog = deleteDialog();
+    expect(within(dialog).getByText(EDITOR_MESSAGES.deleteItem('Chicken Pepperoni'))).toBeInTheDocument();
+    expect(within(dialog).getByText(EDITOR_MESSAGES.deleteDescendantsWarning(2))).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(screen.queryByText('🍗 Chicken Pepperoni')).not.toBeInTheDocument();
+    expect(screen.queryByText('Large')).not.toBeInTheDocument();
+    expect(screen.queryByText('Extra cheese')).not.toBeInTheDocument();
+    expect(screen.getByText('🍕 Pizza')).toBeInTheDocument();
+    expect(screen.getByText('🥩 Beef Pepperoni')).toBeInTheDocument();
+    expect(foodItem('chicken')).toBeUndefined();
+    expect(foodItem('large')).toBeUndefined();
+    expect(foodItem('extra')).toBeUndefined();
+    expect(foodItem('pizza')?.children?.map((item) => item.id)).toEqual(['beef']);
+  });
+
+  it('cancels deletion and leaves the tree unchanged', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Delete Pizza' }));
+    const dialog = deleteDialog();
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Delete item' })).not.toBeInTheDocument();
+    expect(screen.getByText('🍕 Pizza')).toBeInTheDocument();
+    expect(screen.getByText('🍗 Chicken Pepperoni')).toBeInTheDocument();
+    expect(foodItem('pizza')?.children?.map((item) => item.id)).toEqual(['chicken', 'beef']);
+  });
+
+  it('persists a confirmed deletion', async () => {
+    const user = userEvent.setup();
+    window.localStorage.clear();
+    storageService.clearMemory();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Delete Sushi' }));
+    await user.click(within(deleteDialog()).getByRole('button', { name: 'Delete' }));
+
+    expect(foodItem('sushi')).toBeUndefined();
+    expect(
+      loadPersistedState().wheels.find((wheel) => wheel.id === 'food')?.items.map((item) => item.id),
+    ).toEqual(['pizza', 'burger']);
   });
 
   it('adds a child two levels deep without duplicating tree rendering', async () => {
@@ -348,18 +448,6 @@ describe('WheelEditorScreen', () => {
 
     expect(await screen.findByText('Extra spicy')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add child to Extra spicy' })).toBeInTheDocument();
-  });
-
-  it('skips the delete dialog when confirmation is disabled', async () => {
-    const user = userEvent.setup();
-    useSettingsStore.getState().updateSettings({ confirmBeforeDelete: false });
-    seedFoodWheel();
-    renderEditor();
-
-    await user.click(screen.getByRole('button', { name: 'Delete Sushi' }));
-
-    expect(screen.queryByRole('dialog', { name: 'Delete item' })).not.toBeInTheDocument();
-    expect(screen.queryByText('🍣 Sushi')).not.toBeInTheDocument();
   });
 
   it('prevents adding main data without a name', async () => {
