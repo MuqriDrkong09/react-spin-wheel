@@ -1,4 +1,6 @@
 import {
+  FULL_TURN,
+  WHEEL_CENTER_BUTTON_RATIO,
   WHEEL_INNER_RADIUS,
   WHEEL_LABEL_CHAR_WIDTH_RATIO,
   WHEEL_LABEL_FONT_RATIO,
@@ -12,10 +14,11 @@ import {
   WHEEL_TANGENT_MIN_SWEEP,
   WHEEL_VIEWBOX_SIZE,
 } from '@/features/spin/constants';
+import { calculateSegmentAngles } from '@/features/spin/engine/spinEngine';
 import type { HexColor, WheelItem } from '@/types/wheel';
 
-export const FULL_TURN = Math.PI * 2;
-export const POINTER_ANGLE = -Math.PI / 2;
+export { FULL_TURN, POINTER_ANGLE } from '@/features/spin/constants';
+export { activeWheelItems, isActiveWheelSegment } from '@/features/spin/engine/spinEngine';
 
 export type WheelLabelOrientation = 'radial' | 'tangent';
 
@@ -64,14 +67,6 @@ export interface WheelGeometry {
   segments: WheelSegmentGeometry[];
 }
 
-export function isActiveWheelSegment(item: WheelItem): boolean {
-  return item.enabled && Number.isFinite(item.weight) && item.weight > 0;
-}
-
-export function activeWheelItems(items: readonly WheelItem[]): WheelItem[] {
-  return items.filter(isActiveWheelSegment);
-}
-
 export function buildWheelGeometry(
   items: readonly WheelItem[],
   size = WHEEL_VIEWBOX_SIZE,
@@ -79,64 +74,53 @@ export function buildWheelGeometry(
   const center = size / 2;
   const radius = scale(WHEEL_RADIUS, size);
   const innerRadius = scale(WHEEL_INNER_RADIUS, size);
-  const activeItems = activeWheelItems(items);
-  const totalWeight = activeItems.reduce((sum, item) => sum + item.weight, 0);
   const baseFontSize = round(size * WHEEL_LABEL_FONT_RATIO);
   const minFontSize = round(size * WHEEL_LABEL_MIN_FONT_RATIO);
   const padding = scale(WHEEL_LABEL_PADDING, size);
   const segments: WheelSegmentGeometry[] = [];
 
-  if (totalWeight > 0) {
-    let cursor = POINTER_ANGLE;
+  for (const angleSegment of calculateSegmentAngles(items)) {
+    const { item, startAngle, endAngle, sweepAngle, midAngle } = angleSegment;
+    const isFullCircle = sweepAngle >= FULL_TURN - 1e-6;
+    const labelRadius = radius * WHEEL_LABEL_RADIUS_RATIO;
+    const labelPoint = polar(center, labelRadius, midAngle);
+    const labelOrientation = labelOrientationForSweep(sweepAngle, isFullCircle);
+    const labelText = segmentLabel(item);
+    const showLabel = isFullCircle || sweepAngle >= WHEEL_LABEL_MIN_SWEEP;
+    const { maxWidth, maxHeight } = labelBox(
+      sweepAngle,
+      isFullCircle,
+      radius,
+      innerRadius,
+      labelRadius,
+      padding,
+      labelOrientation,
+    );
+    const fitted = showLabel
+      ? fitWheelLabel(labelText, maxWidth, maxHeight, baseFontSize, minFontSize)
+      : { lines: [] as string[], fontSize: baseFontSize };
 
-    for (const item of activeItems) {
-      const sweepAngle = (item.weight / totalWeight) * FULL_TURN;
-      const startAngle = cursor;
-      const endAngle = cursor + sweepAngle;
-      const midAngle = startAngle + sweepAngle / 2;
-      const isFullCircle = sweepAngle >= FULL_TURN - 1e-6;
-      const labelRadius = radius * WHEEL_LABEL_RADIUS_RATIO;
-      const labelPoint = polar(center, labelRadius, midAngle);
-      const labelOrientation = labelOrientationForSweep(sweepAngle, isFullCircle);
-      const labelText = segmentLabel(item);
-      const showLabel = isFullCircle || sweepAngle >= WHEEL_LABEL_MIN_SWEEP;
-      const { maxWidth, maxHeight } = labelBox(
-        sweepAngle,
-        isFullCircle,
-        radius,
-        innerRadius,
-        labelRadius,
-        padding,
-        labelOrientation,
-      );
-      const fitted = showLabel
-        ? fitWheelLabel(labelText, maxWidth, maxHeight, baseFontSize, minFontSize)
-        : { lines: [] as string[], fontSize: baseFontSize };
-
-      segments.push({
-        id: item.id,
-        name: item.name,
-        color: item.color,
-        icon: item.icon,
-        labelText,
-        labelLines: toLabelLines(fitted.lines, fitted.fontSize),
-        labelFontSize: fitted.fontSize,
-        labelOrientation,
-        clipPathId: `spin-wheel-clip-${item.id.replace(/[^a-zA-Z0-9_-]/g, '')}`,
-        showLabel: showLabel && fitted.lines.length > 0,
-        path: donutSlicePath(center, innerRadius, radius, startAngle, endAngle),
-        labelX: round(labelPoint.x),
-        labelY: round(labelPoint.y),
-        labelRotation: round(labelRotation(midAngle, labelOrientation)),
-        labelFill: labelFillForColor(item.color),
-        startAngle,
-        endAngle,
-        sweepAngle,
-        isFullCircle,
-      });
-
-      cursor = endAngle;
-    }
+    segments.push({
+      id: item.id,
+      name: item.name,
+      color: item.color,
+      icon: item.icon,
+      labelText,
+      labelLines: toLabelLines(fitted.lines, fitted.fontSize),
+      labelFontSize: fitted.fontSize,
+      labelOrientation,
+      clipPathId: `spin-wheel-clip-${item.id.replace(/[^a-zA-Z0-9_-]/g, '')}`,
+      showLabel: showLabel && fitted.lines.length > 0,
+      path: donutSlicePath(center, innerRadius, radius, startAngle, endAngle),
+      labelX: round(labelPoint.x),
+      labelY: round(labelPoint.y),
+      labelRotation: round(labelRotation(midAngle, labelOrientation)),
+      labelFill: labelFillForColor(item.color),
+      startAngle,
+      endAngle,
+      sweepAngle,
+      isFullCircle,
+    });
   }
 
   return {
@@ -152,7 +136,7 @@ export function buildWheelGeometry(
     pointer: {
       points: pointerPoints(center, size),
     },
-    centerButtonPercent: round(((innerRadius * 2 * 0.78) / size) * 100),
+    centerButtonPercent: round(((innerRadius * 2 * WHEEL_CENTER_BUTTON_RATIO) / size) * 100),
     labelFontSize: baseFontSize,
     segments,
   };

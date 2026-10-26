@@ -10,11 +10,14 @@ interface SpinWheelProps {
   items: WheelItem[];
   onSpin?: () => void;
   spinning?: boolean;
+  selectedColor?: string;
 }
 
-export function SpinWheel({ items, onSpin, spinning = false }: SpinWheelProps) {
+export function SpinWheel({ items, onSpin, spinning = false, selectedColor }: SpinWheelProps) {
   const theme = useTheme();
   const geometry = useMemo(() => buildWheelGeometry(items), [items]);
+  const hubColor = selectedColor ?? theme.palette.primary.main;
+  const hubContrast = theme.palette.getContrastText(hubColor);
 
   if (geometry.segments.length === 0) {
     return (
@@ -91,7 +94,7 @@ export function SpinWheel({ items, onSpin, spinning = false }: SpinWheelProps) {
             cx={geometry.hub.cx}
             cy={geometry.hub.cy}
             r={geometry.hub.r}
-            fill={theme.palette.background.paper}
+            fill={hubColor}
           />
           <polygon
             points={geometry.pointer.points}
@@ -118,7 +121,19 @@ export function SpinWheel({ items, onSpin, spinning = false }: SpinWheelProps) {
             borderRadius: '50%',
             transform: 'translate(-50%, -50%)',
             zIndex: 1,
-            fontSize: { xs: '0.8rem', sm: '0.95rem' },
+            fontSize: { xs: '0.7rem', sm: '0.8rem' },
+            bgcolor: hubColor,
+            color: hubContrast,
+            boxShadow: 'none',
+            '&:hover': {
+              bgcolor: hubColor,
+              boxShadow: 'none',
+            },
+            '&.Mui-disabled': {
+              bgcolor: hubColor,
+              color: hubContrast,
+              opacity: 0.7,
+            },
           }}
         >
           Spin

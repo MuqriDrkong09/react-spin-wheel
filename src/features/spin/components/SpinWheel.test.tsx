@@ -71,6 +71,27 @@ describe('SpinWheel', () => {
     expect(screen.getAllByTitle('Cadillac F1 Team')).toHaveLength(11);
   });
 
+  it('fills the hub with the primary color by default', () => {
+    const { container } = renderWithProviders(
+      <SpinWheel items={[item('Pizza', { icon: '🍕' }), item('Burger', { icon: '🍔' })]} />,
+    );
+    const hub = container.querySelector('circle');
+
+    expect(hub).toHaveAttribute('fill', '#4f46e5');
+  });
+
+  it('fills the hub with the selected item color', () => {
+    const { container } = renderWithProviders(
+      <SpinWheel
+        items={[item('Pizza', { icon: '🍕', color: '#ea580c' }), item('Burger', { icon: '🍔' })]}
+        selectedColor="#ea580c"
+      />,
+    );
+    const hub = container.querySelector('circle');
+
+    expect(hub).toHaveAttribute('fill', '#ea580c');
+  });
+
   it('renders a single item as a full wheel', () => {
     renderWithProviders(<SpinWheel items={[item('Pizza', { icon: '🍕' })]} />);
 

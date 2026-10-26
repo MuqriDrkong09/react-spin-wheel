@@ -12,9 +12,13 @@ export const SPIN_MESSAGES = {
     names.length === 0 ? 'Empty spin wheel' : `Spin wheel with ${names.join(', ')}`,
 } as const;
 
+export const FULL_TURN = Math.PI * 2;
+export const POINTER_ANGLE = -Math.PI / 2;
+export const DEFAULT_FULL_ROTATIONS = 4;
 export const WHEEL_VIEWBOX_SIZE = 200;
 export const WHEEL_RADIUS = 94;
-export const WHEEL_INNER_RADIUS = 36;
+export const WHEEL_INNER_RADIUS = 24;
+export const WHEEL_CENTER_BUTTON_RATIO = 0.96;
 export const WHEEL_LABEL_RADIUS_RATIO = 0.66;
 export const WHEEL_LABEL_MIN_SWEEP = 0.28;
 export const WHEEL_TANGENT_MIN_SWEEP = Math.PI / 3;

@@ -88,6 +88,8 @@ describe('buildWheelGeometry', () => {
     expect(Number.isFinite(geometry.segments[0]?.labelX)).toBe(true);
     expect(Number.isFinite(geometry.segments[0]?.labelY)).toBe(true);
     expect(geometry.centerButtonPercent).toBeGreaterThan(0);
+    expect(geometry.centerButtonPercent).toBeLessThan(30);
+    expect(geometry.hub.r).toBeLessThan(geometry.radius * 0.3);
     expect(geometry.hub.cx).toBe(geometry.size / 2);
   });
 
