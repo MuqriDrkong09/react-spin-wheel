@@ -1,3 +1,4 @@
+import AddIcon from '@mui/icons-material/Add';
 import { Alert, Button, Card, CardContent, Snackbar, Stack } from '@mui/material';
 
 import { PageContainer } from '@/components/common/PageContainer';
@@ -6,6 +7,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { AddChildDataDialog } from '@/features/wheel-editor/components/AddChildDataDialog';
 import { AddMainDataCard } from '@/features/wheel-editor/components/AddMainDataCard';
 import { DeleteItemDialog } from '@/features/wheel-editor/components/DeleteItemDialog';
+import { EditorWheelPicker } from '@/features/wheel-editor/components/EditorWheelPicker';
 import { ItemFormDialog } from '@/features/wheel-editor/components/ItemFormDialog';
 import { WheelTree } from '@/features/wheel-editor/components/WheelTree';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
@@ -25,7 +27,20 @@ export function WheelEditorScreen() {
           description={
             editor.wheel
               ? `Edit items in ${editor.wheel.name}.`
-              : 'Design wheel segments and settings.'
+              : editor.needsWheelChoice
+                ? EDITOR_MESSAGES.chooseWheelDescription
+                : 'Design wheel segments and settings.'
+          }
+          action={
+            tree ? (
+              <Button variant="outlined" onClick={editor.clearWheelSelection}>
+                {EDITOR_MESSAGES.changeWheel}
+              </Button>
+            ) : editor.needsWheelChoice ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={editor.goToCreate}>
+                Create Wheel
+              </Button>
+            ) : null
           }
         />
         {tree ? (
@@ -49,6 +64,8 @@ export function WheelEditorScreen() {
               </CardContent>
             </Card>
           </>
+        ) : editor.needsWheelChoice ? (
+          <EditorWheelPicker wheels={editor.availableWheels} onSelect={editor.selectWheel} />
         ) : (
           <EmptyState
             titleComponent="h2"

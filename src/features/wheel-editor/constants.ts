@@ -8,6 +8,10 @@ export const EDITOR_MESSAGES = {
   itemUpdated: (name: string) => `${name} updated.`,
   noWheelTitle: 'No wheel selected',
   noWheelDescription: 'Create a wheel or open one from the dashboard to edit its items.',
+  chooseWheelDescription: 'Select a wheel to open it in the editor.',
+  chooseWheelAction: (name: string) => `Edit ${name}`,
+  changeWheel: 'Choose another wheel',
+  itemCount: (count: number) => (count === 1 ? '1 item' : `${count} items`),
   emptyChildren: (name: string) => `No child items under ${name} yet.`,
   deleteItem: (name: string) => `Delete ${name}? This cannot be undone.`,
   deleteDescendantsWarning: (count: number) =>

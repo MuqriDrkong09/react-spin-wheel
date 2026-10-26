@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, withWheelId } from '@/constants/routes';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import type { ItemFormValues } from '@/features/wheel-editor/schema';
 import { defaultItemFormValues } from '@/features/wheel-editor/schema';
@@ -14,7 +14,7 @@ import {
 } from '@/features/wheel-editor/utils/toEditorTree';
 import { persistStores } from '@/services/storage/storePersistence';
 import { useWheelStore } from '@/stores/wheelStore';
-import type { Wheel, WheelItemId } from '@/types/wheel';
+import type { Wheel, WheelId, WheelItemId } from '@/types/wheel';
 import { findItem, type ItemMove } from '@/utils/wheelTree';
 
 export type EditorDialog =
@@ -38,11 +38,13 @@ export function useWheelEditor() {
   const updateWheel = useWheelStore((state) => state.updateWheel);
   const moveItemInStore = useWheelStore((state) => state.moveItem);
 
-  const wheelId = requestedId ?? activeWheelId;
+  const wheelId = requestedId;
   const wheel = useMemo(
     () => (wheelId ? wheels.find((entry) => entry.id === wheelId) : undefined),
     [wheelId, wheels],
   );
+  const availableWheels = useMemo(() => sortWheelsForPicker(wheels), [wheels]);
+  const needsWheelChoice = !requestedId && availableWheels.length > 0;
 
   const tree = useMemo(() => (wheel ? toEditorTree(wheel) : undefined), [wheel]);
 
@@ -295,8 +297,22 @@ export function useWheelEditor() {
     void navigate(ROUTES.dashboard);
   }, [navigate]);
 
+  const selectWheel = useCallback(
+    (nextWheelId: WheelId) => {
+      setActiveWheel(nextWheelId);
+      void navigate(withWheelId(ROUTES.wheelEditor, nextWheelId));
+    },
+    [navigate, setActiveWheel],
+  );
+
+  const clearWheelSelection = useCallback(() => {
+    void navigate(ROUTES.wheelEditor);
+  }, [navigate]);
+
   return {
     wheel,
+    availableWheels,
+    needsWheelChoice,
     tree,
     expandedIds: expandedIdSet,
     hasWheel: Boolean(wheel),
@@ -322,7 +338,20 @@ export function useWheelEditor() {
     moveItem,
     goToCreate,
     goToDashboard,
+    selectWheel,
+    clearWheelSelection,
   };
+}
+
+function sortWheelsForPicker(wheels: readonly Wheel[]): Wheel[] {
+  return [...wheels].sort((left, right) => {
+    const updated = right.updatedAt.localeCompare(left.updatedAt);
+    if (updated !== 0) {
+      return updated;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
 }
 
 function siblingCount(wheel: Wheel, parentId: string): number {

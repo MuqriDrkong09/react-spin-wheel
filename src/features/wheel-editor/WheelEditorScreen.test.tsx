@@ -90,6 +90,48 @@ describe('WheelEditorScreen', () => {
     expect(screen.getByRole('button', { name: 'Create a wheel' })).toBeInTheDocument();
   });
 
+  it('asks which wheel to edit when the editor is opened without a wheel id', () => {
+    seedFoodWheel();
+    useWheelStore.getState().createWheel({ id: 'games', name: 'Games Wheel', category: 'Games' });
+    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+
+    expect(screen.getByText(EDITOR_MESSAGES.chooseWheelDescription)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Food Wheel') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Games Wheel') })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '📁 Food Wheel', level: 2 })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Add Main Data')).not.toBeInTheDocument();
+  });
+
+  it('opens the chosen wheel from the picker instead of the active wheel', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    useWheelStore.getState().createWheel({
+      id: 'games',
+      name: 'Games Wheel',
+      icon: '🎮',
+      category: 'Games',
+    });
+    useWheelStore.getState().setActiveWheel('food');
+    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+
+    await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Games Wheel') }));
+
+    expect(screen.getByText('Edit items in Games Wheel.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '🎮 Games Wheel', level: 2 })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '📁 Food Wheel', level: 2 })).not.toBeInTheDocument();
+  });
+
+  it('returns to the wheel picker from an open editor', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.changeWheel }));
+
+    expect(screen.getByText(EDITOR_MESSAGES.chooseWheelDescription)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Food Wheel') })).toBeInTheDocument();
+  });
+
   it('renders hierarchical items with one recursive tree', () => {
     seedFoodWheel();
     renderEditor();
