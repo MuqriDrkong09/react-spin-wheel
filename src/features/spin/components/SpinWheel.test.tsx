@@ -99,4 +99,15 @@ describe('SpinWheel', () => {
     expect(screen.getByTitle('🍕 Pizza')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeInTheDocument();
   });
+
+  it('disables the spin button while spinning', () => {
+    const onSpin = vi.fn();
+    renderWithProviders(
+      <SpinWheel items={[item('Pizza', { icon: '🍕' })]} spinning onSpin={onSpin} />,
+    );
+
+    const button = screen.getByRole('button', { name: SPIN_MESSAGES.spinButton });
+    expect(button).toBeDisabled();
+    expect(button.closest('[aria-busy="true"]')).toBeTruthy();
+  });
 });
