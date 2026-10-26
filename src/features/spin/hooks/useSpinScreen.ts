@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ROUTES, withWheelId } from '@/constants/routes';
-import { useSpinWheel } from '@/features/spin/hooks/useSpinWheel';
 import { useWheelStore } from '@/stores/wheelStore';
 import type { Wheel, WheelId } from '@/types/wheel';
 
@@ -28,16 +27,11 @@ export function useSpinScreen() {
     }
   }, [activeWheelId, requestedId, setActiveWheel, wheel]);
 
-  const spin = useSpinWheel(wheel?.items ?? [], {
-    wheelSettings: wheel?.settings,
-  });
-
   return {
     wheel,
     availableWheels,
     needsWheelChoice,
     isMissingWheel: Boolean(requestedId && !wheel),
-    spin,
     selectWheel: (nextWheelId: WheelId) => {
       setActiveWheel(nextWheelId);
       void navigate(withWheelId(ROUTES.spin, nextWheelId));

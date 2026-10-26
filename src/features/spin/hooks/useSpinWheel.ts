@@ -43,13 +43,20 @@ export function useSpinWheel(items: readonly WheelItem[], options: UseSpinWheelO
   const maxRotations = options.wheelSettings?.maxRotations ?? animation.rotations;
 
   function spin() {
-    const current = stateRef.current;
+    beginSpin(items, stateRef.current);
+  }
+
+  function spinChildren(nextItems: readonly WheelItem[]) {
+    beginSpin(nextItems, createIdleSpinState());
+  }
+
+  function beginSpin(source: readonly WheelItem[], current: SpinLifecycleState) {
     if (!canStartSpin(current)) {
       return;
     }
 
     const sample = options.randomValue ?? Math.random;
-    const next = createSpinResult(items, {
+    const next = createSpinResult(source, {
       randomValue: sample,
       minRotations,
       maxRotations,
@@ -72,6 +79,12 @@ export function useSpinWheel(items: readonly WheelItem[], options: UseSpinWheelO
     setState(nextState);
   }
 
+  function reset() {
+    const nextState = createIdleSpinState();
+    stateRef.current = nextState;
+    setState(nextState);
+  }
+
   const spinning = state.status === SPIN_STATUS.spinning;
   const selectedColor =
     state.status === SPIN_STATUS.completed ? state.result?.item.color : undefined;
@@ -88,6 +101,8 @@ export function useSpinWheel(items: readonly WheelItem[], options: UseSpinWheelO
     easing: animationEasing(animation.animationType),
     reducedMotion,
     spin,
+    spinChildren,
     complete,
+    reset,
   };
 }

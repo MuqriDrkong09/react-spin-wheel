@@ -13,6 +13,12 @@ export const SPIN_MESSAGES = {
   spinButton: 'Spin the wheel',
   pointerTitle: 'Wheel pointer',
   winner: (name: string) => `${name} wins!`,
+  winnerTitle: '🎉 Winner!',
+  additionalData: 'Additional data available',
+  spinChild: 'Spin Child',
+  finish: 'Finish',
+  close: 'Close',
+  spinAgain: 'Spin Again',
   spinning: 'Spinning',
   wheelLabel: (names: string[]) =>
     names.length === 0 ? 'Empty spin wheel' : `Spin wheel with ${names.join(', ')}`,

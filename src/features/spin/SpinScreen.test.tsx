@@ -1,7 +1,7 @@
 import { ROUTES, withWheelId } from '@/constants/routes';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
-import { renderApp, screen, userEvent } from '@/test/test-utils';
+import { renderApp, screen, userEvent, within } from '@/test/test-utils';
 
 function seedFoodWheel() {
   useWheelStore.getState().createWheel({
@@ -10,7 +10,18 @@ function seedFoodWheel() {
     icon: '📁',
     settings: { durationMs: 60_000, minRotations: 4, maxRotations: 4 },
     items: [
-      { id: 'pizza', name: 'Pizza', icon: '🍕', color: '#ea580c', enabled: true, weight: 1 },
+      {
+        id: 'pizza',
+        name: 'Pizza',
+        icon: '🍕',
+        color: '#ea580c',
+        enabled: true,
+        weight: 1,
+        children: [
+          { id: 'pepperoni', name: 'Pepperoni', color: '#dc2626', enabled: true, weight: 1 },
+          { id: 'mushroom', name: 'Mushroom', color: '#ca8a04', enabled: true, weight: 1 },
+        ],
+      },
       { id: 'burger', name: 'Burger', icon: '🍔', color: '#ca8a04', enabled: true, weight: 2 },
       { id: 'sushi', name: 'Sushi', icon: '🍣', color: '#0f766e', enabled: true, weight: 1 },
       { id: 'salad', name: 'Salad', icon: '🥗', color: '#16a34a', enabled: false, weight: 1 },
@@ -129,7 +140,7 @@ describe('SpinScreen', () => {
 
     expect(button).toBeDisabled();
     expect(screen.getByText(SPIN_MESSAGES.spinning)).toBeInTheDocument();
-    expect(screen.queryByText(/wins!/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: SPIN_MESSAGES.winnerTitle })).not.toBeInTheDocument();
     expect(random).toHaveBeenCalledTimes(1);
   });
 
@@ -142,13 +153,84 @@ describe('SpinScreen', () => {
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
 
-    const button = screen.getByRole('button', { name: SPIN_MESSAGES.spinButton });
-    expect(screen.getByText(SPIN_MESSAGES.winner('Burger'))).toBeInTheDocument();
-    expect(button).toBeEnabled();
+    const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText('Burger')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.spinAgain })).toHaveFocus();
+    expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.finish })).toBeInTheDocument();
+    expect(within(dialog).queryByText(SPIN_MESSAGES.additionalData)).not.toBeInTheDocument();
 
-    await user.click(button);
-    expect(screen.getByText(SPIN_MESSAGES.winner('Burger'))).toBeInTheDocument();
-    expect(button).toBeEnabled();
+    await user.click(within(dialog).getByRole('button', { name: SPIN_MESSAGES.spinAgain }));
+    expect(screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle })).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByText('Burger')).toBeInTheDocument();
+  });
+
+  it('returns to the picker when Finish is chosen', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
+
+    expect(screen.getByText(SPIN_MESSAGES.chooseWheelDescription)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps the wheel open when Close is chosen for a winner with children', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+
+    const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText('Pizza')).toBeInTheDocument();
+    expect(within(dialog).getByText(SPIN_MESSAGES.additionalData)).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.spinChild })).toHaveFocus();
+
+    await user.click(within(dialog).getByRole('button', { name: SPIN_MESSAGES.close }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Spin Food Wheel.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeInTheDocument();
+  });
+
+  it('spins the winner children from the modal', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
+
+    const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText('Pepperoni')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.spinAgain })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('img', { name: /spin wheel with pepperoni, mushroom/i })).toBeInTheDocument();
+  });
+
+  it('closes the winner dialog with Escape and restores the spin button', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    expect(screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toHaveFocus();
   });
 
   it('handles a wheel with a single active item', () => {

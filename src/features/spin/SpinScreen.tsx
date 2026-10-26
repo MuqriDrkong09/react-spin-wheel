@@ -6,8 +6,11 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { SpinWheel } from '@/features/spin/components/SpinWheel';
 import { SpinWheelPicker } from '@/features/spin/components/SpinWheelPicker';
+import { WinnerDialog } from '@/features/spin/components/WinnerDialog';
 import { SPIN_MESSAGES, SPIN_STATUS } from '@/features/spin/constants';
 import { useSpinScreen } from '@/features/spin/hooks/useSpinScreen';
+import { useSpinSession } from '@/features/spin/hooks/useSpinSession';
+import type { Wheel } from '@/types/wheel';
 
 export function SpinScreen() {
   const {
@@ -15,7 +18,6 @@ export function SpinScreen() {
     availableWheels,
     needsWheelChoice,
     isMissingWheel,
-    spin,
     selectWheel,
     clearWheelSelection,
     goToCreate,
@@ -52,36 +54,7 @@ export function SpinScreen() {
           }
         />
         {wheel ? (
-          <Box
-            sx={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              minHeight: 0,
-              gap: 2,
-            }}
-          >
-            <SpinWheel
-              items={wheel.items}
-              onSpin={spin.spin}
-              spinning={spin.spinning}
-              selectedColor={spin.selectedColor}
-              rotationDegrees={spin.rotationDegrees}
-              spinDuration={spin.animation.spinDuration}
-              animationType={spin.animation.animationType}
-              reducedMotion={spin.reducedMotion}
-              onSpinComplete={spin.complete}
-            />
-            {spin.status === SPIN_STATUS.spinning ? (
-              <Typography color="text.secondary">{SPIN_MESSAGES.spinning}</Typography>
-            ) : null}
-            {spin.status === SPIN_STATUS.completed && spin.result ? (
-              <Typography aria-live="polite">{SPIN_MESSAGES.winner(spin.result.item.name)}</Typography>
-            ) : null}
-          </Box>
+          <ActiveWheelSpin key={wheel.id} wheel={wheel} onFinish={clearWheelSelection} />
         ) : needsWheelChoice ? (
           <SpinWheelPicker wheels={availableWheels} onSelect={selectWheel} />
         ) : (
@@ -111,5 +84,50 @@ export function SpinScreen() {
         )}
       </Stack>
     </PageContainer>
+  );
+}
+
+function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => void }) {
+  const session = useSpinSession(wheel);
+
+  return (
+    <>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          minHeight: 0,
+          gap: 2,
+        }}
+      >
+            <SpinWheel
+          items={session.items}
+          onSpin={session.startSpin}
+          spinning={session.spin.spinning}
+          selectedColor={session.spin.selectedColor}
+          rotationDegrees={session.spin.rotationDegrees}
+          spinDuration={session.spin.animation.spinDuration}
+          animationType={session.spin.animation.animationType}
+          reducedMotion={session.spin.reducedMotion}
+          onSpinComplete={session.spin.complete}
+        />
+        {session.spin.status === SPIN_STATUS.spinning ? (
+          <Typography color="text.secondary">{SPIN_MESSAGES.spinning}</Typography>
+        ) : null}
+      </Box>
+      <WinnerDialog
+        open={session.winnerOpen}
+        item={session.winner}
+        reducedMotion={session.spin.reducedMotion}
+        onClose={session.closeWinner}
+        onFinish={onFinish}
+        onSpinAgain={session.spinAgain}
+        onSpinChild={session.spinChild}
+      />
+    </>
   );
 }
