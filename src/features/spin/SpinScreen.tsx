@@ -91,6 +91,11 @@ export function SpinScreen() {
 function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => void }) {
   const session = useSpinSession(wheel);
 
+  function handleFinish() {
+    session.finish();
+    onFinish();
+  }
+
   return (
     <>
       <Box
@@ -114,6 +119,7 @@ function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => vo
           </>
         ) : null}
         <SpinWheel
+          key={session.items.map((item) => item.id).join('|')}
           items={session.items}
           onSpin={session.startSpin}
           spinning={session.spin.spinning}
@@ -134,7 +140,7 @@ function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => vo
         path={session.selection}
         reducedMotion={session.spin.reducedMotion}
         onClose={session.closeWinner}
-        onFinish={onFinish}
+        onFinish={handleFinish}
         onSpinAgain={session.spinAgain}
         onSpinChild={session.spinChild}
       />

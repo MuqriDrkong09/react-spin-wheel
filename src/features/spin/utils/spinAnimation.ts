@@ -14,11 +14,18 @@ export function animationDurationSeconds(
   settings: Pick<SpinAnimationSettings, 'spinDuration'>,
   reducedMotion: boolean,
 ): number {
-  if (reducedMotion) {
+  return spinDiscDurationSeconds(settings.spinDuration, { reducedMotion, spinning: true });
+}
+
+export function spinDiscDurationSeconds(
+  spinDurationMs: number,
+  options: { reducedMotion: boolean; spinning: boolean },
+): number {
+  if (options.reducedMotion || !options.spinning) {
     return 0;
   }
 
-  return settings.spinDuration / 1000;
+  return spinDurationMs / 1000;
 }
 
 export function animationEasing(type: SpinAnimationType): readonly [number, number, number, number] {

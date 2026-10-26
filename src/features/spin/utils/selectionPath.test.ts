@@ -1,6 +1,7 @@
 import {
   childItemsOf,
   completedSelectionPath,
+  selectionPathIds,
   selectionPathNames,
   toSelectionStep,
 } from '@/features/spin/utils/selectionPath';
@@ -41,5 +42,6 @@ describe('selectionPath', () => {
     const path = completedSelectionPath([toSelectionStep(pizza)], item('Chicken Pepperoni'));
 
     expect(selectionPathNames(path)).toEqual(['Pizza', 'Chicken Pepperoni']);
+    expect(selectionPathIds(path)).toEqual(['pizza', 'chicken-pepperoni']);
   });
 });

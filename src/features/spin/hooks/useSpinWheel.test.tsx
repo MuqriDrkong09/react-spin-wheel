@@ -98,6 +98,35 @@ describe('useSpinWheel', () => {
     expect(result.current.rotation).toBeGreaterThan(firstTarget);
   });
 
+  it('resets to idle at 0 so the next spin is a new animation', () => {
+    const { result } = renderHook(() =>
+      useSpinWheel(food, { randomValue: 0, reducedMotion: false, rotations: 4 }),
+    );
+
+    act(() => {
+      result.current.spin();
+    });
+    act(() => {
+      result.current.complete();
+    });
+    expect(result.current.rotation).toBeGreaterThan(0);
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.status).toBe(SPIN_STATUS.idle);
+    expect(result.current.spinning).toBe(false);
+    expect(result.current.rotation).toBe(0);
+
+    act(() => {
+      result.current.spin();
+    });
+
+    expect(result.current.status).toBe(SPIN_STATUS.spinning);
+    expect(result.current.rotation).toBeGreaterThan(0);
+  });
+
   it('starts a child-level spin from a fresh rotation', () => {
     const children = [item('Pepperoni', { color: '#dc2626' }), item('Mushroom', { color: '#ca8a04' })];
     const { result } = renderHook(() =>

@@ -100,6 +100,30 @@ describe('SpinWheel', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeInTheDocument();
   });
 
+  it('does not complete a spin when rotation snaps while idle', () => {
+    const onSpinComplete = vi.fn();
+    const { rerender } = renderWithProviders(
+      <SpinWheel
+        items={[item('Pizza'), item('Burger')]}
+        rotationDegrees={1080}
+        spinDuration={4000}
+        onSpinComplete={onSpinComplete}
+      />,
+    );
+
+    rerender(
+      <SpinWheel
+        items={[item('Pepperoni'), item('Mushroom')]}
+        rotationDegrees={0}
+        spinDuration={4000}
+        onSpinComplete={onSpinComplete}
+      />,
+    );
+
+    expect(onSpinComplete).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeEnabled();
+  });
+
   it('disables the spin button while spinning', () => {
     const onSpin = vi.fn();
     renderWithProviders(

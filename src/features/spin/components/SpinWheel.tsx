@@ -9,6 +9,7 @@ import {
   SPIN_MESSAGES,
   type SpinAnimationType,
 } from '@/features/spin/constants';
+import { spinDiscDurationSeconds } from '@/features/spin/utils/spinAnimation';
 import { buildWheelGeometry } from '@/features/spin/utils/wheelGeometry';
 import type { WheelItem } from '@/types/wheel';
 
@@ -39,7 +40,7 @@ export function SpinWheel({
   const geometry = useMemo(() => buildWheelGeometry(items), [items]);
   const hubColor = selectedColor ?? theme.palette.primary.main;
   const hubContrast = theme.palette.getContrastText(hubColor);
-  const duration = reducedMotion ? 0 : spinDuration / 1000;
+  const duration = spinDiscDurationSeconds(spinDuration, { reducedMotion, spinning });
   const ease = [...(SPIN_EASINGS[animationType] ?? SPIN_EASINGS.easeInOut)] as [
     number,
     number,

@@ -1,4 +1,4 @@
-import { isWheelItemBranch, type WheelItem } from '@/types/wheel';
+import { isWheelItemBranch, type WheelItem, type WheelItemPath } from '@/types/wheel';
 
 export interface SelectionStep {
   id: string;
@@ -14,6 +14,10 @@ export function toSelectionStep(item: Pick<WheelItem, 'id' | 'name' | 'icon'>): 
 
 export function selectionPathNames(path: readonly SelectionStep[]): string[] {
   return path.map((step) => step.name);
+}
+
+export function selectionPathIds(path: readonly SelectionStep[]): WheelItemPath {
+  return path.map((step) => step.id);
 }
 
 export function childItemsOf(item: WheelItem): WheelItem[] | undefined {

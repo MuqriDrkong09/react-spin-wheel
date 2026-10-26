@@ -108,6 +108,32 @@ describe('WinnerDialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('lets the user continue from a grandchild that still has children', () => {
+    const pizza = item('Pizza');
+    const chicken = item('Chicken Pepperoni');
+    const large = item('Large', { children: [item('Thin Crust')] });
+    renderWithProviders(
+      <WinnerDialog
+        open
+        item={large}
+        path={[pizza, chicken, large].map((entry) => ({ id: entry.id, name: entry.name }))}
+        reducedMotion
+        onClose={vi.fn()}
+        onFinish={vi.fn()}
+        onSpinAgain={vi.fn()}
+        onSpinChild={vi.fn()}
+      />,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText('Pizza')).toBeInTheDocument();
+    expect(within(dialog).getByText('Chicken Pepperoni')).toBeInTheDocument();
+    expect(within(dialog).getByText('Large')).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription(/Pizza.*Chicken Pepperoni.*Large/s);
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: SPIN_MESSAGES.spinAgain })).not.toBeInTheDocument();
+  });
+
   it('renders the selection hierarchy for a child winner', () => {
     const pizza = item('Pizza');
     const chicken = item('Chicken Pepperoni');

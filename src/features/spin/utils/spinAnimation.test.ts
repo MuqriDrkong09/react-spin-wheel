@@ -6,6 +6,7 @@ import {
   extraRotationRange,
   prefersReducedMotion,
   radiansToDegrees,
+  spinDiscDurationSeconds,
   spinSettingsFromWheel,
 } from '@/features/spin/utils/spinAnimation';
 
@@ -27,6 +28,12 @@ describe('spinAnimation', () => {
   it('uses zero duration when reduced motion is preferred', () => {
     expect(animationDurationSeconds({ spinDuration: 4000 }, true)).toBe(0);
     expect(animationDurationSeconds({ spinDuration: 4000 }, false)).toBe(4);
+  });
+
+  it('snaps idle rotation changes instead of playing a spin', () => {
+    expect(spinDiscDurationSeconds(4000, { reducedMotion: false, spinning: false })).toBe(0);
+    expect(spinDiscDurationSeconds(4000, { reducedMotion: false, spinning: true })).toBe(4);
+    expect(spinDiscDurationSeconds(4000, { reducedMotion: true, spinning: true })).toBe(0);
   });
 
   it('returns the cubic bezier for each animation type', () => {

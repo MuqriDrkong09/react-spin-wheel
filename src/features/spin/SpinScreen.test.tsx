@@ -211,10 +211,74 @@ describe('SpinScreen', () => {
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText(SPIN_MESSAGES.spinning)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeEnabled();
     expect(screen.getByText(SPIN_MESSAGES.childWheelOf('Pizza'))).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /spin wheel with pepperoni, mushroom/i })).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: /pizza, burger, sushi/i })).not.toBeInTheDocument();
     expect(useWheelStore.getState().getWheel('food')?.items).toEqual(parentItems);
+  });
+
+  it('keeps spinning through grandchildren until a leaf is selected', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    useWheelStore.getState().createWheel({
+      id: 'pizza-night',
+      name: 'Pizza Night',
+      settings: { durationMs: 60_000, minRotations: 4, maxRotations: 4 },
+      items: [
+        {
+          id: 'pizza',
+          name: 'Pizza',
+          color: '#ea580c',
+          enabled: true,
+          weight: 1,
+          children: [
+            {
+              id: 'chicken-pepperoni',
+              name: 'Chicken Pepperoni',
+              color: '#dc2626',
+              enabled: true,
+              weight: 1,
+              children: [
+                {
+                  id: 'large',
+                  name: 'Large',
+                  color: '#a855f7',
+                  enabled: true,
+                  weight: 1,
+                  children: [
+                    { id: 'thin-crust', name: 'Thin Crust', color: '#6366f1', enabled: true, weight: 1 },
+                    { id: 'thick-crust', name: 'Thick Crust', color: '#8b5cf6', enabled: true, weight: 1 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const parentItems = structuredClone(useWheelStore.getState().getWheel('pizza-night')?.items);
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'pizza-night')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+
+    const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText('Pizza')).toBeInTheDocument();
+    expect(within(dialog).getByText('Chicken Pepperoni')).toBeInTheDocument();
+    expect(within(dialog).getByText('Large')).toBeInTheDocument();
+    expect(within(dialog).getByText('Thin Crust')).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription(/Pizza.*Chicken Pepperoni.*Large.*Thin Crust/s);
+    expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.finish })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: SPIN_MESSAGES.spinChild })).not.toBeInTheDocument();
+    expect(useWheelStore.getState().getWheel('pizza-night')?.items).toEqual(parentItems);
   });
 
   it('keeps the selection path after a child winner is chosen', async () => {
