@@ -199,7 +199,25 @@ describe('SpinScreen', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeInTheDocument();
   });
 
-  it('spins the winner children from the modal', async () => {
+  it('opens a child-only wheel without changing parent data', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seedFoodWheel();
+    const parentItems = structuredClone(useWheelStore.getState().getWheel('food')?.items);
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText(SPIN_MESSAGES.childWheelOf('Pizza'))).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /spin wheel with pepperoni, mushroom/i })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /pizza, burger, sushi/i })).not.toBeInTheDocument();
+    expect(useWheelStore.getState().getWheel('food')?.items).toEqual(parentItems);
+  });
+
+  it('keeps the selection path after a child winner is chosen', async () => {
     stubReducedMotion(true);
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0);
@@ -208,13 +226,13 @@ describe('SpinScreen', () => {
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
 
     const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText('Pizza')).toBeInTheDocument();
     expect(within(dialog).getByText('Pepperoni')).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription(/Pizza.*Pepperoni/s);
     expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.spinAgain })).toBeInTheDocument();
-
-    await user.keyboard('{Escape}');
-    expect(screen.getByRole('img', { name: /spin wheel with pepperoni, mushroom/i })).toBeInTheDocument();
   });
 
   it('closes the winner dialog with Escape and restores the spin button', async () => {

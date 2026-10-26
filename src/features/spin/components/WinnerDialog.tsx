@@ -5,16 +5,18 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Typography,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
+import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
+import { toSelectionStep, type SelectionStep } from '@/features/spin/utils/selectionPath';
 import { isWheelItemBranch, type WheelItem } from '@/types/wheel';
 
 interface WinnerDialogProps {
   open: boolean;
   item?: WheelItem;
+  path?: readonly SelectionStep[];
   reducedMotion?: boolean;
   onClose: () => void;
   onFinish: () => void;
@@ -25,6 +27,7 @@ interface WinnerDialogProps {
 export function WinnerDialog({
   open,
   item,
+  path,
   reducedMotion = false,
   onClose,
   onFinish,
@@ -33,6 +36,7 @@ export function WinnerDialog({
 }: WinnerDialogProps) {
   const hasChildren = item ? isWheelItemBranch(item) : false;
   const extraId = hasChildren ? 'winner-dialog-extra' : undefined;
+  const steps = path && path.length > 0 ? path : item ? [toSelectionStep(item)] : [];
 
   return (
     <Dialog
@@ -58,14 +62,7 @@ export function WinnerDialog({
             {SPIN_MESSAGES.winnerTitle}
           </DialogTitle>
           <DialogContent sx={{ textAlign: 'center' }}>
-            {item.icon ? (
-              <Typography aria-hidden sx={{ fontSize: '2rem', lineHeight: 1, mb: 1 }}>
-                {item.icon}
-              </Typography>
-            ) : null}
-            <Typography id="winner-dialog-name" variant="h4" component="p" sx={{ fontWeight: 700 }}>
-              {item.name}
-            </Typography>
+            <SelectionPath id="winner-dialog-name" steps={steps} size="dialog" />
             {hasChildren ? (
               <DialogContentText id="winner-dialog-extra" sx={{ mt: 1.5 }}>
                 {SPIN_MESSAGES.additionalData}

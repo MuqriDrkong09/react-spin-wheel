@@ -1,6 +1,6 @@
 import { WinnerDialog } from '@/features/spin/components/WinnerDialog';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
-import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
+import { renderWithProviders, screen, userEvent, within } from '@/test/test-utils';
 import type { WheelItem } from '@/types/wheel';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
@@ -106,5 +106,28 @@ describe('WinnerDialog', () => {
     );
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('renders the selection hierarchy for a child winner', () => {
+    const pizza = item('Pizza');
+    const chicken = item('Chicken Pepperoni');
+    renderWithProviders(
+      <WinnerDialog
+        open
+        item={chicken}
+        path={[pizza, chicken].map((entry) => ({ id: entry.id, name: entry.name }))}
+        reducedMotion
+        onClose={vi.fn()}
+        onFinish={vi.fn()}
+        onSpinAgain={vi.fn()}
+        onSpinChild={vi.fn()}
+      />,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText('Pizza')).toBeInTheDocument();
+    expect(within(dialog).getByText('Chicken Pepperoni')).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription(/Pizza.*Chicken Pepperoni/s);
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinAgain })).toBeInTheDocument();
   });
 });

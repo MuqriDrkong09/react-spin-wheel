@@ -20,6 +20,10 @@ export const SPIN_MESSAGES = {
   close: 'Close',
   spinAgain: 'Spin Again',
   spinning: 'Spinning',
+  path: (names: string[]) => names.join(' → '),
+  pathLabel: (names: string[]) =>
+    names.length <= 1 ? names[0] ?? '' : `Selection path: ${names.join(' → ')}`,
+  childWheelOf: (name: string) => `Children of ${name}`,
   wheelLabel: (names: string[]) =>
     names.length === 0 ? 'Empty spin wheel' : `Spin wheel with ${names.join(', ')}`,
 } as const;

@@ -4,6 +4,7 @@ import { Box, Button, Stack, Typography } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SpinWheel } from '@/features/spin/components/SpinWheel';
 import { SpinWheelPicker } from '@/features/spin/components/SpinWheelPicker';
 import { WinnerDialog } from '@/features/spin/components/WinnerDialog';
@@ -104,7 +105,15 @@ function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => vo
           gap: 2,
         }}
       >
-            <SpinWheel
+        {session.ancestors.length > 0 ? (
+          <>
+            <SelectionPath steps={session.ancestors} />
+            <Typography color="text.secondary">
+              {SPIN_MESSAGES.childWheelOf(session.ancestors[session.ancestors.length - 1]?.name ?? '')}
+            </Typography>
+          </>
+        ) : null}
+        <SpinWheel
           items={session.items}
           onSpin={session.startSpin}
           spinning={session.spin.spinning}
@@ -122,6 +131,7 @@ function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => vo
       <WinnerDialog
         open={session.winnerOpen}
         item={session.winner}
+        path={session.selection}
         reducedMotion={session.spin.reducedMotion}
         onClose={session.closeWinner}
         onFinish={onFinish}
