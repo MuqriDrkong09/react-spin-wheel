@@ -1,7 +1,8 @@
 import { ROUTES, withWheelId } from '@/constants/routes';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
+import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
-import { renderApp, screen, userEvent, within } from '@/test/test-utils';
+import { renderApp, screen, userEvent, waitFor, within } from '@/test/test-utils';
 import { SELECTION_MODE } from '@/types/wheel';
 
 function seedFoodWheel() {
@@ -49,6 +50,7 @@ describe('SpinScreen', () => {
 
   beforeEach(() => {
     resetWheelStore();
+    resetHistoryStore();
   });
 
   afterEach(() => {
@@ -165,7 +167,64 @@ describe('SpinScreen', () => {
     expect(within(screen.getByRole('dialog')).getByText('Burger')).toBeInTheDocument();
   });
 
-  it('returns to the picker when Finish is chosen', async () => {
+  it('shows the final result when Finish is chosen', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
+
+    const result = screen.getByRole('region', { name: SPIN_MESSAGES.finalResultTitle });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(within(result).getByText('Food Wheel')).toBeInTheDocument();
+    expect(within(result).getByText('Burger')).toBeInTheDocument();
+    expect(within(result).getByText('🍔')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: SPIN_MESSAGES.finalResultTitle })).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.copyResult }));
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(writeText.mock.calls[0]?.[0]).toContain('🎉 Final result');
+    expect(writeText.mock.calls[0]?.[0]).toContain('Food Wheel');
+    expect(writeText.mock.calls[0]?.[0]).toContain('🍔 Burger');
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.saveResult }));
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(1);
+    expect(useHistoryStore.getState().spinHistory[0]?.wheelName).toBe('Food Wheel');
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.resultSaved })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinAgain }));
+    expect(screen.queryByRole('region', { name: SPIN_MESSAGES.finalResultTitle })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const spinButton = screen.getByRole('button', { name: SPIN_MESSAGES.spinButton });
+    expect(spinButton).toBeEnabled();
+
+    await user.click(spinButton);
+    expect(screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle })).toBeInTheDocument();
+  });
+
+  it('automatically spins again from the final result when selection mode is automatic', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seedFoodWheel();
+    useWheelStore.getState().updateWheelSettings('food', { selectionMode: SELECTION_MODE.automatic });
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinAgain }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle })).toBeInTheDocument();
+    });
+  });
+
+  it('returns to the picker-level wheel after Start New Selection', async () => {
     stubReducedMotion(true);
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
@@ -174,9 +233,10 @@ describe('SpinScreen', () => {
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.startNewSelection }));
 
-    expect(screen.getByText(SPIN_MESSAGES.chooseWheelDescription)).toBeInTheDocument();
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeEnabled();
+    expect(screen.queryByRole('region', { name: SPIN_MESSAGES.finalResultTitle })).not.toBeInTheDocument();
   });
 
   it('keeps the wheel open when Close is chosen for a winner with children', async () => {

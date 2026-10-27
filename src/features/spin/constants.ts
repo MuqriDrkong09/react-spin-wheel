@@ -25,6 +25,13 @@ export const SPIN_MESSAGES = {
   finish: 'Finish',
   close: 'Close',
   spinAgain: 'Spin Again',
+  finalResultTitle: '🎉 Final result',
+  startNewSelection: 'Start New Selection',
+  copyResult: 'Copy Result',
+  saveResult: 'Save Result',
+  resultCopied: 'Result copied',
+  resultCopyFailed: 'Could not copy the result',
+  resultSaved: 'Saved',
   spinning: 'Spinning',
   path: (names: string[]) => names.join(' → '),
   pathLabel: (names: string[]) =>

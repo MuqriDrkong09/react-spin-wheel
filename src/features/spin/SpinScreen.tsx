@@ -1,9 +1,11 @@
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Snackbar, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
 
 import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { FinalResult } from '@/features/spin/components/FinalResult';
 import { SelectionModeSelect } from '@/features/spin/components/SelectionModeSelect';
 import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SpinWheel } from '@/features/spin/components/SpinWheel';
@@ -12,6 +14,8 @@ import { WinnerDialog } from '@/features/spin/components/WinnerDialog';
 import { SPIN_MESSAGES, SPIN_STATUS } from '@/features/spin/constants';
 import { useSpinScreen } from '@/features/spin/hooks/useSpinScreen';
 import { useSpinSession } from '@/features/spin/hooks/useSpinSession';
+import { formatFinalResultCopy, toSpinHistorySession } from '@/features/spin/utils/formatFinalResult';
+import { useHistoryStore } from '@/stores/historyStore';
 import type { Wheel } from '@/types/wheel';
 
 export function SpinScreen() {
@@ -67,7 +71,7 @@ export function SpinScreen() {
           }
         />
         {wheel ? (
-          <ActiveWheelSpin key={wheel.id} wheel={wheel} onFinish={clearWheelSelection} />
+          <ActiveWheelSpin key={wheel.id} wheel={wheel} />
         ) : needsWheelChoice ? (
           <SpinWheelPicker wheels={availableWheels} onSelect={selectWheel} />
         ) : (
@@ -100,67 +104,134 @@ export function SpinScreen() {
   );
 }
 
-function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => void }) {
+function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
   const session = useSpinSession(wheel);
+  const addSpinSession = useHistoryStore((state) => state.addSpinSession);
+  const [saved, setSaved] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
 
-  function handleFinish() {
-    session.finish();
-    onFinish();
+  async function copyResult() {
+    if (!session.result) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(
+        formatFinalResultCopy({
+          wheelName: wheel.name,
+          steps: session.selection,
+          timestamp: session.result.timestamp,
+        }),
+      );
+      setStatusMessage(SPIN_MESSAGES.resultCopied);
+    } catch {
+      setStatusMessage(SPIN_MESSAGES.resultCopyFailed);
+    }
+  }
+
+  function saveResult() {
+    if (!session.result || saved) {
+      return;
+    }
+
+    addSpinSession(
+      toSpinHistorySession({
+        result: session.result,
+        wheelName: wheel.name,
+      }),
+    );
+    setSaved(true);
+    setStatusMessage(SPIN_MESSAGES.resultSaved);
+  }
+
+  function spinAgain() {
+    setSaved(false);
+    setStatusMessage('');
+    session.spinAgain();
+  }
+
+  function resumeFromResult() {
+    setSaved(false);
+    setStatusMessage('');
+    session.resumeFromResult();
+  }
+
+  function startNewSelection() {
+    setSaved(false);
+    setStatusMessage('');
+    session.startNewSelection();
   }
 
   return (
     <>
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          minHeight: 0,
-          gap: 2,
-          overflow: 'hidden',
-          scrollbarGutter: 'stable',
-        }}
-      >
+      {session.finalOpen && session.result ? (
+        <FinalResult
+          wheelName={wheel.name}
+          steps={session.selection}
+          timestamp={session.result.timestamp}
+          reducedMotion={session.spin.reducedMotion}
+          saved={saved}
+          statusMessage={statusMessage}
+          onSpinAgain={resumeFromResult}
+          onStartNewSelection={startNewSelection}
+          onCopy={() => {
+            void copyResult();
+          }}
+          onSave={saveResult}
+        />
+      ) : (
         <Box
           sx={{
-            minHeight: { xs: 72, md: 0 },
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            textAlign: 'center',
             width: '100%',
-            flexShrink: 0,
+            minHeight: 0,
+            gap: 2,
+            overflow: 'hidden',
+            scrollbarGutter: 'stable',
           }}
         >
-          {session.ancestors.length > 0 ? (
-            <>
-              <SelectionPath steps={session.ancestors} />
-              <Typography color="text.secondary">
-                {SPIN_MESSAGES.childWheelOf(session.ancestors[session.ancestors.length - 1]?.name ?? '')}
-              </Typography>
-            </>
+          <Box
+            sx={{
+              minHeight: { xs: 72, md: 0 },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%',
+              flexShrink: 0,
+            }}
+          >
+            {session.ancestors.length > 0 ? (
+              <>
+                <SelectionPath steps={session.ancestors} />
+                <Typography color="text.secondary">
+                  {SPIN_MESSAGES.childWheelOf(session.ancestors[session.ancestors.length - 1]?.name ?? '')}
+                </Typography>
+              </>
+            ) : null}
+          </Box>
+          <SpinWheel
+            key={session.items.map((item) => item.id).join('|')}
+            items={session.items}
+            onSpin={session.startSpin}
+            spinning={session.spin.spinning}
+            selectedColor={session.spin.selectedColor}
+            rotationDegrees={session.spin.rotationDegrees}
+            spinDuration={session.spin.animation.spinDuration}
+            animationType={session.spin.animation.animationType}
+            reducedMotion={session.spin.reducedMotion}
+            onSpinComplete={session.completeSpin}
+          />
+          {session.spin.status === SPIN_STATUS.spinning ? (
+            <Typography color="text.secondary">{SPIN_MESSAGES.spinning}</Typography>
           ) : null}
         </Box>
-        <SpinWheel
-          key={session.items.map((item) => item.id).join('|')}
-          items={session.items}
-          onSpin={session.startSpin}
-          spinning={session.spin.spinning}
-          selectedColor={session.spin.selectedColor}
-          rotationDegrees={session.spin.rotationDegrees}
-          spinDuration={session.spin.animation.spinDuration}
-          animationType={session.spin.animation.animationType}
-          reducedMotion={session.spin.reducedMotion}
-          onSpinComplete={session.completeSpin}
-        />
-        {session.spin.status === SPIN_STATUS.spinning ? (
-          <Typography color="text.secondary">{SPIN_MESSAGES.spinning}</Typography>
-        ) : null}
-      </Box>
+      )}
       <WinnerDialog
         open={session.winnerOpen}
         item={session.winner}
@@ -168,10 +239,28 @@ function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => vo
         selectionMode={session.selectionMode}
         reducedMotion={session.spin.reducedMotion}
         onClose={session.closeWinner}
-        onFinish={handleFinish}
-        onSpinAgain={session.spinAgain}
+        onFinish={() => {
+          setSaved(false);
+          setStatusMessage('');
+          session.finish();
+        }}
+        onSpinAgain={spinAgain}
         onSpinChild={session.spinChild}
       />
+      <Snackbar
+        open={Boolean(statusMessage)}
+        autoHideDuration={4000}
+        onClose={() => setStatusMessage('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={statusMessage === SPIN_MESSAGES.resultCopyFailed ? 'error' : 'success'}
+          variant="filled"
+          onClose={() => setStatusMessage('')}
+        >
+          {statusMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

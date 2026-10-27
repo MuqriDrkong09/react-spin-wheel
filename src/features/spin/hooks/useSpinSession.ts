@@ -33,14 +33,16 @@ function scheduleAfterPaint(onPainted: () => void): () => void {
 }
 
 export function useSpinSession(wheel: Wheel) {
-  const [sessionId] = useState(() => createId());
+  const [sessionId, setSessionId] = useState(() => createId());
   const [spinItems, setSpinItems] = useState<WheelItem[] | null>(null);
   const [ancestors, setAncestors] = useState<SelectionStep[]>([]);
   const [winnerDismissed, setWinnerDismissed] = useState(false);
   const [autoHandoff, setAutoHandoff] = useState(false);
+  const [finalOpen, setFinalOpen] = useState(false);
   const [finishedResult, setFinishedResult] = useState<HierarchicalSelectionResult>();
   const cancelPaintWaitRef = useRef<() => void>(() => undefined);
   const pendingAutomaticSpinRef = useRef<PendingAutomaticSpin | null>(null);
+  const pendingResumeSpinRef = useRef(false);
   const startPendingAutomaticSpinRef = useRef<() => void>(() => undefined);
   const items = spinItems ?? wheel.items;
   const spin = useSpinWheel(items, {
@@ -53,7 +55,8 @@ export function useSpinSession(wheel: Wheel) {
   const willAutoAdvance = Boolean(
     winner && shouldAutoAdvanceSelection(selectionMode, ancestors, winner),
   );
-  const winnerOpen = Boolean(winner) && !winnerDismissed && !willAutoAdvance && !autoHandoff;
+  const winnerOpen =
+    Boolean(winner) && !winnerDismissed && !willAutoAdvance && !autoHandoff && !finalOpen;
   const leafResult = useMemo(() => {
     if (!winner || canContinueSelection(winner)) {
       return undefined;
@@ -137,9 +140,26 @@ export function useSpinSession(wheel: Wheel) {
     };
   }, [items]);
 
+  useLayoutEffect(() => {
+    if (finalOpen || !pendingResumeSpinRef.current) {
+      return undefined;
+    }
+
+    cancelPaintWaitRef.current();
+    cancelPaintWaitRef.current = scheduleAfterPaint(() => {
+      pendingResumeSpinRef.current = false;
+      startPendingAutomaticSpinRef.current();
+    });
+
+    return () => {
+      cancelPaintWaitRef.current();
+    };
+  }, [finalOpen]);
+
   function startSpin() {
     setWinnerDismissed(false);
     setAutoHandoff(false);
+    setFinalOpen(false);
     setFinishedResult(undefined);
     continueAutomatically(ancestors, spin.spin());
   }
@@ -155,6 +175,7 @@ export function useSpinSession(wheel: Wheel) {
   function spinAgain() {
     setWinnerDismissed(false);
     setAutoHandoff(false);
+    setFinalOpen(false);
     setFinishedResult(undefined);
     continueAutomatically(ancestors, spin.spin());
   }
@@ -172,6 +193,34 @@ export function useSpinSession(wheel: Wheel) {
     setAncestors(next.ancestors);
     setSpinItems(next.items);
     setWinnerDismissed(true);
+    setFinalOpen(false);
+    setFinishedResult(undefined);
+    spin.reset();
+  }
+
+  function resumeFromResult() {
+    setWinnerDismissed(true);
+    setAutoHandoff(false);
+    setFinalOpen(false);
+    setFinishedResult(undefined);
+    spin.reset();
+    if (selectionMode !== SELECTION_MODE.automatic) {
+      return;
+    }
+
+    pendingResumeSpinRef.current = true;
+    startPendingAutomaticSpinRef.current = () => {
+      continueAutomatically(ancestors, spin.spin());
+    };
+  }
+
+  function startNewSelection() {
+    setSessionId(createId());
+    setSpinItems(null);
+    setAncestors([]);
+    setWinnerDismissed(false);
+    setAutoHandoff(false);
+    setFinalOpen(false);
     setFinishedResult(undefined);
     spin.reset();
   }
@@ -183,6 +232,8 @@ export function useSpinSession(wheel: Wheel) {
       selection,
     });
     setFinishedResult(next);
+    setWinnerDismissed(true);
+    setFinalOpen(Boolean(next));
     return next;
   }
 
@@ -197,12 +248,15 @@ export function useSpinSession(wheel: Wheel) {
     result,
     spin,
     winnerOpen,
+    finalOpen,
     winner,
     startSpin,
     completeSpin,
     closeWinner,
     spinAgain,
+    resumeFromResult,
     spinChild,
+    startNewSelection,
     finish,
   };
 }

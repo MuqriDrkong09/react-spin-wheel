@@ -181,6 +181,90 @@ describe('useSpinSession', () => {
       timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
     });
     expect(result.current.canContinue).toBe(true);
+    expect(result.current.finalOpen).toBe(true);
+    expect(result.current.winnerOpen).toBe(false);
+  });
+
+  it('starts a new selection from the root of the same wheel', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { result } = renderHook(() => useSpinSession(pizzaNightWheel()));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    act(() => {
+      result.current.finish();
+    });
+
+    const finishedSession = result.current.sessionId;
+
+    act(() => {
+      result.current.startNewSelection();
+    });
+
+    expect(result.current.sessionId).not.toBe(finishedSession);
+    expect(result.current.finalOpen).toBe(false);
+    expect(result.current.ancestors).toEqual([]);
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Pizza']);
+    expect(result.current.spin.status).toBe('idle');
+  });
+
+  it('returns to an idle wheel after finishing so Spin Again can be started by the user', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { result } = renderHook(() => useSpinSession(foodWheel()));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    act(() => {
+      result.current.finish();
+    });
+    act(() => {
+      result.current.resumeFromResult();
+    });
+
+    expect(result.current.finalOpen).toBe(false);
+    expect(result.current.winnerOpen).toBe(false);
+    expect(result.current.spin.status).toBe('idle');
+    expect(result.current.spin.spinning).toBe(false);
+
+    act(() => {
+      result.current.startSpin();
+    });
+
+    expect(result.current.spin.status).not.toBe('idle');
+    expect(result.current.path).toEqual(['Pizza']);
+  });
+
+  it('automatically starts spinning after Spin Again when selection mode is automatic', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    wheel.settings.selectionMode = SELECTION_MODE.automatic;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    act(() => {
+      result.current.finish();
+    });
+    act(() => {
+      result.current.resumeFromResult();
+    });
+
+    expect(result.current.finalOpen).toBe(false);
+    expect(result.current.spin.status).toBe('idle');
+
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
+      });
+    });
+
+    expect(result.current.spin.status).not.toBe('idle');
+    expect(result.current.winnerOpen).toBe(true);
   });
 
   it('automatically continues through nested children until a leaf', () => {
