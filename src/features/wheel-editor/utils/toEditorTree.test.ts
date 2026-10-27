@@ -14,7 +14,7 @@ const foodWheel = {
     soundEnabled: true,
     confettiEnabled: true,
     eliminationMode: false,
-    autoSpinChildren: true,
+    selectionMode: 'manual',
     skipDisabledItems: true,
   },
   items: [

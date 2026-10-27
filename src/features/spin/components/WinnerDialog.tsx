@@ -11,12 +11,13 @@ import { motion } from 'framer-motion';
 import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import { toSelectionStep, type SelectionStep } from '@/features/spin/utils/selectionPath';
-import { isWheelItemBranch, type WheelItem } from '@/types/wheel';
+import { isWheelItemBranch, SELECTION_MODE, type SelectionMode, type WheelItem } from '@/types/wheel';
 
 interface WinnerDialogProps {
   open: boolean;
   item?: WheelItem;
   path?: readonly SelectionStep[];
+  selectionMode?: SelectionMode;
   reducedMotion?: boolean;
   onClose: () => void;
   onFinish: () => void;
@@ -28,6 +29,7 @@ export function WinnerDialog({
   open,
   item,
   path,
+  selectionMode = SELECTION_MODE.manual,
   reducedMotion = false,
   onClose,
   onFinish,
@@ -35,7 +37,10 @@ export function WinnerDialog({
   onSpinChild,
 }: WinnerDialogProps) {
   const hasChildren = item ? isWheelItemBranch(item) : false;
+  const askToContinue = hasChildren && selectionMode === SELECTION_MODE.ask;
   const extraId = hasChildren ? 'winner-dialog-extra' : undefined;
+  const extraMessage = askToContinue ? SPIN_MESSAGES.continuePrompt : SPIN_MESSAGES.additionalData;
+  const continueLabel = askToContinue ? SPIN_MESSAGES.continueSelection : SPIN_MESSAGES.spinChild;
   const steps = path && path.length > 0 ? path : item ? [toSelectionStep(item)] : [];
 
   return (
@@ -65,7 +70,7 @@ export function WinnerDialog({
             <SelectionPath id="winner-dialog-name" steps={steps} size="dialog" />
             {hasChildren ? (
               <DialogContentText id="winner-dialog-extra" sx={{ mt: 1.5 }}>
-                {SPIN_MESSAGES.additionalData}
+                {extraMessage}
               </DialogContentText>
             ) : null}
           </DialogContent>
@@ -85,7 +90,7 @@ export function WinnerDialog({
             {hasChildren ? (
               <>
                 <Button variant="contained" autoFocus onClick={onSpinChild}>
-                  {SPIN_MESSAGES.spinChild}
+                  {continueLabel}
                 </Button>
                 <Button variant="outlined" onClick={onFinish}>
                   {SPIN_MESSAGES.finish}

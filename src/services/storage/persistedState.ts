@@ -3,6 +3,7 @@ import { COLOR_MODE, type ColorMode } from '@/types/colorMode';
 import type { AppSettings } from '@/types/settings';
 import {
   ITEM_CONDITION_KIND,
+  SELECTION_MODE,
   SPIN_SESSION_STATUS,
   type HexColor,
   type ItemCondition,
@@ -52,7 +53,9 @@ const wheelSettingsSchema = z.object({
   soundEnabled: z.boolean(),
   confettiEnabled: z.boolean(),
   eliminationMode: z.boolean(),
-  autoSpinChildren: z.boolean(),
+  selectionMode: z
+    .enum([SELECTION_MODE.manual, SELECTION_MODE.automatic, SELECTION_MODE.ask])
+    .default(SELECTION_MODE.manual),
   skipDisabledItems: z.boolean(),
 }) satisfies z.ZodType<WheelSettings>;
 

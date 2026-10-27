@@ -1,6 +1,6 @@
 import { Box, Button, useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import {
@@ -41,12 +41,17 @@ export function SpinWheel({
   const hubColor = selectedColor ?? theme.palette.primary.main;
   const hubContrast = theme.palette.getContrastText(hubColor);
   const duration = spinDiscDurationSeconds(spinDuration, { reducedMotion, spinning });
+  const spinStartedAtRef = useRef<number | null>(null);
   const ease = [...(SPIN_EASINGS[animationType] ?? SPIN_EASINGS.easeInOut)] as [
     number,
     number,
     number,
     number,
   ];
+
+  useEffect(() => {
+    spinStartedAtRef.current = spinning ? performance.now() : null;
+  }, [spinning]);
 
   if (geometry.segments.length === 0) {
     return (
@@ -122,9 +127,18 @@ export function SpinWheel({
           animate={{ rotate: rotationDegrees }}
           transition={{ duration, ease }}
           onAnimationComplete={() => {
-            if (spinning) {
-              onSpinComplete?.();
+            if (!spinning) {
+              return;
             }
+
+            const startedAt = spinStartedAtRef.current;
+            const minSpinMs =
+              reducedMotion || duration <= 0 ? 0 : Math.max(32, Math.min(120, spinDuration * 0.05));
+            if (minSpinMs > 0 && (startedAt == null || performance.now() - startedAt < minSpinMs)) {
+              return;
+            }
+
+            onSpinComplete?.();
           }}
           style={{ width: '100%', height: '100%', transformOrigin: '50% 50%' }}
         >

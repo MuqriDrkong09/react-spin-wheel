@@ -553,7 +553,7 @@ describe('useWheelStore', () => {
 
     expect(settings?.soundEnabled).toBe(false);
     expect(settings?.durationMs).toBe(2500);
-    expect(settings?.autoSpinChildren).toBe(true);
+    expect(settings?.selectionMode).toBe('manual');
     expect(wheel.settings.soundEnabled).toBe(true);
   });
 

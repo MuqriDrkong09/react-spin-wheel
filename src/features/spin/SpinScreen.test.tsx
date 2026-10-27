@@ -2,6 +2,7 @@ import { ROUTES, withWheelId } from '@/constants/routes';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { renderApp, screen, userEvent, within } from '@/test/test-utils';
+import { SELECTION_MODE } from '@/types/wheel';
 
 function seedFoodWheel() {
   useWheelStore.getState().createWheel({
@@ -217,6 +218,56 @@ describe('SpinScreen', () => {
     expect(screen.getByRole('img', { name: /spin wheel with pepperoni, mushroom/i })).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: /pizza, burger, sushi/i })).not.toBeInTheDocument();
     expect(useWheelStore.getState().getWheel('food')?.items).toEqual(parentItems);
+  });
+
+  it('asks before continuing when selection mode is ask', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seedFoodWheel();
+    useWheelStore.getState().updateWheelSettings('food', { selectionMode: SELECTION_MODE.ask });
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+
+    const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText(SPIN_MESSAGES.continuePrompt)).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.continueSelection })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: SPIN_MESSAGES.spinChild })).not.toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: SPIN_MESSAGES.continueSelection }));
+    expect(screen.getByText(SPIN_MESSAGES.childWheelOf('Pizza'))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeEnabled();
+  });
+
+  it('automatically starts the child spin when selection mode is automatic', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seedFoodWheel();
+    useWheelStore.getState().updateWheelSettings('food', { selectionMode: SELECTION_MODE.automatic });
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+
+    const dialog = await screen.findByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
+    expect(within(dialog).getByText('Pizza')).toBeInTheDocument();
+    expect(within(dialog).getByText('Pepperoni')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: SPIN_MESSAGES.spinChild })).not.toBeInTheDocument();
+    expect(within(dialog).queryByText(SPIN_MESSAGES.continuePrompt)).not.toBeInTheDocument();
+  });
+
+  it('persists the selected selection mode on the wheel', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('combobox', { name: SPIN_MESSAGES.selectionMode }));
+    await user.click(screen.getByRole('option', { name: SPIN_MESSAGES.selectionModeAutomatic }));
+
+    expect(useWheelStore.getState().getWheel('food')?.settings.selectionMode).toBe(
+      SELECTION_MODE.automatic,
+    );
   });
 
   it('keeps spinning through grandchildren until a leaf is selected', async () => {

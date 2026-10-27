@@ -1,4 +1,4 @@
-import type { HexColor, WheelSettings } from '@/types/wheel';
+import { SELECTION_MODE, type HexColor, type WheelSettings } from '@/types/wheel';
 
 export const WHEEL_CATEGORIES = ['General', 'Food', 'Games', 'Decisions', 'Custom'] as const;
 
@@ -24,6 +24,6 @@ export const DEFAULT_WHEEL_SETTINGS: WheelSettings = {
   soundEnabled: true,
   confettiEnabled: true,
   eliminationMode: false,
-  autoSpinChildren: true,
+  selectionMode: SELECTION_MODE.manual,
   skipDisabledItems: true,
 };

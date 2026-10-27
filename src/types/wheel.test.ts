@@ -97,7 +97,7 @@ describe('wheel domain model', () => {
         soundEnabled: true,
         confettiEnabled: true,
         eliminationMode: false,
-        autoSpinChildren: true,
+        selectionMode: 'manual',
         skipDisabledItems: true,
       },
       ...timestamps,

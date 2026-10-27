@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ROUTES, withWheelId } from '@/constants/routes';
 import { useWheelStore } from '@/stores/wheelStore';
-import type { Wheel, WheelId } from '@/types/wheel';
+import type { SelectionMode, Wheel, WheelId } from '@/types/wheel';
 
 export function useSpinScreen() {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ export function useSpinScreen() {
   const wheels = useWheelStore((state) => state.wheels);
   const activeWheelId = useWheelStore((state) => state.activeWheelId);
   const setActiveWheel = useWheelStore((state) => state.setActiveWheel);
+  const updateWheelSettings = useWheelStore((state) => state.updateWheelSettings);
 
   const wheelId = requestedId;
   const wheel = useMemo(
@@ -44,6 +45,11 @@ export function useSpinScreen() {
     },
     goToDashboard: () => {
       void navigate(ROUTES.dashboard);
+    },
+    setSelectionMode: (mode: SelectionMode) => {
+      if (wheelId) {
+        updateWheelSettings(wheelId, { selectionMode: mode });
+      }
     },
   };
 }

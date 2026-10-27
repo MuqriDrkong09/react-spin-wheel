@@ -43,16 +43,19 @@ export function useSpinWheel(items: readonly WheelItem[], options: UseSpinWheelO
   const maxRotations = options.wheelSettings?.maxRotations ?? animation.rotations;
 
   function spin() {
-    beginSpin(items, stateRef.current);
+    return beginSpin(items, stateRef.current);
   }
 
   function spinChildren(nextItems: readonly WheelItem[]) {
-    beginSpin(nextItems, createIdleSpinState());
+    return beginSpin(nextItems, createIdleSpinState());
   }
 
-  function beginSpin(source: readonly WheelItem[], current: SpinLifecycleState) {
+  function beginSpin(
+    source: readonly WheelItem[],
+    current: SpinLifecycleState,
+  ): SpinLifecycleState {
     if (!canStartSpin(current)) {
-      return;
+      return current;
     }
 
     const sample = options.randomValue ?? Math.random;
@@ -65,18 +68,20 @@ export function useSpinWheel(items: readonly WheelItem[], options: UseSpinWheelO
     });
     const started = startSpin(current, next);
     if (started === current) {
-      return;
+      return current;
     }
 
     const nextState = reducedMotion ? finishSpin(started) : started;
     stateRef.current = nextState;
     setState(nextState);
+    return nextState;
   }
 
   function complete() {
     const nextState = finishSpin(stateRef.current);
     stateRef.current = nextState;
     setState(nextState);
+    return nextState;
   }
 
   function reset() {

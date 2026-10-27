@@ -9,7 +9,9 @@ import {
 import { nowIso } from '@/utils/id';
 import {
   isWheelItemBranch,
+  SELECTION_MODE,
   type IsoDateTime,
+  type SelectionMode,
   type SpinSessionId,
   type WheelId,
   type WheelItem,
@@ -44,6 +46,38 @@ export function selectionDecision(item: WheelItem): SelectionDecision {
 
 export function canContinueSelection(item: WheelItem): boolean {
   return selectionDecision(item) === SELECTION_DECISION.continue;
+}
+
+export const AUTO_SELECTION_MAX_STEPS = 64;
+
+export function hasSelectionCycle(
+  ancestors: readonly SelectionStep[],
+  winnerId: WheelItemId,
+): boolean {
+  return ancestors.some((step) => step.id === winnerId);
+}
+
+export function canAutoAdvanceSelection(
+  ancestors: readonly SelectionStep[],
+  winner: WheelItem,
+): boolean {
+  if (!canContinueSelection(winner)) {
+    return false;
+  }
+
+  if (hasSelectionCycle(ancestors, winner.id)) {
+    return false;
+  }
+
+  return ancestors.length < AUTO_SELECTION_MAX_STEPS;
+}
+
+export function shouldAutoAdvanceSelection(
+  mode: SelectionMode,
+  ancestors: readonly SelectionStep[],
+  winner: WheelItem,
+): boolean {
+  return mode === SELECTION_MODE.automatic && canAutoAdvanceSelection(ancestors, winner);
 }
 
 export function advanceSelectionLevel(

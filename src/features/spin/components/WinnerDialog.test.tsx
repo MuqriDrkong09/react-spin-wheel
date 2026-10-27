@@ -1,7 +1,7 @@
 import { WinnerDialog } from '@/features/spin/components/WinnerDialog';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import { renderWithProviders, screen, userEvent, within } from '@/test/test-utils';
-import type { WheelItem } from '@/types/wheel';
+import { SELECTION_MODE, type WheelItem } from '@/types/wheel';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -63,6 +63,25 @@ describe('WinnerDialog', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.finish })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.close })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: SPIN_MESSAGES.spinAgain })).not.toBeInTheDocument();
+  });
+
+  it('asks whether to continue when selection mode is ask', () => {
+    renderWithProviders(
+      <WinnerDialog
+        open
+        item={item('Pizza', { children: [item('Pepperoni')] })}
+        selectionMode={SELECTION_MODE.ask}
+        reducedMotion
+        onClose={vi.fn()}
+        onFinish={vi.fn()}
+        onSpinAgain={vi.fn()}
+        onSpinChild={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(SPIN_MESSAGES.continuePrompt)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.continueSelection })).toHaveFocus();
+    expect(screen.queryByRole('button', { name: SPIN_MESSAGES.spinChild })).not.toBeInTheDocument();
   });
 
   it('invokes the matching action', async () => {

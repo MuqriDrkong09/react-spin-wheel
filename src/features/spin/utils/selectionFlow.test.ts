@@ -1,10 +1,14 @@
 import {
+  AUTO_SELECTION_MAX_STEPS,
   advanceSelectionLevel,
+  canAutoAdvanceSelection,
   canContinueSelection,
   createHierarchicalSelectionResult,
   SELECTION_DECISION,
   selectionDecision,
+  shouldAutoAdvanceSelection,
 } from '@/features/spin/utils/selectionFlow';
+import { SELECTION_MODE } from '@/types/wheel';
 import { toSelectionStep, type SelectionStep } from '@/features/spin/utils/selectionPath';
 import type { WheelItem } from '@/types/wheel';
 
@@ -106,6 +110,19 @@ describe('selectionFlow', () => {
       labels: ['Pizza', 'Chicken Pepperoni', 'Large', 'Thin Crust'],
       timestamp: '2026-10-26T04:00:00.000Z',
     });
+  });
+
+  it('blocks automatic advance on a cycle or safety cap', () => {
+    expect(shouldAutoAdvanceSelection(SELECTION_MODE.manual, [], pizza)).toBe(false);
+    expect(shouldAutoAdvanceSelection(SELECTION_MODE.ask, [], pizza)).toBe(false);
+    expect(shouldAutoAdvanceSelection(SELECTION_MODE.automatic, [], pizza)).toBe(true);
+    expect(canAutoAdvanceSelection([toSelectionStep(pizza)], pizza)).toBe(false);
+    expect(canAutoAdvanceSelection([], thinCrust)).toBe(false);
+
+    const capped = Array.from({ length: AUTO_SELECTION_MAX_STEPS }, (_, index) =>
+      toSelectionStep(item(`Level ${index}`)),
+    );
+    expect(canAutoAdvanceSelection(capped, pizza)).toBe(false);
   });
 
   it('does not create a result without a selected item', () => {

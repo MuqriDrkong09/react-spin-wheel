@@ -4,6 +4,7 @@ import { Box, Button, Stack, Typography } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { SelectionModeSelect } from '@/features/spin/components/SelectionModeSelect';
 import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SpinWheel } from '@/features/spin/components/SpinWheel';
 import { SpinWheelPicker } from '@/features/spin/components/SpinWheelPicker';
@@ -23,6 +24,7 @@ export function SpinScreen() {
     clearWheelSelection,
     goToCreate,
     goToDashboard,
+    setSelectionMode,
   } = useSpinScreen();
 
   return (
@@ -44,9 +46,19 @@ export function SpinScreen() {
           }
           action={
             wheel ? (
-              <Button variant="outlined" onClick={clearWheelSelection}>
-                {SPIN_MESSAGES.changeWheel}
-              </Button>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1}
+                sx={{ alignItems: { xs: 'stretch', sm: 'center' }, width: { xs: '100%', sm: 'auto' } }}
+              >
+                <SelectionModeSelect
+                  value={wheel.settings.selectionMode}
+                  onChange={setSelectionMode}
+                />
+                <Button variant="outlined" onClick={clearWheelSelection}>
+                  {SPIN_MESSAGES.changeWheel}
+                </Button>
+              </Stack>
             ) : needsWheelChoice ? (
               <Button variant="contained" startIcon={<AddIcon />} onClick={goToCreate}>
                 Create Wheel
@@ -108,16 +120,31 @@ function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => vo
           width: '100%',
           minHeight: 0,
           gap: 2,
+          overflow: 'hidden',
+          scrollbarGutter: 'stable',
         }}
       >
-        {session.ancestors.length > 0 ? (
-          <>
-            <SelectionPath steps={session.ancestors} />
-            <Typography color="text.secondary">
-              {SPIN_MESSAGES.childWheelOf(session.ancestors[session.ancestors.length - 1]?.name ?? '')}
-            </Typography>
-          </>
-        ) : null}
+        <Box
+          sx={{
+            minHeight: { xs: 72, md: 0 },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            width: '100%',
+            flexShrink: 0,
+          }}
+        >
+          {session.ancestors.length > 0 ? (
+            <>
+              <SelectionPath steps={session.ancestors} />
+              <Typography color="text.secondary">
+                {SPIN_MESSAGES.childWheelOf(session.ancestors[session.ancestors.length - 1]?.name ?? '')}
+              </Typography>
+            </>
+          ) : null}
+        </Box>
         <SpinWheel
           key={session.items.map((item) => item.id).join('|')}
           items={session.items}
@@ -128,7 +155,7 @@ function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => vo
           spinDuration={session.spin.animation.spinDuration}
           animationType={session.spin.animation.animationType}
           reducedMotion={session.spin.reducedMotion}
-          onSpinComplete={session.spin.complete}
+          onSpinComplete={session.completeSpin}
         />
         {session.spin.status === SPIN_STATUS.spinning ? (
           <Typography color="text.secondary">{SPIN_MESSAGES.spinning}</Typography>
@@ -138,6 +165,7 @@ function ActiveWheelSpin({ wheel, onFinish }: { wheel: Wheel; onFinish: () => vo
         open={session.winnerOpen}
         item={session.winner}
         path={session.selection}
+        selectionMode={session.selectionMode}
         reducedMotion={session.spin.reducedMotion}
         onClose={session.closeWinner}
         onFinish={handleFinish}

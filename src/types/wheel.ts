@@ -92,6 +92,22 @@ export type FlattenedWheelItem = Omit<WheelItem, 'children'> & {
   hasChildren: boolean;
 };
 
+export const SELECTION_MODE = {
+  manual: 'manual',
+  automatic: 'automatic',
+  ask: 'ask',
+} as const;
+
+export type SelectionMode = (typeof SELECTION_MODE)[keyof typeof SELECTION_MODE];
+
+export function isSelectionMode(value: string): value is SelectionMode {
+  return (
+    value === SELECTION_MODE.manual ||
+    value === SELECTION_MODE.automatic ||
+    value === SELECTION_MODE.ask
+  );
+}
+
 export interface WheelSettings {
   durationMs: number;
   minRotations: number;
@@ -99,7 +115,7 @@ export interface WheelSettings {
   soundEnabled: boolean;
   confettiEnabled: boolean;
   eliminationMode: boolean;
-  autoSpinChildren: boolean;
+  selectionMode: SelectionMode;
   skipDisabledItems: boolean;
 }
 

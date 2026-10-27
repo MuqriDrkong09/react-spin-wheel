@@ -53,7 +53,7 @@ describe('persistedState', () => {
             soundEnabled: true,
             confettiEnabled: true,
             eliminationMode: false,
-            autoSpinChildren: true,
+            selectionMode: 'manual',
             skipDisabledItems: true,
           },
           createdAt: '2026-01-01T00:00:00.000Z',
@@ -79,6 +79,49 @@ describe('persistedState', () => {
     expect(loadPersistedState().colorMode).toBe(COLOR_MODE.dark);
     expect(loadPersistedState().wheels[0]?.name).toBe('Pizza');
     expect(loadPersistedState().spinHistory).toHaveLength(1);
+  });
+
+  it('defaults a missing selection mode to manual', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          wheels: [
+            {
+              id: 'wheel-1',
+              name: 'Pizza',
+              items: [
+                {
+                  id: 'chicken',
+                  name: 'Chicken Pepperoni',
+                  color: '#ef4444',
+                  enabled: true,
+                  weight: 1,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+              ],
+              settings: {
+                durationMs: 4000,
+                minRotations: 4,
+                maxRotations: 8,
+                soundEnabled: true,
+                confettiEnabled: true,
+                eliminationMode: false,
+                autoSpinChildren: true,
+                skipDisabledItems: true,
+              },
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(loadPersistedState().wheels[0]?.settings.selectionMode).toBe('manual');
   });
 
   it('returns defaults for corrupted JSON', () => {

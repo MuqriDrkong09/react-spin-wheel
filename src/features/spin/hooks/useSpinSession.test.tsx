@@ -2,7 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
 import { useSpinSession } from '@/features/spin/hooks/useSpinSession';
-import type { Wheel, WheelItem } from '@/types/wheel';
+import { AUTO_SELECTION_MAX_STEPS } from '@/features/spin/utils/selectionFlow';
+import { SELECTION_MODE, type Wheel, type WheelItem } from '@/types/wheel';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -180,5 +181,102 @@ describe('useSpinSession', () => {
       timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
     });
     expect(result.current.canContinue).toBe(true);
+  });
+
+  it('automatically continues through nested children until a leaf', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = pizzaNightWheel();
+    wheel.settings.selectionMode = SELECTION_MODE.automatic;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+
+    expect(result.current.path).toEqual(['Pizza', 'Chicken Pepperoni', 'Large', 'Thin Crust']);
+    expect(result.current.canContinue).toBe(false);
+    expect(result.current.winnerOpen).toBe(true);
+    expect(result.current.winner?.name).toBe('Thin Crust');
+  });
+
+  it('stops automatic spinning when an item would repeat', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const child = item('Child');
+    const parent = item('Parent', { children: [child] });
+    child.children = [parent];
+    const wheel: Wheel = {
+      id: 'cycle',
+      name: 'Cycle',
+      items: [parent],
+      settings: {
+        ...DEFAULT_WHEEL_SETTINGS,
+        durationMs: 1,
+        minRotations: 1,
+        maxRotations: 1,
+        selectionMode: SELECTION_MODE.automatic,
+      },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+
+    expect(result.current.path.length).toBeLessThanOrEqual(AUTO_SELECTION_MAX_STEPS + 1);
+    expect(result.current.path).toEqual(['Parent', 'Child', 'Parent']);
+    expect(result.current.winnerOpen).toBe(true);
+    expect(result.current.spin.status).not.toBe('spinning');
+  });
+
+  it('parks on the child wheel before automatic spinning when motion is allowed', async () => {
+    window.matchMedia = (query: string): MediaQueryList => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    });
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    wheel.settings.selectionMode = SELECTION_MODE.automatic;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    expect(result.current.spin.spinning).toBe(true);
+    expect(result.current.winnerOpen).toBe(false);
+
+    act(() => {
+      result.current.completeSpin();
+    });
+
+    expect(result.current.items.map((entry) => entry.name)).toEqual([
+      'Chicken Pepperoni',
+      'Beef Pepperoni',
+    ]);
+    expect(result.current.spin.status).toBe('idle');
+    expect(result.current.winnerOpen).toBe(false);
+    expect(result.current.path).toEqual(['Pizza']);
+
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
+      });
+    });
+
+    expect(result.current.spin.spinning).toBe(true);
+    expect(result.current.winnerOpen).toBe(false);
+    expect(result.current.items.map((entry) => entry.name)).toEqual([
+      'Chicken Pepperoni',
+      'Beef Pepperoni',
+    ]);
   });
 });
