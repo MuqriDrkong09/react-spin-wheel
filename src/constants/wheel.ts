@@ -25,5 +25,6 @@ export const DEFAULT_WHEEL_SETTINGS: WheelSettings = {
   confettiEnabled: true,
   eliminationMode: false,
   selectionMode: SELECTION_MODE.manual,
+  removeWinner: false,
   skipDisabledItems: true,
 };

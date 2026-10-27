@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { SPIN_STATUS } from '@/features/spin/constants';
 import { useSpinWheel } from '@/features/spin/hooks/useSpinWheel';
+import { excludeRemovedWinners, withRemovedWinner } from '@/features/spin/utils/removeWinner';
 import {
   advanceSelectionLevel,
   canContinueSelection,
@@ -12,7 +13,7 @@ import {
 } from '@/features/spin/utils/selectionFlow';
 import { selectionPathNames, type SelectionStep } from '@/features/spin/utils/selectionPath';
 import type { SpinLifecycleState } from '@/features/spin/utils/spinLifecycle';
-import { SELECTION_MODE, type Wheel, type WheelItem } from '@/types/wheel';
+import { SELECTION_MODE, type Wheel, type WheelItem, type WheelItemId } from '@/types/wheel';
 import { createId } from '@/utils/id';
 
 interface PendingAutomaticSpin {
@@ -40,11 +41,14 @@ export function useSpinSession(wheel: Wheel) {
   const [autoHandoff, setAutoHandoff] = useState(false);
   const [finalOpen, setFinalOpen] = useState(false);
   const [finishedResult, setFinishedResult] = useState<HierarchicalSelectionResult>();
+  const [removedWinnerIds, setRemovedWinnerIds] = useState<WheelItemId[]>([]);
   const cancelPaintWaitRef = useRef<() => void>(() => undefined);
   const pendingAutomaticSpinRef = useRef<PendingAutomaticSpin | null>(null);
   const pendingResumeSpinRef = useRef(false);
   const startPendingAutomaticSpinRef = useRef<() => void>(() => undefined);
-  const items = spinItems ?? wheel.items;
+  const sourceItems = spinItems ?? wheel.items;
+  const items = excludeRemovedWinners(sourceItems, new Set(removedWinnerIds));
+  const removeWinnerEnabled = wheel.settings.removeWinner ?? false;
   const spin = useSpinWheel(items, {
     wheelSettings: wheel.settings,
   });
@@ -85,6 +89,9 @@ export function useSpinSession(wheel: Wheel) {
     }
 
     const item = lifecycle.result?.item;
+    if (item && removeWinnerEnabled) {
+      setRemovedWinnerIds((current) => withRemovedWinner(current, item.id));
+    }
     if (!item || !shouldAutoAdvanceSelection(selectionMode, currentAncestors, item)) {
       setAutoHandoff(false);
       setWinnerDismissed(false);
@@ -225,6 +232,10 @@ export function useSpinSession(wheel: Wheel) {
     spin.reset();
   }
 
+  function restoreItems() {
+    setRemovedWinnerIds([]);
+  }
+
   function finish() {
     const next = createHierarchicalSelectionResult({
       sessionId,
@@ -244,7 +255,9 @@ export function useSpinSession(wheel: Wheel) {
     selection,
     path: selectionPathNames(selection),
     selectionMode,
+    removeWinnerEnabled,
     canContinue,
+    canRestoreItems: removedWinnerIds.length > 0,
     result,
     spin,
     winnerOpen,
@@ -257,6 +270,7 @@ export function useSpinSession(wheel: Wheel) {
     resumeFromResult,
     spinChild,
     startNewSelection,
+    restoreItems,
     finish,
   };
 }

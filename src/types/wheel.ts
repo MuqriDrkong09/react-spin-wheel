@@ -116,6 +116,7 @@ export interface WheelSettings {
   confettiEnabled: boolean;
   eliminationMode: boolean;
   selectionMode: SelectionMode;
+  removeWinner: boolean;
   skipDisabledItems: boolean;
 }
 

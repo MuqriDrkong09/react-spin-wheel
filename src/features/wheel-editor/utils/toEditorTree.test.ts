@@ -15,6 +15,7 @@ const foodWheel = {
     confettiEnabled: true,
     eliminationMode: false,
     selectionMode: 'manual',
+    removeWinner: false,
     skipDisabledItems: true,
   },
   items: [

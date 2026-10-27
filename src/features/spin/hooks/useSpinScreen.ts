@@ -51,6 +51,11 @@ export function useSpinScreen() {
         updateWheelSettings(wheelId, { selectionMode: mode });
       }
     },
+    setRemoveWinner: (enabled: boolean) => {
+      if (wheelId) {
+        updateWheelSettings(wheelId, { removeWinner: enabled });
+      }
+    },
   };
 }
 

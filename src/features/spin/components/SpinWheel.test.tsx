@@ -1,5 +1,5 @@
 import { SpinWheel } from '@/features/spin/components/SpinWheel';
-import { SPIN_MESSAGES } from '@/features/spin/constants';
+import { SPIN_MESSAGES, WHEEL_HUB_COLOR } from '@/features/spin/constants';
 import { renderWithProviders, screen } from '@/test/test-utils';
 import type { WheelItem } from '@/types/wheel';
 
@@ -71,25 +71,26 @@ describe('SpinWheel', () => {
     expect(screen.getAllByTitle('Cadillac F1 Team')).toHaveLength(11);
   });
 
-  it('fills the hub with the primary color by default', () => {
-    const { container } = renderWithProviders(
-      <SpinWheel items={[item('Pizza', { icon: '🍕' }), item('Burger', { icon: '🍔' })]} />,
-    );
-    const hub = container.querySelector('circle');
-
-    expect(hub).toHaveAttribute('fill', '#4f46e5');
-  });
-
-  it('fills the hub with the selected item color', () => {
-    const { container } = renderWithProviders(
+  it('keeps the hub a static color that does not follow slice colors', () => {
+    const { container, rerender } = renderWithProviders(
       <SpinWheel
         items={[item('Pizza', { icon: '🍕', color: '#ea580c' }), item('Burger', { icon: '🍔' })]}
-        selectedColor="#ea580c"
       />,
     );
     const hub = container.querySelector('circle');
 
-    expect(hub).toHaveAttribute('fill', '#ea580c');
+    expect(hub).toHaveAttribute('fill', WHEEL_HUB_COLOR);
+    expect(hub).not.toHaveAttribute('fill', '#ea580c');
+    expect(hub).not.toHaveAttribute('fill', '#4f46e5');
+
+    rerender(
+      <SpinWheel
+        items={[item('Pizza', { icon: '🍕', color: '#ea580c' }), item('Burger', { icon: '🍔' })]}
+        spinning
+      />,
+    );
+
+    expect(container.querySelector('circle')).toHaveAttribute('fill', WHEEL_HUB_COLOR);
   });
 
   it('renders a single item as a full wheel', () => {

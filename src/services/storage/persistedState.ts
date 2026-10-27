@@ -56,6 +56,7 @@ const wheelSettingsSchema = z.object({
   selectionMode: z
     .enum([SELECTION_MODE.manual, SELECTION_MODE.automatic, SELECTION_MODE.ask])
     .default(SELECTION_MODE.manual),
+  removeWinner: z.boolean().default(false),
   skipDisabledItems: z.boolean(),
 }) satisfies z.ZodType<WheelSettings>;
 

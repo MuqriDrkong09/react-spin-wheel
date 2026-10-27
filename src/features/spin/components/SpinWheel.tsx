@@ -7,6 +7,7 @@ import {
   DEFAULT_SPIN_ANIMATION,
   SPIN_EASINGS,
   SPIN_MESSAGES,
+  WHEEL_HUB_COLOR,
   type SpinAnimationType,
 } from '@/features/spin/constants';
 import { spinDiscDurationSeconds } from '@/features/spin/utils/spinAnimation';
@@ -17,7 +18,6 @@ interface SpinWheelProps {
   items: WheelItem[];
   onSpin?: () => void;
   spinning?: boolean;
-  selectedColor?: string;
   rotationDegrees?: number;
   spinDuration?: number;
   animationType?: SpinAnimationType;
@@ -29,7 +29,6 @@ export function SpinWheel({
   items,
   onSpin,
   spinning = false,
-  selectedColor,
   rotationDegrees = 0,
   spinDuration = DEFAULT_SPIN_ANIMATION.spinDuration,
   animationType = DEFAULT_SPIN_ANIMATION.animationType,
@@ -38,7 +37,7 @@ export function SpinWheel({
 }: SpinWheelProps) {
   const theme = useTheme();
   const geometry = useMemo(() => buildWheelGeometry(items), [items]);
-  const hubColor = selectedColor ?? theme.palette.primary.main;
+  const hubColor = WHEEL_HUB_COLOR;
   const hubContrast = theme.palette.getContrastText(hubColor);
   const duration = spinDiscDurationSeconds(spinDuration, { reducedMotion, spinning });
   const spinStartedAtRef = useRef<number | null>(null);

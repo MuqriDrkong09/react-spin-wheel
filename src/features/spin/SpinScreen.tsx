@@ -6,6 +6,7 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { FinalResult } from '@/features/spin/components/FinalResult';
+import { RemoveWinnerSwitch } from '@/features/spin/components/RemoveWinnerSwitch';
 import { SelectionModeSelect } from '@/features/spin/components/SelectionModeSelect';
 import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SpinWheel } from '@/features/spin/components/SpinWheel';
@@ -29,6 +30,7 @@ export function SpinScreen() {
     goToCreate,
     goToDashboard,
     setSelectionMode,
+    setRemoveWinner,
   } = useSpinScreen();
 
   return (
@@ -58,6 +60,10 @@ export function SpinScreen() {
                 <SelectionModeSelect
                   value={wheel.settings.selectionMode}
                   onChange={setSelectionMode}
+                />
+                <RemoveWinnerSwitch
+                  checked={wheel.settings.removeWinner ?? false}
+                  onChange={setRemoveWinner}
                 />
                 <Button variant="outlined" onClick={clearWheelSelection}>
                   {SPIN_MESSAGES.changeWheel}
@@ -162,8 +168,19 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
     session.startNewSelection();
   }
 
+  function restoreItems() {
+    session.restoreItems();
+  }
+
   return (
     <>
+      {session.canRestoreItems ? (
+        <Stack direction="row" sx={{ justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
+          <Button variant="outlined" onClick={restoreItems}>
+            {SPIN_MESSAGES.restoreItems}
+          </Button>
+        </Stack>
+      ) : null}
       {session.finalOpen && session.result ? (
         <FinalResult
           wheelName={wheel.name}
@@ -220,7 +237,6 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
             items={session.items}
             onSpin={session.startSpin}
             spinning={session.spin.spinning}
-            selectedColor={session.spin.selectedColor}
             rotationDegrees={session.spin.rotationDegrees}
             spinDuration={session.spin.animation.spinDuration}
             animationType={session.spin.animation.animationType}

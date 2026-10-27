@@ -98,6 +98,7 @@ describe('wheel domain model', () => {
         confettiEnabled: true,
         eliminationMode: false,
         selectionMode: 'manual',
+        removeWinner: false,
         skipDisabledItems: true,
       },
       ...timestamps,

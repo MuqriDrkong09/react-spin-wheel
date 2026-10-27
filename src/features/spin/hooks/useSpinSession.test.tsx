@@ -363,4 +363,106 @@ describe('useSpinSession', () => {
       'Beef Pepperoni',
     ]);
   });
+
+  it('removes a selected parent from future spins without deleting its children', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    wheel.settings.removeWinner = true;
+    const parentItems = wheel.items;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+
+    expect(result.current.winner?.name).toBe('Pizza');
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Burger']);
+    expect(result.current.canContinue).toBe(true);
+    expect(result.current.canRestoreItems).toBe(true);
+    expect(wheel.items).toBe(parentItems);
+    expect(wheel.items[0]?.children).toHaveLength(2);
+
+    act(() => {
+      result.current.spinChild();
+    });
+
+    expect(result.current.items.map((entry) => entry.name)).toEqual([
+      'Chicken Pepperoni',
+      'Beef Pepperoni',
+    ]);
+  });
+
+  it('removes only the selected nested item from its siblings', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = pizzaNightWheel();
+    wheel.settings.removeWinner = true;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    spinNextLevel(result, 'Pizza');
+    spinNextLevel(result, 'Chicken Pepperoni');
+    act(() => {
+      result.current.startSpin();
+    });
+
+    expect(result.current.winner?.name).toBe('Large');
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Medium']);
+    expect(wheel.items[0]?.children?.[0]?.children?.map((entry) => entry.name)).toEqual([
+      'Large',
+      'Medium',
+    ]);
+    expect(wheel.items[0]?.children?.[0]?.children?.[0]?.children?.map((entry) => entry.name)).toEqual(
+      ['Thin Crust', 'Thick Crust'],
+    );
+
+    act(() => {
+      result.current.spinChild();
+    });
+
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Thin Crust', 'Thick Crust']);
+  });
+
+  it('keeps removed winners out of a new selection until Restore Items', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    wheel.settings.removeWinner = true;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    act(() => {
+      result.current.startNewSelection();
+    });
+
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Burger']);
+    expect(result.current.canRestoreItems).toBe(true);
+
+    act(() => {
+      result.current.restoreItems();
+    });
+
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Pizza', 'Burger']);
+    expect(result.current.canRestoreItems).toBe(false);
+    expect(result.current.items[0]?.children?.map((entry) => entry.name)).toEqual([
+      'Chicken Pepperoni',
+      'Beef Pepperoni',
+    ]);
+  });
+
+  it('still auto-advances into children after the parent winner is removed', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    wheel.settings.selectionMode = SELECTION_MODE.automatic;
+    wheel.settings.removeWinner = true;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+
+    expect(result.current.path).toEqual(['Pizza', 'Chicken Pepperoni']);
+    expect(result.current.winner?.name).toBe('Chicken Pepperoni');
+    expect(result.current.winnerOpen).toBe(true);
+    expect(wheel.items[0]?.children).toHaveLength(2);
+  });
 });

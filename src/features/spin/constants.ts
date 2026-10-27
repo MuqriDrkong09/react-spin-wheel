@@ -22,6 +22,8 @@ export const SPIN_MESSAGES = {
   selectionModeManual: 'Manual',
   selectionModeAutomatic: 'Automatic',
   selectionModeAsk: 'Ask',
+  removeWinner: 'Remove Winner',
+  restoreItems: 'Restore Items',
   finish: 'Finish',
   close: 'Close',
   spinAgain: 'Spin Again',
@@ -75,6 +77,7 @@ export const DEFAULT_FULL_ROTATIONS = 4;
 export const WHEEL_VIEWBOX_SIZE = 200;
 export const WHEEL_RADIUS = 94;
 export const WHEEL_INNER_RADIUS = 24;
+export const WHEEL_HUB_COLOR = '#111827';
 export const WHEEL_CENTER_BUTTON_RATIO = 0.96;
 export const WHEEL_LABEL_RADIUS_RATIO = 0.66;
 export const WHEEL_LABEL_MIN_SWEEP = 0.28;

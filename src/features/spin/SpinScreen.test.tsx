@@ -317,6 +317,59 @@ describe('SpinScreen', () => {
     expect(within(dialog).queryByText(SPIN_MESSAGES.continuePrompt)).not.toBeInTheDocument();
   });
 
+  it('persists Remove Winner on the wheel', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('switch', { name: SPIN_MESSAGES.removeWinner }));
+
+    expect(useWheelStore.getState().getWheel('food')?.settings.removeWinner).toBe(true);
+  });
+
+  it('removes the winner from later spins and restores it on Restore Items', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seedFoodWheel();
+    useWheelStore.getState().updateWheelSettings('food', { removeWinner: true });
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('img', { name: /spin wheel with burger, sushi/i })).toBeInTheDocument();
+    expect(screen.queryByTitle('🍕 Pizza')).not.toBeInTheDocument();
+    expect(useWheelStore.getState().getWheel('food')?.items[0]?.name).toBe('Pizza');
+    expect(useWheelStore.getState().getWheel('food')?.items[0]?.children).toHaveLength(2);
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.restoreItems }));
+
+    expect(screen.getByRole('img', { name: /spin wheel with pizza, burger, sushi/i })).toBeInTheDocument();
+    expect(screen.getByTitle('🍕 Pizza')).toBeInTheDocument();
+  });
+
+  it('removes only the selected child from its parent siblings', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seedFoodWheel();
+    useWheelStore.getState().updateWheelSettings('food', { removeWinner: true });
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('img', { name: /spin wheel with mushroom/i })).toBeInTheDocument();
+    expect(screen.queryByTitle('Pepperoni')).not.toBeInTheDocument();
+    expect(screen.getByTitle('Mushroom')).toBeInTheDocument();
+    expect(
+      useWheelStore.getState().getWheel('food')?.items[0]?.children?.map((entry) => entry.name),
+    ).toEqual(['Pepperoni', 'Mushroom']);
+  });
+
   it('persists the selected selection mode on the wheel', async () => {
     const user = userEvent.setup();
     seedFoodWheel();

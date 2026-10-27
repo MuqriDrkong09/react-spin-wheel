@@ -54,6 +54,7 @@ describe('persistedState', () => {
             confettiEnabled: true,
             eliminationMode: false,
             selectionMode: 'manual',
+            removeWinner: false,
             skipDisabledItems: true,
           },
           createdAt: '2026-01-01T00:00:00.000Z',
@@ -122,6 +123,7 @@ describe('persistedState', () => {
     );
 
     expect(loadPersistedState().wheels[0]?.settings.selectionMode).toBe('manual');
+    expect(loadPersistedState().wheels[0]?.settings.removeWinner).toBe(false);
   });
 
   it('returns defaults for corrupted JSON', () => {
