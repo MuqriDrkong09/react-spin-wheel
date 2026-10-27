@@ -109,6 +109,7 @@ describe('selectionFlow', () => {
       path: ['pizza', 'chicken-pepperoni', 'large', 'thin-crust'],
       labels: ['Pizza', 'Chicken Pepperoni', 'Large', 'Thin Crust'],
       timestamp: '2026-10-26T04:00:00.000Z',
+      durationMs: 0,
     });
   });
 

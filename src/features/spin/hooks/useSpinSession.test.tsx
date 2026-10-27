@@ -155,6 +155,7 @@ describe('useSpinSession', () => {
       path: ['pizza', 'chicken-pepperoni', 'large', 'thin-crust'],
       labels: ['Pizza', 'Chicken Pepperoni', 'Large', 'Thin Crust'],
       timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      durationMs: 0,
     });
     expect(wheel.items).toBe(parentItems);
     expect(wheel.items[0]?.children?.[0]?.children?.[0]?.children?.[0]?.name).toBe('Thin Crust');
@@ -179,6 +180,7 @@ describe('useSpinSession', () => {
       path: ['pizza'],
       labels: ['Pizza'],
       timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      durationMs: expect.any(Number),
     });
     expect(result.current.canContinue).toBe(true);
     expect(result.current.finalOpen).toBe(true);

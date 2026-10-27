@@ -126,6 +126,51 @@ describe('persistedState', () => {
     expect(loadPersistedState().wheels[0]?.settings.removeWinner).toBe(false);
   });
 
+  it('fills missing spin result history fields', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          spinHistory: [
+            {
+              id: 'session-1',
+              wheelId: 'wheel-1',
+              wheelName: 'Pizza',
+              status: SPIN_SESSION_STATUS.completed,
+              results: [
+                {
+                  id: 'r1',
+                  sessionId: 'session-1',
+                  wheelId: 'wheel-1',
+                  itemId: 'large',
+                  itemName: 'Large',
+                  parentItemId: 'chicken',
+                  path: ['pizza', 'chicken', 'large'],
+                  depth: 2,
+                  probability: 1,
+                  spunAt: '2026-01-01T00:00:00.000Z',
+                },
+              ],
+              path: ['pizza', 'chicken', 'large'],
+              startedAt: '2026-01-01T00:00:00.000Z',
+              completedAt: '2026-01-01T00:00:01.000Z',
+            },
+          ],
+        },
+      }),
+    );
+
+    const result = loadPersistedState().spinHistory[0]?.results[0];
+    expect(result?.selectedItemId).toBe('large');
+    expect(result?.selectedItemName).toBe('Large');
+    expect(result?.pathLabels).toEqual(['Large']);
+    expect(result?.timestamp).toBe('2026-01-01T00:00:00.000Z');
+    expect(result?.duration).toBe(0);
+    expect(result?.mode).toBe('manual');
+  });
+
   it('returns defaults for corrupted JSON', () => {
     window.localStorage.setItem(STORAGE_KEY, '{bad');
     expect(loadPersistedState()).toEqual(defaultPersistedState);

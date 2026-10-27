@@ -3,7 +3,7 @@ import {
   formatResultTimestamp,
   toSpinHistorySession,
 } from '@/features/spin/utils/formatFinalResult';
-import { SPIN_SESSION_STATUS } from '@/types/wheel';
+import { SELECTION_MODE, SPIN_SESSION_STATUS } from '@/types/wheel';
 
 const steps = [
   { id: 'pizza', name: 'Pizza', icon: '🍕' },
@@ -41,6 +41,7 @@ describe('formatFinalResult', () => {
     expect(
       toSpinHistorySession({
         wheelName: 'Pizza Night',
+        mode: SELECTION_MODE.ask,
         result: {
           sessionId: 'session-1',
           wheelId: 'pizza-night',
@@ -48,49 +49,32 @@ describe('formatFinalResult', () => {
           path: ['pizza', 'chicken-pepperoni', 'large'],
           labels: ['Pizza', 'Chicken Pepperoni', 'Large'],
           timestamp: '2026-10-27T01:20:00.000Z',
+          durationMs: 4200,
         },
       }),
     ).toEqual({
-      id: 'session-1',
+      id: expect.any(String),
       wheelId: 'pizza-night',
       wheelName: 'Pizza Night',
       status: SPIN_SESSION_STATUS.completed,
       results: [
         {
-          id: 'session-1-pizza',
-          sessionId: 'session-1',
-          wheelId: 'pizza-night',
-          itemId: 'pizza',
-          itemName: 'Pizza',
-          parentItemId: null,
-          path: ['pizza'],
-          depth: 0,
-          probability: 1,
-          spunAt: '2026-10-27T01:20:00.000Z',
-        },
-        {
-          id: 'session-1-chicken-pepperoni',
-          sessionId: 'session-1',
-          wheelId: 'pizza-night',
-          itemId: 'chicken-pepperoni',
-          itemName: 'Chicken Pepperoni',
-          parentItemId: 'pizza',
-          path: ['pizza', 'chicken-pepperoni'],
-          depth: 1,
-          probability: 1,
-          spunAt: '2026-10-27T01:20:00.000Z',
-        },
-        {
-          id: 'session-1-large',
+          id: expect.any(String),
           sessionId: 'session-1',
           wheelId: 'pizza-night',
           itemId: 'large',
           itemName: 'Large',
+          selectedItemId: 'large',
+          selectedItemName: 'Large',
           parentItemId: 'chicken-pepperoni',
           path: ['pizza', 'chicken-pepperoni', 'large'],
+          pathLabels: ['Pizza', 'Chicken Pepperoni', 'Large'],
           depth: 2,
           probability: 1,
+          timestamp: '2026-10-27T01:20:00.000Z',
           spunAt: '2026-10-27T01:20:00.000Z',
+          duration: 4200,
+          mode: SELECTION_MODE.ask,
         },
       ],
       path: ['pizza', 'chicken-pepperoni', 'large'],

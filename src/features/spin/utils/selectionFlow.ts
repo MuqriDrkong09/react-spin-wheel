@@ -33,6 +33,7 @@ export interface HierarchicalSelectionResult {
   path: WheelItemPath;
   labels: string[];
   timestamp: IsoDateTime;
+  durationMs: number;
 }
 
 export interface SelectionLevel {
@@ -100,6 +101,7 @@ export function createHierarchicalSelectionResult(input: {
   wheelId: WheelId;
   selection: readonly SelectionStep[];
   timestamp?: IsoDateTime;
+  durationMs?: number;
 }): HierarchicalSelectionResult | undefined {
   const selected = input.selection[input.selection.length - 1];
   if (!selected) {
@@ -113,6 +115,7 @@ export function createHierarchicalSelectionResult(input: {
     path: selectionPathIds(input.selection),
     labels: selectionPathNames(input.selection),
     timestamp: input.timestamp ?? nowIso(),
+    durationMs: input.durationMs ?? 0,
   };
 }
 

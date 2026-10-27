@@ -144,6 +144,7 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
       toSpinHistorySession({
         result: session.result,
         wheelName: wheel.name,
+        mode: session.selectionMode,
       }),
     );
     setSaved(true);
@@ -256,9 +257,21 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
         reducedMotion={session.spin.reducedMotion}
         onClose={session.closeWinner}
         onFinish={() => {
-          setSaved(false);
+          const completed = session.finish();
           setStatusMessage('');
-          session.finish();
+          if (!completed) {
+            setSaved(false);
+            return;
+          }
+
+          addSpinSession(
+            toSpinHistorySession({
+              result: completed,
+              wheelName: wheel.name,
+              mode: session.selectionMode,
+            }),
+          );
+          setSaved(true);
         }}
         onSpinAgain={spinAgain}
         onSpinChild={session.spinChild}

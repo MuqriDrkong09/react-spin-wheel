@@ -14,7 +14,7 @@ import {
 import { selectionPathNames, type SelectionStep } from '@/features/spin/utils/selectionPath';
 import type { SpinLifecycleState } from '@/features/spin/utils/spinLifecycle';
 import { SELECTION_MODE, type Wheel, type WheelItem, type WheelItemId } from '@/types/wheel';
-import { createId } from '@/utils/id';
+import { createId, elapsedMs, nowMs } from '@/utils/id';
 
 interface PendingAutomaticSpin {
   ancestors: SelectionStep[];
@@ -46,6 +46,7 @@ export function useSpinSession(wheel: Wheel) {
   const pendingAutomaticSpinRef = useRef<PendingAutomaticSpin | null>(null);
   const pendingResumeSpinRef = useRef(false);
   const startPendingAutomaticSpinRef = useRef<() => void>(() => undefined);
+  const selectionStartedAtRef = useRef<number | null>(null);
   const sourceItems = spinItems ?? wheel.items;
   const items = excludeRemovedWinners(sourceItems, new Set(removedWinnerIds));
   const removeWinnerEnabled = wheel.settings.removeWinner ?? false;
@@ -163,7 +164,14 @@ export function useSpinSession(wheel: Wheel) {
     };
   }, [finalOpen]);
 
+  function markSelectionStarted() {
+    if (selectionStartedAtRef.current == null) {
+      selectionStartedAtRef.current = nowMs();
+    }
+  }
+
   function startSpin() {
+    markSelectionStarted();
     setWinnerDismissed(false);
     setAutoHandoff(false);
     setFinalOpen(false);
@@ -180,6 +188,7 @@ export function useSpinSession(wheel: Wheel) {
   }
 
   function spinAgain() {
+    markSelectionStarted();
     setWinnerDismissed(false);
     setAutoHandoff(false);
     setFinalOpen(false);
@@ -206,6 +215,7 @@ export function useSpinSession(wheel: Wheel) {
   }
 
   function resumeFromResult() {
+    selectionStartedAtRef.current = null;
     setWinnerDismissed(true);
     setAutoHandoff(false);
     setFinalOpen(false);
@@ -217,11 +227,13 @@ export function useSpinSession(wheel: Wheel) {
 
     pendingResumeSpinRef.current = true;
     startPendingAutomaticSpinRef.current = () => {
+      markSelectionStarted();
       continueAutomatically(ancestors, spin.spin());
     };
   }
 
   function startNewSelection() {
+    selectionStartedAtRef.current = null;
     setSessionId(createId());
     setSpinItems(null);
     setAncestors([]);
@@ -237,10 +249,12 @@ export function useSpinSession(wheel: Wheel) {
   }
 
   function finish() {
+    const startedAt = selectionStartedAtRef.current;
     const next = createHierarchicalSelectionResult({
       sessionId,
       wheelId: wheel.id,
       selection,
+      durationMs: startedAt == null ? 0 : elapsedMs(startedAt),
     });
     setFinishedResult(next);
     setWinnerDismissed(true);

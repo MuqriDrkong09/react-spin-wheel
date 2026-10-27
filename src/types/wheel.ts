@@ -160,11 +160,17 @@ export interface SpinResult extends Identifiable<SpinResultId> {
   wheelId: WheelId;
   itemId: WheelItemId;
   itemName: string;
+  selectedItemId: WheelItemId;
+  selectedItemName: string;
   parentItemId: WheelItemId | null;
   path: WheelItemPath;
+  pathLabels: string[];
   depth: number;
   probability: Probability;
+  timestamp: IsoDateTime;
   spunAt: IsoDateTime;
+  duration: number;
+  mode: SelectionMode;
 }
 
 export interface SpinSession extends Identifiable<SpinSessionId> {

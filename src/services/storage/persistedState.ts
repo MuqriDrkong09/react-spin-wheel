@@ -120,18 +120,36 @@ const snapshotSchema: z.ZodType<WheelSnapshot> = z.object({
   conditions: z.array(itemConditionSchema).optional(),
 });
 
-const spinResultSchema: z.ZodType<SpinResult> = z.object({
-  id: z.string(),
-  sessionId: z.string(),
-  wheelId: z.string(),
-  itemId: z.string(),
-  itemName: z.string(),
-  parentItemId: z.string().nullable(),
-  path: z.array(z.string()),
-  depth: z.number(),
-  probability: z.number(),
-  spunAt: z.string(),
-});
+const spinResultSchema: z.ZodType<SpinResult> = z
+  .object({
+    id: z.string(),
+    sessionId: z.string(),
+    wheelId: z.string(),
+    itemId: z.string(),
+    itemName: z.string(),
+    selectedItemId: z.string().optional(),
+    selectedItemName: z.string().optional(),
+    parentItemId: z.string().nullable(),
+    path: z.array(z.string()),
+    pathLabels: z.array(z.string()).optional(),
+    depth: z.number(),
+    probability: z.number(),
+    timestamp: z.string().optional(),
+    spunAt: z.string(),
+    duration: z.number().optional(),
+    mode: z
+      .enum([SELECTION_MODE.manual, SELECTION_MODE.automatic, SELECTION_MODE.ask])
+      .optional(),
+  })
+  .transform((value) => ({
+    ...value,
+    selectedItemId: value.selectedItemId ?? value.itemId,
+    selectedItemName: value.selectedItemName ?? value.itemName,
+    pathLabels: value.pathLabels ?? [value.itemName],
+    timestamp: value.timestamp ?? value.spunAt,
+    duration: value.duration ?? 0,
+    mode: value.mode ?? SELECTION_MODE.manual,
+  }));
 
 const spinSessionSchema: z.ZodType<SpinSession> = z.object({
   id: z.string(),

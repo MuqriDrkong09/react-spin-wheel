@@ -1,6 +1,13 @@
 import type { HierarchicalSelectionResult } from '@/features/spin/utils/selectionFlow';
 import type { SelectionStep } from '@/features/spin/utils/selectionPath';
-import { SPIN_SESSION_STATUS, type SpinResult, type SpinSession } from '@/types/wheel';
+import {
+  SELECTION_MODE,
+  SPIN_SESSION_STATUS,
+  type SelectionMode,
+  type SpinResult,
+  type SpinSession,
+} from '@/types/wheel';
+import { createId } from '@/utils/id';
 
 export function formatResultTimestamp(iso: string): string {
   const date = new Date(iso);
@@ -39,26 +46,36 @@ export function formatFinalResultCopy(input: {
 export function toSpinHistorySession(input: {
   result: HierarchicalSelectionResult;
   wheelName: string;
+  mode?: SelectionMode;
 }): SpinSession {
-  const results: SpinResult[] = input.result.path.map((itemId, index) => ({
-    id: `${input.result.sessionId}-${itemId}`,
+  const lastIndex = input.result.path.length - 1;
+  const selectedItemId = input.result.selectedItemId;
+  const selectedItemName = input.result.labels[lastIndex] ?? selectedItemId;
+  const result: SpinResult = {
+    id: createId(),
     sessionId: input.result.sessionId,
     wheelId: input.result.wheelId,
-    itemId,
-    itemName: input.result.labels[index] ?? itemId,
-    parentItemId: index > 0 ? (input.result.path[index - 1] ?? null) : null,
-    path: input.result.path.slice(0, index + 1),
-    depth: index,
+    itemId: selectedItemId,
+    itemName: selectedItemName,
+    selectedItemId,
+    selectedItemName,
+    parentItemId: lastIndex > 0 ? (input.result.path[lastIndex - 1] ?? null) : null,
+    path: [...input.result.path],
+    pathLabels: [...input.result.labels],
+    depth: Math.max(0, lastIndex),
     probability: 1,
+    timestamp: input.result.timestamp,
     spunAt: input.result.timestamp,
-  }));
+    duration: input.result.durationMs,
+    mode: input.mode ?? SELECTION_MODE.manual,
+  };
 
   return {
-    id: input.result.sessionId,
+    id: result.id,
     wheelId: input.result.wheelId,
     wheelName: input.wheelName,
     status: SPIN_SESSION_STATUS.completed,
-    results,
+    results: [result],
     path: [...input.result.path],
     startedAt: input.result.timestamp,
     completedAt: input.result.timestamp,

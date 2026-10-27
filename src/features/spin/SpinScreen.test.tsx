@@ -192,9 +192,10 @@ describe('SpinScreen', () => {
     expect(writeText.mock.calls[0]?.[0]).toContain('Food Wheel');
     expect(writeText.mock.calls[0]?.[0]).toContain('🍔 Burger');
 
-    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.saveResult }));
     expect(useHistoryStore.getState().spinHistory).toHaveLength(1);
     expect(useHistoryStore.getState().spinHistory[0]?.wheelName).toBe('Food Wheel');
+    expect(useHistoryStore.getState().spinHistory[0]?.results[0]?.selectedItemName).toBe('Burger');
+    expect(useHistoryStore.getState().spinHistory[0]?.results[0]?.pathLabels).toEqual(['Burger']);
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.resultSaved })).toBeDisabled();
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinAgain }));

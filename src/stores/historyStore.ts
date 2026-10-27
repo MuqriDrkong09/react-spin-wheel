@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 
-import type { SpinSession } from '@/types/wheel';
+import type { SpinSession, SpinSessionId } from '@/types/wheel';
 
 interface HistoryStore {
   spinHistory: SpinSession[];
   addSpinSession: (session: SpinSession) => void;
+  deleteSpinSession: (sessionId: SpinSessionId) => void;
   clearSpinHistory: () => void;
 }
 
@@ -17,6 +18,10 @@ export const useHistoryStore = create<HistoryStore>((set) => ({
   addSpinSession: (session) =>
     set((state) => ({
       spinHistory: [session, ...state.spinHistory],
+    })),
+  deleteSpinSession: (sessionId) =>
+    set((state) => ({
+      spinHistory: state.spinHistory.filter((session) => session.id !== sessionId),
     })),
   clearSpinHistory: () => set({ spinHistory: [] }),
 }));
