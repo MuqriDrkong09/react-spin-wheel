@@ -214,7 +214,7 @@ describe('persistedState', () => {
   it('clears persisted state', () => {
     savePersistedState({ ...defaultPersistedState, colorMode: COLOR_MODE.dark });
     clearPersistedState();
-    expect(loadPersistedState().colorMode).toBe(COLOR_MODE.light);
+    expect(loadPersistedState().colorMode).toBe(COLOR_MODE.system);
   });
 });
 

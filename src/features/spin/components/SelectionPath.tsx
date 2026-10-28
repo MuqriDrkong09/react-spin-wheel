@@ -10,9 +10,10 @@ interface SelectionPathProps {
   steps: readonly SelectionStep[];
   id?: string;
   size?: 'dialog' | 'screen' | 'result';
+  textColor?: string;
 }
 
-export function SelectionPath({ steps, id, size = 'screen' }: SelectionPathProps) {
+export function SelectionPath({ steps, id, size = 'screen', textColor }: SelectionPathProps) {
   if (steps.length === 0) {
     return null;
   }
@@ -35,18 +36,25 @@ export function SelectionPath({ steps, id, size = 'screen' }: SelectionPathProps
         return (
           <Stack key={step.id} component="li" spacing={0.5} alignItems="center">
             {index > 0 ? (
-              <Typography aria-hidden variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>
+              <Typography
+                aria-hidden
+                variant="body2"
+                color={textColor ? undefined : 'text.secondary'}
+                sx={{ lineHeight: 1, color: textColor, opacity: textColor ? 0.78 : undefined }}
+              >
                 ↓
               </Typography>
             ) : null}
             <Typography
               variant={isLeaf && emphasizeLeaf ? 'h4' : 'body1'}
               component="p"
-              color={isLeaf ? 'text.primary' : 'text.secondary'}
+              color={textColor ? undefined : isLeaf ? 'text.primary' : 'text.secondary'}
               aria-current={isLeaf ? 'true' : undefined}
               sx={{
                 fontWeight: isLeaf ? 700 : 500,
                 textAlign: 'center',
+                color: textColor,
+                opacity: textColor && !isLeaf ? 0.78 : undefined,
                 fontSize: isLeaf && size === 'result' ? { xs: '1.5rem', sm: '2.125rem' } : undefined,
               }}
             >

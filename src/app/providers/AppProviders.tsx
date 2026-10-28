@@ -9,8 +9,8 @@ interface AppProvidersProps {
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
-  const { colorMode } = useColorMode();
-  const theme = useMemo(() => createAppTheme(colorMode), [colorMode]);
+  const { resolvedMode } = useColorMode();
+  const theme = useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
 
   return (
     <ThemeProvider theme={theme}>

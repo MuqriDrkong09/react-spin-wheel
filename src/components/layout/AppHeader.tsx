@@ -1,19 +1,14 @@
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import { AppBar, Box, IconButton, Toolbar, Typography } from '@mui/material';
 
+import { ColorModeMenu } from '@/components/layout/ColorModeMenu';
 import { APP_NAME, DRAWER_WIDTH } from '@/constants/app';
-import { useColorMode } from '@/hooks/useColorMode';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useAppStore } from '@/stores/appStore';
-import { COLOR_MODE } from '@/types/colorMode';
 
 export function AppHeader() {
   const isMobile = useIsMobile();
   const toggleSidebar = useAppStore((state) => state.toggleSidebar);
-  const { colorMode, toggleColorMode } = useColorMode();
-  const isDark = colorMode === COLOR_MODE.dark;
 
   return (
     <AppBar
@@ -22,6 +17,7 @@ export function AppHeader() {
         borderBottom: 1,
         borderColor: 'divider',
         bgcolor: 'background.paper',
+        color: 'text.primary',
         width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
         ml: { md: `${DRAWER_WIDTH}px` },
       }}
@@ -41,13 +37,7 @@ export function AppHeader() {
           {APP_NAME}
         </Typography>
         <Box>
-          <IconButton
-            color="inherit"
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            onClick={toggleColorMode}
-          >
-            {isDark ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
-          </IconButton>
+          <ColorModeMenu />
         </Box>
       </Toolbar>
     </AppBar>

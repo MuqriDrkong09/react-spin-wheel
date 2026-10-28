@@ -206,7 +206,7 @@ export function WheelCustomizationPanel({ wheel }: WheelCustomizationPanelProps)
 
             <Card variant="outlined" sx={{ bgcolor: appearance.background }}>
               <CardContent>
-                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, color: appearance.textColor }}>
                   {CUSTOMIZATION_MESSAGES.preview}
                 </Typography>
                 <Typography

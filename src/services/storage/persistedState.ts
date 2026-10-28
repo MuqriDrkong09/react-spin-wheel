@@ -37,7 +37,7 @@ export interface PersistedState {
 }
 
 export const defaultPersistedState: PersistedState = {
-  colorMode: COLOR_MODE.light,
+  colorMode: COLOR_MODE.system,
   wheels: [],
   activeWheelId: null,
   snapshots: {},
@@ -175,7 +175,7 @@ const spinSessionSchema: z.ZodType<SpinSession> = z.object({
 });
 
 const persistedStateSchema: z.ZodType<PersistedState> = z.object({
-  colorMode: z.enum([COLOR_MODE.light, COLOR_MODE.dark]),
+  colorMode: z.enum([COLOR_MODE.light, COLOR_MODE.dark, COLOR_MODE.system]),
   wheels: z.array(wheelSchema),
   activeWheelId: z.string().nullable(),
   snapshots: z.record(z.string(), snapshotSchema),

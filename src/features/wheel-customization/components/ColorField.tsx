@@ -81,6 +81,10 @@ export function ColorField({ label, value, onChange, onCommit }: ColorFieldProps
               p: 0.5,
               borderColor: 'divider',
               bgcolor: displayed,
+              boxShadow: (theme) =>
+                `inset 0 0 0 1px ${
+                  theme.palette.mode === 'dark' ? 'rgba(248,250,252,0.22)' : 'rgba(15,23,42,0.16)'
+                }`,
               '&:hover': { bgcolor: displayed },
             }}
           />

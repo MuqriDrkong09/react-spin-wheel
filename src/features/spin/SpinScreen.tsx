@@ -47,6 +47,7 @@ export function SpinScreen() {
       >
         <PageHeader
           title="Spin"
+          actionsBesideFrom={wheel ? 'md' : 'sm'}
           description={
             wheel
               ? `Spin ${wheel.name}.`
@@ -239,8 +240,8 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
             </Typography>
             {session.ancestors.length > 0 ? (
               <>
-                <SelectionPath steps={session.ancestors} />
-                <Typography color="text.secondary">
+                <SelectionPath steps={session.ancestors} textColor={appearance.textColor} />
+                <Typography sx={{ color: appearance.textColor, opacity: 0.8 }}>
                   {SPIN_MESSAGES.childWheelOf(session.ancestors[session.ancestors.length - 1]?.name ?? '')}
                 </Typography>
               </>
@@ -259,7 +260,9 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
             onSpinComplete={session.completeSpin}
           />
           {session.spin.status === SPIN_STATUS.spinning ? (
-            <Typography color="text.secondary">{SPIN_MESSAGES.spinning}</Typography>
+            <Typography sx={{ color: appearance.textColor, opacity: 0.8 }}>
+              {SPIN_MESSAGES.spinning}
+            </Typography>
           ) : null}
         </Box>
       )}

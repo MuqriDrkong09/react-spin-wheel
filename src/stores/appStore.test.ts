@@ -7,11 +7,21 @@ describe('useAppStore', () => {
     resetAppStore();
   });
 
-  it('toggles color mode', () => {
+  it('defaults to system color mode and cycles light, dark, then system', () => {
+    expect(useAppStore.getState().colorMode).toBe(COLOR_MODE.system);
+
+    useAppStore.getState().toggleColorMode();
     expect(useAppStore.getState().colorMode).toBe(COLOR_MODE.light);
 
     useAppStore.getState().toggleColorMode();
+    expect(useAppStore.getState().colorMode).toBe(COLOR_MODE.dark);
 
+    useAppStore.getState().toggleColorMode();
+    expect(useAppStore.getState().colorMode).toBe(COLOR_MODE.system);
+  });
+
+  it('sets an explicit color mode', () => {
+    useAppStore.getState().setColorMode(COLOR_MODE.dark);
     expect(useAppStore.getState().colorMode).toBe(COLOR_MODE.dark);
   });
 

@@ -5,14 +5,23 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  actionsBesideFrom?: 'sm' | 'md';
 }
 
-export function PageHeader({ title, description, action }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  action,
+  actionsBesideFrom = 'sm',
+}: PageHeaderProps) {
   return (
     <Stack
-      direction={{ xs: 'column', sm: 'row' }}
+      direction={{ xs: 'column', [actionsBesideFrom]: 'row' }}
       spacing={2}
-      sx={{ alignItems: { sm: 'flex-start' }, justifyContent: 'space-between' }}
+      sx={{
+        alignItems: { [actionsBesideFrom]: 'flex-start' },
+        justifyContent: 'space-between',
+      }}
     >
       <Box>
         <Typography variant="h4" component="h1" gutterBottom>

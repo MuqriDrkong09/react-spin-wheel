@@ -12,23 +12,27 @@ const testComponents =
     : {};
 
 export function createAppTheme(mode: PaletteMode): Theme {
+  const light = mode === 'light';
+
   return createTheme({
     palette: {
       mode,
+      contrastThreshold: 4.5,
       primary: {
-        main: '#4f46e5',
+        main: light ? '#4338ca' : '#818cf8',
       },
       secondary: {
-        main: '#0f766e',
+        main: light ? '#0f766e' : '#5eead4',
       },
       background: {
-        default: mode === 'light' ? '#f8fafc' : '#0b1220',
-        paper: mode === 'light' ? '#ffffff' : '#111827',
+        default: light ? '#f8fafc' : '#0b1220',
+        paper: light ? '#ffffff' : '#111827',
       },
       text: {
-        primary: mode === 'light' ? '#0f172a' : '#f8fafc',
-        secondary: mode === 'light' ? '#475569' : '#cbd5e1',
+        primary: light ? '#0f172a' : '#f8fafc',
+        secondary: light ? '#334155' : '#cbd5e1',
       },
+      divider: light ? '#cbd5e1' : '#475569',
     },
     shape: {
       borderRadius: 12,
@@ -51,6 +55,9 @@ export function createAppTheme(mode: PaletteMode): Theme {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
+          html: {
+            colorScheme: mode,
+          },
           body: {
             minHeight: '100vh',
           },
