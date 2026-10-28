@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { DEFAULT_APP_SETTINGS } from '@/constants/settings';
+import { clampVolume } from '@/features/sound/soundEngine';
 import type { AppSettings } from '@/types/settings';
 
 interface SettingsStore {
@@ -19,6 +20,7 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
       settings: {
         ...state.settings,
         ...patch,
+        masterVolume: clampVolume(patch.masterVolume ?? state.settings.masterVolume),
       },
     })),
 }));

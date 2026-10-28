@@ -2,6 +2,7 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import { useMemo, type ReactNode } from 'react';
 
 import { createAppTheme } from '@/app/theme/createAppTheme';
+import { SoundProvider } from '@/features/sound/SoundProvider';
 import { useColorMode } from '@/hooks/useColorMode';
 
 interface AppProvidersProps {
@@ -15,7 +16,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {children}
+      <SoundProvider>{children}</SoundProvider>
     </ThemeProvider>
   );
 }

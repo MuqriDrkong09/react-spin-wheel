@@ -211,6 +211,28 @@ describe('persistedState', () => {
     expect(loaded.favoriteWheelIds).toEqual([]);
   });
 
+  it('fills missing app sound settings', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          settings: {
+            soundEnabled: false,
+            confettiEnabled: true,
+            confirmBeforeDelete: true,
+          },
+        },
+      }),
+    );
+
+    expect(loadPersistedState().settings).toEqual({
+      ...DEFAULT_APP_SETTINGS,
+      soundEnabled: false,
+    });
+  });
+
   it('clears persisted state', () => {
     savePersistedState({ ...defaultPersistedState, colorMode: COLOR_MODE.dark });
     clearPersistedState();

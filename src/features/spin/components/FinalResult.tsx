@@ -6,10 +6,12 @@ import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 
+import { useSound } from '@/features/sound/useSound';
 import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import { formatResultTimestamp } from '@/features/spin/utils/formatFinalResult';
 import type { SelectionStep } from '@/features/spin/utils/selectionPath';
+import { SOUND_ID } from '@/types/sound';
 
 interface FinalResultProps {
   wheelName: string;
@@ -18,6 +20,7 @@ interface FinalResultProps {
   reducedMotion?: boolean;
   saved?: boolean;
   statusMessage?: string;
+  soundEnabled?: boolean;
   onSpinAgain: () => void;
   onStartNewSelection: () => void;
   onCopy: () => void;
@@ -31,17 +34,30 @@ export function FinalResult({
   reducedMotion = false,
   saved = false,
   statusMessage,
+  soundEnabled = true,
   onSpinAgain,
   onStartNewSelection,
   onCopy,
   onSave,
 }: FinalResultProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const { play } = useSound();
+  const playRef = useRef(play);
   const formattedTime = formatResultTimestamp(timestamp);
 
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    playRef.current = play;
+  }, [play]);
+
+  useEffect(() => {
+    if (soundEnabled) {
+      playRef.current(SOUND_ID.celebration);
+    }
+  }, [soundEnabled]);
 
   return (
     <Box

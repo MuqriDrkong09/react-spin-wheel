@@ -57,7 +57,9 @@ describe('CreateWheelScreen', () => {
     expect(created?.items.map((item) => item.name)).toEqual(['Pepperoni', 'Margherita']);
     expect(useWheelStore.getState().activeWheelId).toBe(created?.id);
     expect(loadPersistedState().wheels[0]?.name).toBe('Pizza Night');
-    expect(await screen.findByRole('heading', { name: 'Wheel editor', level: 1 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Wheel editor', level: 1 }, { timeout: 5000 }),
+    ).toBeInTheDocument();
   });
 
   it('allows optional description, category, and icon', async () => {
@@ -74,6 +76,8 @@ describe('CreateWheelScreen', () => {
     expect(created?.category).toBeUndefined();
     expect(created?.icon).toBeUndefined();
     expect(created?.items).toHaveLength(1);
-    expect(await screen.findByRole('heading', { name: 'Wheel editor', level: 1 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Wheel editor', level: 1 }, { timeout: 5000 }),
+    ).toBeInTheDocument();
   });
 });

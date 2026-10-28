@@ -182,6 +182,10 @@ const persistedStateSchema: z.ZodType<PersistedState> = z.object({
   spinHistory: z.array(spinSessionSchema),
   settings: z.object({
     soundEnabled: z.boolean(),
+    masterVolume: z.number().min(0).max(1).default(DEFAULT_APP_SETTINGS.masterVolume),
+    spinSound: z.boolean().default(DEFAULT_APP_SETTINGS.spinSound),
+    tickSound: z.boolean().default(DEFAULT_APP_SETTINGS.tickSound),
+    winnerSound: z.boolean().default(DEFAULT_APP_SETTINGS.winnerSound),
     confettiEnabled: z.boolean(),
     confirmBeforeDelete: z.boolean(),
   }),

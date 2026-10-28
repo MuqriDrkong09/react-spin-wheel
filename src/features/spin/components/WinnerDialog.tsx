@@ -7,10 +7,13 @@ import {
   DialogTitle,
 } from '@mui/material';
 import { motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 
+import { useSound } from '@/features/sound/useSound';
 import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import { toSelectionStep, type SelectionStep } from '@/features/spin/utils/selectionPath';
+import { SOUND_ID } from '@/types/sound';
 import { isWheelItemBranch, SELECTION_MODE, type SelectionMode, type WheelItem } from '@/types/wheel';
 
 interface WinnerDialogProps {
@@ -19,6 +22,7 @@ interface WinnerDialogProps {
   path?: readonly SelectionStep[];
   selectionMode?: SelectionMode;
   reducedMotion?: boolean;
+  soundEnabled?: boolean;
   onClose: () => void;
   onFinish: () => void;
   onSpinAgain: () => void;
@@ -31,17 +35,31 @@ export function WinnerDialog({
   path,
   selectionMode = SELECTION_MODE.manual,
   reducedMotion = false,
+  soundEnabled = true,
   onClose,
   onFinish,
   onSpinAgain,
   onSpinChild,
 }: WinnerDialogProps) {
+  const { play } = useSound();
+  const playRef = useRef(play);
+  const winnerId = item?.id;
   const hasChildren = item ? isWheelItemBranch(item) : false;
   const askToContinue = hasChildren && selectionMode === SELECTION_MODE.ask;
   const extraId = hasChildren ? 'winner-dialog-extra' : undefined;
   const extraMessage = askToContinue ? SPIN_MESSAGES.continuePrompt : SPIN_MESSAGES.additionalData;
   const continueLabel = askToContinue ? SPIN_MESSAGES.continueSelection : SPIN_MESSAGES.spinChild;
   const steps = path && path.length > 0 ? path : item ? [toSelectionStep(item)] : [];
+
+  useEffect(() => {
+    playRef.current = play;
+  }, [play]);
+
+  useEffect(() => {
+    if (open && winnerId && soundEnabled) {
+      playRef.current(SOUND_ID.winner);
+    }
+  }, [open, soundEnabled, winnerId]);
 
   return (
     <Dialog

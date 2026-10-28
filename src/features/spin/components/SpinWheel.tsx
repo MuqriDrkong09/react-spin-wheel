@@ -10,6 +10,7 @@ import {
   SPIN_MESSAGES,
   type SpinAnimationType,
 } from '@/features/spin/constants';
+import { useSpinSounds } from '@/features/spin/hooks/useSpinSounds';
 import { spinDiscDurationSeconds } from '@/features/spin/utils/spinAnimation';
 import { buildWheelGeometry } from '@/features/spin/utils/wheelGeometry';
 import { resolveAppearance } from '@/features/wheel-customization/utils/appearance';
@@ -24,6 +25,7 @@ interface SpinWheelProps {
   spinDuration?: number;
   animationType?: SpinAnimationType;
   reducedMotion?: boolean;
+  soundEnabled?: boolean;
   onSpinComplete?: () => void;
 }
 
@@ -36,6 +38,7 @@ export function SpinWheel({
   spinDuration = DEFAULT_SPIN_ANIMATION.spinDuration,
   animationType = DEFAULT_SPIN_ANIMATION.animationType,
   reducedMotion = false,
+  soundEnabled = true,
   onSpinComplete,
 }: SpinWheelProps) {
   const appearance = useMemo(() => resolveAppearance(appearanceInput), [appearanceInput]);
@@ -56,6 +59,11 @@ export function SpinWheel({
       : appearance.background;
   const duration = spinDiscDurationSeconds(spinDuration, { reducedMotion, spinning });
   const spinStartedAtRef = useRef<number | null>(null);
+  const sounds = useSpinSounds({
+    enabled: soundEnabled,
+    spinning,
+    segments: geometry.segments,
+  });
   const ease = [...(SPIN_EASINGS[animationType] ?? SPIN_EASINGS.easeInOut)] as [
     number,
     number,
@@ -140,6 +148,11 @@ export function SpinWheel({
           initial={false}
           animate={{ rotate: rotationDegrees }}
           transition={{ duration, ease }}
+          onUpdate={(latest) => {
+            if (typeof latest.rotate === 'number') {
+              sounds.handleRotationFrame(latest.rotate);
+            }
+          }}
           onAnimationComplete={() => {
             if (!spinning) {
               return;
@@ -152,6 +165,7 @@ export function SpinWheel({
               return;
             }
 
+            sounds.handleSpinSettled();
             onSpinComplete?.();
           }}
           style={{ width: '100%', height: '100%', transformOrigin: '50% 50%' }}
@@ -195,7 +209,10 @@ export function SpinWheel({
         <Button
           type="button"
           variant={centerButtonVariant(appearance.centerButtonStyle)}
-          onClick={onSpin}
+          onClick={() => {
+            sounds.handleSpinPress();
+            onSpin?.();
+          }}
           disabled={spinning}
           aria-label={SPIN_MESSAGES.spinButton}
           sx={centerButtonSx(appearance, geometry.centerButtonPercent, hubColor)}

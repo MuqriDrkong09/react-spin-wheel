@@ -197,6 +197,7 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
           reducedMotion={session.spin.reducedMotion}
           saved={saved}
           statusMessage={statusMessage}
+          soundEnabled={wheel.settings.soundEnabled}
           onSpinAgain={resumeFromResult}
           onStartNewSelection={startNewSelection}
           onCopy={() => {
@@ -257,6 +258,7 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
             spinDuration={session.spin.animation.spinDuration}
             animationType={session.spin.animation.animationType}
             reducedMotion={session.spin.reducedMotion}
+            soundEnabled={wheel.settings.soundEnabled}
             onSpinComplete={session.completeSpin}
           />
           {session.spin.status === SPIN_STATUS.spinning ? (
@@ -272,6 +274,7 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
         path={session.selection}
         selectionMode={session.selectionMode}
         reducedMotion={session.spin.reducedMotion}
+        soundEnabled={wheel.settings.soundEnabled}
         onClose={session.closeWinner}
         onFinish={() => {
           const completed = session.finish();
