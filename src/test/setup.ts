@@ -16,12 +16,18 @@ Object.defineProperty(window, 'matchMedia', {
 
 class ResizeObserverMock implements ResizeObserver {
   private readonly callback: ResizeObserverCallback;
+  private readonly observed = new Set<Element>();
 
   constructor(callback: ResizeObserverCallback) {
     this.callback = callback;
   }
 
   observe(target: Element): void {
+    if (this.observed.has(target)) {
+      return;
+    }
+
+    this.observed.add(target);
     this.callback(
       [
         {
@@ -46,9 +52,13 @@ class ResizeObserverMock implements ResizeObserver {
     );
   }
 
-  unobserve(): void {}
+  unobserve(target: Element): void {
+    this.observed.delete(target);
+  }
 
-  disconnect(): void {}
+  disconnect(): void {
+    this.observed.clear();
+  }
 }
 
 window.ResizeObserver = ResizeObserverMock;

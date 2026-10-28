@@ -117,4 +117,23 @@ describe('buildWheelGeometry', () => {
 
     expect(geometry.segments.map((segment) => segment.id)).toEqual(['pizza', 'burger']);
   });
+
+  it('applies palette colors, text color, and font size from appearance', () => {
+    const geometry = buildWheelGeometry(
+      [item('Pizza', { color: '#ea580c' }), item('Burger', { color: '#ca8a04' })],
+      200,
+      {
+        appearance: {
+          segmentColors: ['#111111', '#22c55e'],
+          textColor: '#f8fafc',
+          fontSize: 20,
+        },
+      },
+    );
+
+    expect(geometry.segments[0]?.color).toBe('#111111');
+    expect(geometry.segments[1]?.color).toBe('#22c55e');
+    expect(geometry.segments[0]?.labelFill).toBe('#f8fafc');
+    expect(geometry.labelFontSize).toBeGreaterThan(9);
+  });
 });

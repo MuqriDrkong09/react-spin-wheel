@@ -10,6 +10,7 @@ import { DeleteItemDialog } from '@/features/wheel-editor/components/DeleteItemD
 import { EditorWheelPicker } from '@/features/wheel-editor/components/EditorWheelPicker';
 import { ItemFormDialog } from '@/features/wheel-editor/components/ItemFormDialog';
 import { WheelTree } from '@/features/wheel-editor/components/WheelTree';
+import { WheelCustomizationPanel } from '@/features/wheel-customization/components/WheelCustomizationPanel';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { useWheelEditor } from '@/features/wheel-editor/hooks/useWheelEditor';
 
@@ -43,8 +44,9 @@ export function WheelEditorScreen() {
             ) : null
           }
         />
-        {tree ? (
+        {tree && editor.wheel ? (
           <>
+            <WheelCustomizationPanel wheel={editor.wheel} />
             <AddMainDataCard onSubmit={editor.addMainItem} />
             <Card variant="outlined">
               <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>

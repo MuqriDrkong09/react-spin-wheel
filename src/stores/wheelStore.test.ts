@@ -555,7 +555,21 @@ describe('useWheelStore', () => {
     expect(settings?.durationMs).toBe(2500);
     expect(settings?.selectionMode).toBe('manual');
     expect(settings?.removeWinner).toBe(false);
+    expect(settings?.appearance.theme).toBe('classic');
     expect(wheel.settings.soundEnabled).toBe(true);
+  });
+
+  it('updateWheelSettings merges appearance without replacing other settings', () => {
+    pizzaWheel();
+    const settings = useWheelStore.getState().updateWheelSettings('pizza', {
+      appearance: { pointerColor: '#111111', title: 'Dinner' },
+    });
+
+    expect(settings?.appearance.pointerColor).toBe('#111111');
+    expect(settings?.appearance.title).toBe('Dinner');
+    expect(settings?.appearance.theme).toBe('custom');
+    expect(settings?.appearance.background).toBe(DEFAULT_WHEEL_SETTINGS.appearance.background);
+    expect(settings?.durationMs).toBe(4000);
   });
 
   it('resetWheel restores the original items and settings', () => {

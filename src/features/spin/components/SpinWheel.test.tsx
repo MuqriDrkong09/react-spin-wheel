@@ -135,4 +135,26 @@ describe('SpinWheel', () => {
     expect(button).toBeDisabled();
     expect(button.closest('[aria-busy="true"]')).toBeTruthy();
   });
+
+  it('applies custom pointer, hub, and border colors from appearance', () => {
+    const { container } = renderWithProviders(
+      <SpinWheel
+        items={[item('Pizza', { icon: '🍕' }), item('Burger', { icon: '🍔' })]}
+        appearance={{
+          pointerColor: '#22d3ee',
+          centerButtonColor: '#082f49',
+          centerButtonStyle: 'filled',
+          borderColor: '#f43f5e',
+          borderWidth: 3,
+          segmentColors: ['#e879f9', '#a3e635'],
+        }}
+      />,
+    );
+
+    expect(container.querySelector('polygon')).toHaveAttribute('fill', '#22d3ee');
+    expect(container.querySelector('circle')).toHaveAttribute('fill', '#082f49');
+    const slice = [...container.querySelectorAll('path')].find((path) => path.getAttribute('stroke'));
+    expect(slice).toHaveAttribute('stroke', '#f43f5e');
+    expect(slice).toHaveAttribute('stroke-width', '3');
+  });
 });

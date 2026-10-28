@@ -1,4 +1,8 @@
 import { DEFAULT_APP_SETTINGS } from '@/constants/settings';
+import {
+  isAppearanceInput,
+  resolveAppearance,
+} from '@/features/wheel-customization/utils/appearance';
 import { COLOR_MODE, type ColorMode } from '@/types/colorMode';
 import type { AppSettings } from '@/types/settings';
 import {
@@ -58,6 +62,10 @@ const wheelSettingsSchema = z.object({
     .default(SELECTION_MODE.manual),
   removeWinner: z.boolean().default(false),
   skipDisabledItems: z.boolean(),
+  appearance: z
+    .unknown()
+    .optional()
+    .transform((value) => resolveAppearance(isAppearanceInput(value) ? value : undefined)),
 }) satisfies z.ZodType<WheelSettings>;
 
 const itemConditionSchema = z.discriminatedUnion('kind', [

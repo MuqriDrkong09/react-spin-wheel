@@ -108,6 +108,53 @@ export function isSelectionMode(value: string): value is SelectionMode {
   );
 }
 
+export const WHEEL_THEME = {
+  classic: 'classic',
+  neon: 'neon',
+  pastel: 'pastel',
+  minimal: 'minimal',
+  dark: 'dark',
+  rainbow: 'rainbow',
+  custom: 'custom',
+} as const;
+
+export type WheelTheme = (typeof WHEEL_THEME)[keyof typeof WHEEL_THEME];
+
+export const WHEEL_SIZE = {
+  sm: 'sm',
+  md: 'md',
+  lg: 'lg',
+} as const;
+
+export type WheelSize = (typeof WHEEL_SIZE)[keyof typeof WHEEL_SIZE];
+
+export const CENTER_BUTTON_STYLE = {
+  filled: 'filled',
+  outlined: 'outlined',
+  ghost: 'ghost',
+} as const;
+
+export type CenterButtonStyle = (typeof CENTER_BUTTON_STYLE)[keyof typeof CENTER_BUTTON_STYLE];
+
+export type WheelFontWeight = 400 | 600 | 700;
+
+export interface WheelAppearance {
+  title: string;
+  size: WheelSize;
+  theme: WheelTheme;
+  segmentColors: HexColor[];
+  textColor: HexColor;
+  pointerColor: HexColor;
+  borderWidth: number;
+  borderColor: HexColor;
+  fontSize: number;
+  fontWeight: WheelFontWeight;
+  background: HexColor;
+  centerButtonStyle: CenterButtonStyle;
+  centerButtonColor: HexColor;
+  centerButtonTextColor: HexColor;
+}
+
 export interface WheelSettings {
   durationMs: number;
   minRotations: number;
@@ -118,6 +165,7 @@ export interface WheelSettings {
   selectionMode: SelectionMode;
   removeWinner: boolean;
   skipDisabledItems: boolean;
+  appearance: WheelAppearance;
 }
 
 export interface Wheel extends Identifiable<WheelId>, Timestamps {

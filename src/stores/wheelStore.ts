@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
+import { mergeAppearance, resolveAppearance } from '@/features/wheel-customization/utils/appearance';
 import type {
   Wheel,
+  WheelAppearance,
   WheelDraft,
   WheelId,
   WheelItem,
@@ -27,10 +29,14 @@ import {
   type WheelItemPatch,
 } from '@/utils/wheelTree';
 
+export type WheelSettingsPatch = Partial<Omit<WheelSettings, 'appearance'>> & {
+  appearance?: Partial<WheelAppearance>;
+};
+
 export type CreateWheelInput = Omit<WheelDraft, 'items' | 'settings'> & {
   id?: WheelId;
   items?: NewWheelItemInput[];
-  settings?: Partial<WheelSettings>;
+  settings?: WheelSettingsPatch;
 };
 
 export type WheelPatch = Partial<
@@ -76,10 +82,7 @@ interface WheelStoreActions {
     index: number,
   ) => WheelItem | undefined;
   toggleItem: (wheelId: WheelId, itemId: WheelItemId) => WheelItem | undefined;
-  updateWheelSettings: (
-    wheelId: WheelId,
-    settings: Partial<WheelSettings>,
-  ) => WheelSettings | undefined;
+  updateWheelSettings: (wheelId: WheelId, settings: WheelSettingsPatch) => WheelSettings | undefined;
   resetWheel: (wheelId: WheelId) => Wheel | undefined;
 }
 
@@ -91,10 +94,26 @@ const initialState: WheelStoreState = {
   snapshots: {},
 };
 
+function mergeWheelSettings(current: WheelSettings, patch: WheelSettingsPatch): WheelSettings {
+  return {
+    ...current,
+    ...patch,
+    appearance: mergeAppearance(current.appearance, patch.appearance),
+  };
+}
+
 function createSnapshot(wheel: Wheel): WheelSnapshot {
+  const appearance = resolveAppearance(wheel.settings.appearance);
+
   return {
     items: cloneItemsPreserveIds(wheel.items),
-    settings: { ...wheel.settings },
+    settings: {
+      ...wheel.settings,
+      appearance: {
+        ...appearance,
+        segmentColors: [...appearance.segmentColors],
+      },
+    },
     conditions: wheel.conditions ? [...wheel.conditions] : undefined,
   };
 }
@@ -133,10 +152,7 @@ export const useWheelStore = create<WheelStore>((set, get) => ({
       category: input.category,
       icon: input.icon,
       items: (input.items ?? []).map(materializeItem),
-      settings: {
-        ...DEFAULT_WHEEL_SETTINGS,
-        ...input.settings,
-      },
+      settings: mergeWheelSettings(DEFAULT_WHEEL_SETTINGS, input.settings ?? {}),
       conditions: input.conditions,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -196,7 +212,7 @@ export const useWheelStore = create<WheelStore>((set, get) => ({
       id: createId(),
       name: `${source.name} copy`,
       items: source.items.map(cloneItemTree),
-      settings: { ...source.settings },
+      settings: mergeWheelSettings(source.settings, {}),
       conditions: source.conditions ? [...source.conditions] : undefined,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -429,10 +445,7 @@ export const useWheelStore = create<WheelStore>((set, get) => ({
 
     set((state) => ({
       wheels: replaceWheel(state.wheels, wheelId, (wheel) => {
-        nextSettings = {
-          ...wheel.settings,
-          ...settings,
-        };
+        nextSettings = mergeWheelSettings(wheel.settings, settings);
 
         return {
           ...wheel,
@@ -458,7 +471,7 @@ export const useWheelStore = create<WheelStore>((set, get) => ({
         reset = {
           ...wheel,
           items: cloneItemsPreserveIds(snapshot.items),
-          settings: { ...snapshot.settings },
+          settings: mergeWheelSettings(snapshot.settings, {}),
           conditions: snapshot.conditions ? [...snapshot.conditions] : undefined,
           updatedAt: nowIso(),
         };

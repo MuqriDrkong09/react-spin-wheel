@@ -1,21 +1,23 @@
-import { Box, Button, useTheme } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { WHEEL_SIZE_MAX_WIDTH } from '@/constants/wheelAppearance';
 import {
   DEFAULT_SPIN_ANIMATION,
   SPIN_EASINGS,
   SPIN_MESSAGES,
-  WHEEL_HUB_COLOR,
   type SpinAnimationType,
 } from '@/features/spin/constants';
 import { spinDiscDurationSeconds } from '@/features/spin/utils/spinAnimation';
 import { buildWheelGeometry } from '@/features/spin/utils/wheelGeometry';
-import type { WheelItem } from '@/types/wheel';
+import { resolveAppearance } from '@/features/wheel-customization/utils/appearance';
+import { CENTER_BUTTON_STYLE, type WheelAppearance, type WheelItem } from '@/types/wheel';
 
 interface SpinWheelProps {
   items: WheelItem[];
+  appearance?: Partial<WheelAppearance>;
   onSpin?: () => void;
   spinning?: boolean;
   rotationDegrees?: number;
@@ -27,6 +29,7 @@ interface SpinWheelProps {
 
 export function SpinWheel({
   items,
+  appearance: appearanceInput,
   onSpin,
   spinning = false,
   rotationDegrees = 0,
@@ -35,10 +38,22 @@ export function SpinWheel({
   reducedMotion = false,
   onSpinComplete,
 }: SpinWheelProps) {
-  const theme = useTheme();
-  const geometry = useMemo(() => buildWheelGeometry(items), [items]);
-  const hubColor = WHEEL_HUB_COLOR;
-  const hubContrast = theme.palette.getContrastText(hubColor);
+  const appearance = useMemo(() => resolveAppearance(appearanceInput), [appearanceInput]);
+  const geometry = useMemo(
+    () =>
+      buildWheelGeometry(items, undefined, {
+        appearance: {
+          segmentColors: appearance.segmentColors,
+          textColor: appearance.textColor,
+          fontSize: appearance.fontSize,
+        },
+      }),
+    [appearance.fontSize, appearance.segmentColors, appearance.textColor, items],
+  );
+  const hubColor =
+    appearance.centerButtonStyle === CENTER_BUTTON_STYLE.filled
+      ? appearance.centerButtonColor
+      : appearance.background;
   const duration = spinDiscDurationSeconds(spinDuration, { reducedMotion, spinning });
   const spinStartedAtRef = useRef<number | null>(null);
   const ease = [...(SPIN_EASINGS[animationType] ?? SPIN_EASINGS.easeInOut)] as [
@@ -76,8 +91,8 @@ export function SpinWheel({
           <path
             d={segment.path}
             fill={segment.color}
-            stroke={theme.palette.background.paper}
-            strokeWidth={1}
+            stroke={appearance.borderWidth > 0 ? appearance.borderColor : 'none'}
+            strokeWidth={appearance.borderWidth}
             title={segment.labelText}
           >
             <title>{segment.labelText}</title>
@@ -87,7 +102,7 @@ export function SpinWheel({
               <text
                 fill={segment.labelFill}
                 fontSize={segment.labelFontSize}
-                fontWeight={600}
+                fontWeight={appearance.fontWeight}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 transform={`translate(${segment.labelX} ${segment.labelY}) rotate(${segment.labelRotation})`}
@@ -111,7 +126,7 @@ export function SpinWheel({
       sx={{
         position: 'relative',
         width: '100%',
-        maxWidth: { xs: 320, sm: 420, md: 520 },
+        maxWidth: WHEEL_SIZE_MAX_WIDTH[appearance.size],
         mx: 'auto',
         flexShrink: 0,
       }}
@@ -171,7 +186,7 @@ export function SpinWheel({
         >
           <polygon
             points={geometry.pointer.points}
-            fill={theme.palette.primary.main}
+            fill={appearance.pointerColor}
             title={SPIN_MESSAGES.pointerTitle}
           >
             <title>{SPIN_MESSAGES.pointerTitle}</title>
@@ -179,39 +194,67 @@ export function SpinWheel({
         </Box>
         <Button
           type="button"
-          variant="contained"
+          variant={centerButtonVariant(appearance.centerButtonStyle)}
           onClick={onSpin}
           disabled={spinning}
           aria-label={SPIN_MESSAGES.spinButton}
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: `${geometry.centerButtonPercent}%`,
-            height: `${geometry.centerButtonPercent}%`,
-            minWidth: 0,
-            p: 0,
-            borderRadius: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1,
-            fontSize: { xs: '0.7rem', sm: '0.8rem' },
-            bgcolor: hubColor,
-            color: hubContrast,
-            boxShadow: 'none',
-            '&:hover': {
-              bgcolor: hubColor,
-              boxShadow: 'none',
-            },
-            '&.Mui-disabled': {
-              bgcolor: hubColor,
-              color: hubContrast,
-              opacity: 0.7,
-            },
-          }}
+          sx={centerButtonSx(appearance, geometry.centerButtonPercent, hubColor)}
         >
           Spin
         </Button>
       </Box>
     </Box>
   );
+}
+
+function centerButtonVariant(style: WheelAppearance['centerButtonStyle']) {
+  if (style === CENTER_BUTTON_STYLE.outlined) {
+    return 'outlined' as const;
+  }
+
+  if (style === CENTER_BUTTON_STYLE.ghost) {
+    return 'text' as const;
+  }
+
+  return 'contained' as const;
+}
+
+function centerButtonSx(
+  appearance: WheelAppearance,
+  percent: number,
+  hubColor: string,
+) {
+  const filled = appearance.centerButtonStyle === CENTER_BUTTON_STYLE.filled;
+  const bgcolor = filled ? appearance.centerButtonColor : 'transparent';
+  const color = filled ? appearance.centerButtonTextColor : appearance.centerButtonColor;
+
+  return {
+    position: 'absolute' as const,
+    top: '50%',
+    left: '50%',
+    width: `${percent}%`,
+    height: `${percent}%`,
+    minWidth: 0,
+    p: 0,
+    borderRadius: '50%',
+    transform: 'translate(-50%, -50%)',
+    zIndex: 1,
+    fontSize: { xs: '0.7rem', sm: '0.8rem' },
+    fontWeight: appearance.fontWeight,
+    bgcolor,
+    color,
+    boxShadow: 'none',
+    borderColor: appearance.centerButtonColor,
+    '&:hover': {
+      bgcolor: filled ? hubColor : 'transparent',
+      boxShadow: 'none',
+      borderColor: appearance.centerButtonColor,
+    },
+    '&.Mui-disabled': {
+      bgcolor,
+      color,
+      opacity: 0.7,
+      borderColor: appearance.centerButtonColor,
+    },
+  };
 }

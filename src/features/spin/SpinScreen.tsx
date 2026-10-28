@@ -16,6 +16,10 @@ import { SPIN_MESSAGES, SPIN_STATUS } from '@/features/spin/constants';
 import { useSpinScreen } from '@/features/spin/hooks/useSpinScreen';
 import { useSpinSession } from '@/features/spin/hooks/useSpinSession';
 import { formatFinalResultCopy, toSpinHistorySession } from '@/features/spin/utils/formatFinalResult';
+import {
+  displayWheelTitle,
+  resolveAppearance,
+} from '@/features/wheel-customization/utils/appearance';
 import { useHistoryStore } from '@/stores/historyStore';
 import type { Wheel } from '@/types/wheel';
 
@@ -115,6 +119,8 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
   const addSpinSession = useHistoryStore((state) => state.addSpinSession);
   const [saved, setSaved] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const appearance = resolveAppearance(wheel.settings.appearance);
+  const title = displayWheelTitle(appearance, wheel.name);
 
   async function copyResult() {
     if (!session.result) {
@@ -210,6 +216,10 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
             gap: 2,
             overflow: 'hidden',
             scrollbarGutter: 'stable',
+            bgcolor: appearance.background,
+            borderRadius: 3,
+            px: 2,
+            py: 3,
           }}
         >
           <Box
@@ -224,6 +234,9 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
               flexShrink: 0,
             }}
           >
+            <Typography variant="h5" component="h2" sx={{ fontWeight: 700, color: appearance.textColor }}>
+              {title}
+            </Typography>
             {session.ancestors.length > 0 ? (
               <>
                 <SelectionPath steps={session.ancestors} />
@@ -236,6 +249,7 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
           <SpinWheel
             key={session.items.map((item) => item.id).join('|')}
             items={session.items}
+            appearance={appearance}
             onSpin={session.startSpin}
             spinning={session.spin.spinning}
             rotationDegrees={session.spin.rotationDegrees}

@@ -15,7 +15,7 @@ import {
   WHEEL_VIEWBOX_SIZE,
 } from '@/features/spin/constants';
 import { calculateSegmentAngles } from '@/features/spin/engine/spinEngine';
-import type { HexColor, WheelItem } from '@/types/wheel';
+import type { HexColor, WheelAppearance, WheelItem } from '@/types/wheel';
 
 export { FULL_TURN, POINTER_ANGLE } from '@/features/spin/constants';
 export { activeWheelItems, isActiveWheelSegment } from '@/features/spin/engine/spinEngine';
@@ -42,7 +42,7 @@ export interface WheelSegmentGeometry {
   labelX: number;
   labelY: number;
   labelRotation: number;
-  labelFill: '#0f172a' | '#ffffff';
+  labelFill: HexColor;
   startAngle: number;
   endAngle: number;
   sweepAngle: number;
@@ -67,15 +67,21 @@ export interface WheelGeometry {
   segments: WheelSegmentGeometry[];
 }
 
+export interface WheelGeometryOptions {
+  appearance?: Pick<WheelAppearance, 'segmentColors' | 'textColor' | 'fontSize'>;
+}
+
 export function buildWheelGeometry(
   items: readonly WheelItem[],
   size = WHEEL_VIEWBOX_SIZE,
+  options: WheelGeometryOptions = {},
 ): WheelGeometry {
   const center = size / 2;
   const radius = scale(WHEEL_RADIUS, size);
   const innerRadius = scale(WHEEL_INNER_RADIUS, size);
-  const baseFontSize = round(size * WHEEL_LABEL_FONT_RATIO);
-  const minFontSize = round(size * WHEEL_LABEL_MIN_FONT_RATIO);
+  const fontScale = (options.appearance?.fontSize ?? 14) / 14;
+  const baseFontSize = round(size * WHEEL_LABEL_FONT_RATIO * fontScale);
+  const minFontSize = round(size * WHEEL_LABEL_MIN_FONT_RATIO * fontScale);
   const padding = scale(WHEEL_LABEL_PADDING, size);
   const segments: WheelSegmentGeometry[] = [];
 
@@ -99,11 +105,13 @@ export function buildWheelGeometry(
     const fitted = showLabel
       ? fitWheelLabel(labelText, maxWidth, maxHeight, baseFontSize, minFontSize)
       : { lines: [] as string[], fontSize: baseFontSize };
+    const color = segmentFill(item.color, segments.length, options.appearance?.segmentColors);
+    const labelFill = options.appearance?.textColor ?? labelFillForColor(color);
 
     segments.push({
       id: item.id,
       name: item.name,
-      color: item.color,
+      color,
       icon: item.icon,
       labelText,
       labelLines: toLabelLines(fitted.lines, fitted.fontSize),
@@ -115,7 +123,7 @@ export function buildWheelGeometry(
       labelX: round(labelPoint.x),
       labelY: round(labelPoint.y),
       labelRotation: round(labelRotation(midAngle, labelOrientation)),
-      labelFill: labelFillForColor(item.color),
+      labelFill,
       startAngle,
       endAngle,
       sweepAngle,
@@ -397,7 +405,19 @@ function labelRotation(midAngle: number, orientation: WheelLabelOrientation): nu
   return ((degrees % 360) + 360) % 360;
 }
 
-function labelFillForColor(color: string): '#0f172a' | '#ffffff' {
+function segmentFill(
+  fallback: HexColor,
+  index: number,
+  palette: readonly HexColor[] | undefined,
+): HexColor {
+  if (!palette || palette.length === 0) {
+    return fallback;
+  }
+
+  return palette[index % palette.length] ?? fallback;
+}
+
+function labelFillForColor(color: string): HexColor {
   const rgb = parseHex(color);
   if (!rgb) {
     return '#ffffff';

@@ -1,4 +1,8 @@
+import { fireEvent } from '@testing-library/react';
+
 import { ROUTES, withWheelId } from '@/constants/routes';
+import { WHEEL_THEME_PRESETS } from '@/constants/wheelAppearance';
+import { CUSTOMIZATION_MESSAGES } from '@/features/wheel-customization/constants';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { loadPersistedState } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
@@ -563,6 +567,46 @@ describe('WheelEditorScreen', () => {
     expect(salad?.id).toBeTruthy();
     expect(taco?.id).not.toBe(salad?.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('applies a preset theme and persists appearance on the wheel', async () => {
+    const user = userEvent.setup();
+    window.localStorage.clear();
+    storageService.clearMemory();
+    seedFoodWheel();
+    renderEditor();
+
+    expect(screen.getByRole('heading', { name: CUSTOMIZATION_MESSAGES.title })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: CUSTOMIZATION_MESSAGES.applyTheme('Neon') }));
+
+    const appearance = useWheelStore.getState().getWheel('food')?.settings.appearance;
+    expect(appearance?.theme).toBe('neon');
+    expect(appearance?.pointerColor).toBe(WHEEL_THEME_PRESETS.neon.pointerColor);
+    expect(loadPersistedState().wheels.find((wheel) => wheel.id === 'food')?.settings.appearance.theme).toBe(
+      'neon',
+    );
+
+    await user.type(screen.getByLabelText(CUSTOMIZATION_MESSAGES.wheelTitle), 'Dinner');
+    expect(useWheelStore.getState().getWheel('food')?.settings.appearance.title).toContain('Dinner');
+  });
+
+  it('lets the color picker stay open while a color is chosen', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    const swatch = screen.getByRole('button', { name: CUSTOMIZATION_MESSAGES.pointerColor });
+    await user.click(swatch);
+    const picker = screen.getByLabelText(CUSTOMIZATION_MESSAGES.colorPicker(CUSTOMIZATION_MESSAGES.pointerColor));
+    const hex = screen.getByRole('textbox', { name: `${CUSTOMIZATION_MESSAGES.pointerColor} hex` });
+    fireEvent.change(hex, { target: { value: '#abcdef' } });
+
+    expect(screen.getByLabelText(CUSTOMIZATION_MESSAGES.colorPicker(CUSTOMIZATION_MESSAGES.pointerColor))).toBe(
+      picker,
+    );
+    expect(useWheelStore.getState().getWheel('food')?.settings.appearance.pointerColor).toBe('#abcdef');
+    expect(useWheelStore.getState().getWheel('food')?.settings.appearance.theme).toBe('custom');
+    expect(screen.getByRole('button', { name: CUSTOMIZATION_MESSAGES.pointerColor })).toBe(swatch);
   });
 });
 

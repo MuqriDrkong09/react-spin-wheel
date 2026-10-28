@@ -1,4 +1,5 @@
 import { DEFAULT_APP_SETTINGS } from '@/constants/settings';
+import { DEFAULT_WHEEL_APPEARANCE } from '@/constants/wheelAppearance';
 import { COLOR_MODE } from '@/types/colorMode';
 import { SPIN_SESSION_STATUS } from '@/types/wheel';
 
@@ -53,9 +54,10 @@ describe('persistedState', () => {
             soundEnabled: true,
             confettiEnabled: true,
             eliminationMode: false,
-            selectionMode: 'manual',
+            selectionMode: 'manual' as const,
             removeWinner: false,
             skipDisabledItems: true,
+            appearance: DEFAULT_WHEEL_APPEARANCE,
           },
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
@@ -124,6 +126,7 @@ describe('persistedState', () => {
 
     expect(loadPersistedState().wheels[0]?.settings.selectionMode).toBe('manual');
     expect(loadPersistedState().wheels[0]?.settings.removeWinner).toBe(false);
+    expect(loadPersistedState().wheels[0]?.settings.appearance.theme).toBe('classic');
   });
 
   it('fills missing spin result history fields', () => {
