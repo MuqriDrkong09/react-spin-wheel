@@ -198,6 +198,7 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
           saved={saved}
           statusMessage={statusMessage}
           soundEnabled={wheel.settings.soundEnabled}
+          celebrationEnabled={wheel.settings.confettiEnabled}
           onSpinAgain={resumeFromResult}
           onStartNewSelection={startNewSelection}
           onCopy={() => {

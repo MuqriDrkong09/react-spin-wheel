@@ -1,6 +1,7 @@
 import { FinalResult } from '@/features/spin/components/FinalResult';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import { formatResultTimestamp } from '@/features/spin/utils/formatFinalResult';
+import { resetSettingsStore } from '@/stores/settingsStore';
 import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
 
 const timestamp = '2026-10-27T01:20:00.000Z';
@@ -11,6 +12,10 @@ const steps = [
 ];
 
 describe('FinalResult', () => {
+  beforeEach(() => {
+    resetSettingsStore();
+  });
+
   it('shows the wheel name, icon path, timestamp, and actions', () => {
     renderWithProviders(
       <FinalResult
@@ -40,6 +45,23 @@ describe('FinalResult', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.copyResult })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.saveResult })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: SPIN_MESSAGES.finalResultTitle })).toHaveFocus();
+    expect(screen.queryByTestId('celebration-confetti')).not.toBeInTheDocument();
+  });
+
+  it('celebrates the winner when motion is allowed', () => {
+    renderWithProviders(
+      <FinalResult
+        wheelName="Pizza Night"
+        steps={steps}
+        timestamp={timestamp}
+        onSpinAgain={vi.fn()}
+        onStartNewSelection={vi.fn()}
+        onCopy={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('celebration-confetti')).toBeInTheDocument();
   });
 
   it('invokes the matching action and marks a saved result', async () => {

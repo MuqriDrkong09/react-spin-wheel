@@ -3,15 +3,13 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SaveIcon from '@mui/icons-material/Save';
 import { Box, Button, Paper, Stack, Typography } from '@mui/material';
-import { motion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 
-import { useSound } from '@/features/sound/useSound';
+import { WinnerCelebration } from '@/features/celebration/components/WinnerCelebration';
 import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import { formatResultTimestamp } from '@/features/spin/utils/formatFinalResult';
 import type { SelectionStep } from '@/features/spin/utils/selectionPath';
-import { SOUND_ID } from '@/types/sound';
 
 interface FinalResultProps {
   wheelName: string;
@@ -21,6 +19,7 @@ interface FinalResultProps {
   saved?: boolean;
   statusMessage?: string;
   soundEnabled?: boolean;
+  celebrationEnabled?: boolean;
   onSpinAgain: () => void;
   onStartNewSelection: () => void;
   onCopy: () => void;
@@ -35,29 +34,18 @@ export function FinalResult({
   saved = false,
   statusMessage,
   soundEnabled = true,
+  celebrationEnabled = true,
   onSpinAgain,
   onStartNewSelection,
   onCopy,
   onSave,
 }: FinalResultProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const { play } = useSound();
-  const playRef = useRef(play);
   const formattedTime = formatResultTimestamp(timestamp);
 
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
-
-  useEffect(() => {
-    playRef.current = play;
-  }, [play]);
-
-  useEffect(() => {
-    if (soundEnabled) {
-      playRef.current(SOUND_ID.celebration);
-    }
-  }, [soundEnabled]);
 
   return (
     <Box
@@ -71,11 +59,10 @@ export function FinalResult({
         px: { xs: 0.5, sm: 2 },
       }}
     >
-      <motion.div
-        initial={reducedMotion ? false : { opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reducedMotion ? 0 : 0.32, ease: [0.16, 1, 0.3, 1] }}
-        style={{ width: '100%', maxWidth: 480 }}
+      <WinnerCelebration
+        enabled={celebrationEnabled}
+        soundEnabled={soundEnabled}
+        reducedMotion={reducedMotion}
       >
         <Paper
           component="section"
@@ -164,7 +151,7 @@ export function FinalResult({
             {statusMessage}
           </Typography>
         </Paper>
-      </motion.div>
+      </WinnerCelebration>
     </Box>
   );
 }
