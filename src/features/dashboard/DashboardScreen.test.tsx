@@ -97,14 +97,14 @@ describe('DashboardScreen', () => {
     expect(screen.getByRole('heading', { name: 'Chores', level: 3 })).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText('Search wheels'));
-    await user.click(screen.getByLabelText('Category'));
+    await user.click(screen.getByRole('combobox', { name: 'Category' }));
     await user.click(screen.getByRole('option', { name: 'Food' }));
     expect(screen.getByRole('heading', { name: 'Pizza Night', level: 3 })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Chores', level: 3 })).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText('Category'));
+    await user.click(screen.getByRole('combobox', { name: 'Category' }));
     await user.click(screen.getByRole('option', { name: 'All categories' }));
-    await user.click(screen.getByLabelText('Sort'));
+    await user.click(screen.getByRole('combobox', { name: 'Sort' }));
     await user.click(screen.getByRole('option', { name: 'Name A-Z' }));
     expect(screen.getByRole('heading', { name: 'Chores', level: 3 })).toBeInTheDocument();
 

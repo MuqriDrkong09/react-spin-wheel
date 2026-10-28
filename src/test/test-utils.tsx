@@ -1,4 +1,5 @@
 import { render, type RenderOptions } from '@testing-library/react';
+import userEventLib from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 
@@ -29,4 +30,10 @@ export function renderWithProviders(ui: ReactElement, options?: Omit<RenderOptio
 }
 
 export { screen, waitFor, within } from '@testing-library/react';
-export { default as userEvent } from '@testing-library/user-event';
+
+const setupUser = userEventLib.setup.bind(userEventLib);
+
+export const userEvent = Object.assign({}, userEventLib, {
+  setup: (options?: Parameters<typeof userEventLib.setup>[0]) =>
+    setupUser({ delay: null, ...options }),
+});
