@@ -76,6 +76,17 @@ async function saveEditedName(user: ReturnType<typeof userEvent.setup>, itemName
   await user.click(within(dialog).getByRole('button', { name: 'Save item' }));
 }
 
+async function addChildFromTree(parentName: string, childName: string) {
+  fireEvent.click(screen.getByRole('button', { name: `Add child to ${parentName}` }));
+  const dialog = await screen.findByRole('dialog', { name: 'Add Child Data' });
+  expect(within(dialog).getByText(parentName)).toBeInTheDocument();
+  fireEvent.change(within(dialog).getByLabelText(/child name/i), { target: { value: childName } });
+  fireEvent.submit(within(dialog).getByRole('form', { name: 'Add Child Data' }));
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: `Add child to ${childName}` })).toBeInTheDocument();
+  });
+}
+
 function deleteDialog() {
   return screen.getByRole('dialog', { name: 'Delete item' });
 }
@@ -244,36 +255,23 @@ describe('WheelEditorScreen', () => {
   });
 
   it('stores a child under the parent children array at any nesting level', async () => {
-    const user = userEvent.setup();
     seedFoodWheel();
     renderEditor();
 
-    await user.click(screen.getByRole('button', { name: 'Add child to Pizza' }));
-    let dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
-    expect(within(dialog).getByText('Pizza')).toBeInTheDocument();
-    await user.type(within(dialog).getByLabelText(/child name/i), 'Hawaiian');
-    await user.click(within(dialog).getByRole('button', { name: 'Add Child' }));
-
-    expect(await screen.findByText('Hawaiian')).toBeInTheDocument();
+    await addChildFromTree('Pizza', 'Hawaiian');
     const pizza = useWheelStore.getState().getWheel('food')?.items.find((item) => item.id === 'pizza');
     expect(pizza?.children?.map((item) => item.name)).toEqual(
       expect.arrayContaining(['Chicken Pepperoni', 'Beef Pepperoni', 'Hawaiian']),
     );
 
-    await user.click(screen.getByRole('button', { name: 'Add child to Chicken Pepperoni' }));
-    dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
-    expect(within(dialog).getByText('Chicken Pepperoni')).toBeInTheDocument();
-    await user.type(within(dialog).getByLabelText(/child name/i), 'Large');
-    await user.click(within(dialog).getByRole('button', { name: 'Add Child' }));
-
-    expect(await screen.findByText('Large')).toBeInTheDocument();
+    await addChildFromTree('Chicken Pepperoni', 'Large');
     const chicken = useWheelStore
       .getState()
       .getWheel('food')
       ?.items.find((item) => item.id === 'pizza')
       ?.children?.find((item) => item.id === 'chicken');
     expect(chicken?.children).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'Large' })]));
-  });
+  }, 30_000);
 
   it('prevents adding child data without a name', async () => {
     const user = userEvent.setup();

@@ -14,6 +14,12 @@ function ThemeProbe() {
       <button type="button" onClick={() => setTheme('dark')}>
         Dark
       </button>
+      <button
+        type="button"
+        onClick={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
+      >
+        Toggle
+      </button>
     </div>
   );
 }
@@ -43,5 +49,15 @@ describe('useLocalStorage', () => {
     storageService.writeJson('probe-theme', 'dark');
     render(<ThemeProbe />);
     expect(screen.getByText('Theme dark')).toBeInTheDocument();
+  });
+
+  it('updates from the current value with a function', async () => {
+    const user = userEvent.setup();
+    render(<ThemeProbe />);
+
+    await user.click(screen.getByRole('button', { name: 'Toggle' }));
+
+    expect(screen.getByText('Theme dark')).toBeInTheDocument();
+    expect(storageService.readJson('probe-theme')).toBe('dark');
   });
 });

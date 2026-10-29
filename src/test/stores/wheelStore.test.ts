@@ -1,5 +1,5 @@
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
-import type { WheelItem, WheelItemDraft } from '@/types/wheel';
+import { ITEM_CONDITION_KIND, type WheelItem, type WheelItemDraft } from '@/types/wheel';
 
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 
@@ -588,5 +588,60 @@ describe('useWheelStore', () => {
     expect(useWheelStore.getState().addChildItem('missing', draft('Small'))).toBeUndefined();
     expect(useWheelStore.getState().updateWheel('missing', { name: 'Nope' })).toBeUndefined();
     expect(useWheelStore.getState().duplicateWheel('missing')).toBeUndefined();
+  });
+
+  it('keeps the active wheel when a different wheel is deleted', () => {
+    pizzaWheel();
+    useWheelStore.getState().createWheel({ id: 'chores', name: 'Chores' });
+    useWheelStore.getState().setActiveWheel('pizza');
+    useWheelStore.getState().deleteWheel('chores');
+
+    expect(useWheelStore.getState().activeWheelId).toBe('pizza');
+    expect(useWheelStore.getState().getWheel('chores')).toBeUndefined();
+  });
+
+  it('duplicates a wheel with conditions and restores them on reset', () => {
+    const conditions = [
+      { id: 'always-chicken', itemId: 'chicken', kind: ITEM_CONDITION_KIND.always },
+    ];
+    const source = useWheelStore.getState().createWheel({
+      id: 'pizza',
+      name: 'Pizza',
+      items: [{ ...draft('Chicken Pepperoni', { color: '#f97316' }), id: 'chicken' }],
+      conditions,
+      settings: { soundEnabled: true },
+    });
+
+    const copy = useWheelStore.getState().duplicateWheel(source.id);
+    expect(copy?.conditions).toEqual(conditions);
+    expect(copy?.conditions).not.toBe(source.conditions);
+
+    useWheelStore.getState().updateWheel('pizza', { conditions: [] });
+    useWheelStore.getState().updateWheelSettings('pizza', { soundEnabled: false });
+    const reset = useWheelStore.getState().resetWheel('pizza');
+
+    expect(reset?.conditions).toEqual(conditions);
+    expect(reset?.settings.soundEnabled).toBe(true);
+  });
+
+  it('no-ops item mutations when the wheel or item is missing', () => {
+    pizzaWheel();
+    const before = useWheelStore.getState().getWheel('pizza');
+
+    expect(useWheelStore.getState().addItem('missing', draft('Veggie'))).toBeUndefined();
+    expect(useWheelStore.getState().updateItem('pizza', 'missing', { name: 'Nope' })).toBeUndefined();
+    expect(useWheelStore.getState().duplicateItem('pizza', 'missing')).toBeUndefined();
+    expect(useWheelStore.getState().updateChildItem('missing', { name: 'Nope' })).toBeUndefined();
+    expect(useWheelStore.getState().toggleItem('pizza', 'missing')).toBeUndefined();
+    expect(useWheelStore.getState().updateWheelSettings('missing', { soundEnabled: false })).toBeUndefined();
+    expect(useWheelStore.getState().resetWheel('missing')).toBeUndefined();
+
+    useWheelStore.getState().deleteItem('pizza', 'missing');
+    useWheelStore.getState().deleteChildItem('missing');
+    useWheelStore.getState().reorderItems('pizza', 'missing-parent', ['chicken']);
+    useWheelStore.getState().addChildItem('missing', draft('Small'));
+
+    expect(useWheelStore.getState().getWheel('pizza')?.items).toBe(before?.items);
+    expect(useWheelStore.getState().getWheel('pizza')?.updatedAt).toBe(before?.updatedAt);
   });
 });

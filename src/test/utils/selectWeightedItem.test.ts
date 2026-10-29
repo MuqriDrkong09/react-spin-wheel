@@ -148,4 +148,17 @@ describe('selectWeightedItem', () => {
 
     expect(selected).toBe(burger);
   });
+
+  it('falls back when no positive-weight item remains after the scan', () => {
+    let weightReads = 0;
+    const shrinking = {
+      enabled: true,
+      get weight() {
+        weightReads += 1;
+        return weightReads <= 3 ? 1 : 0;
+      },
+    };
+
+    expect(selectWeightedItem([shrinking], 1)).toBeUndefined();
+  });
 });

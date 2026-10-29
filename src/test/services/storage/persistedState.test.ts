@@ -1,7 +1,7 @@
 import { DEFAULT_APP_SETTINGS } from '@/constants/settings';
 import { DEFAULT_WHEEL_APPEARANCE } from '@/constants/wheelAppearance';
 import { COLOR_MODE } from '@/types/colorMode';
-import { SPIN_SESSION_STATUS } from '@/types/wheel';
+import { ITEM_CONDITION_KIND, SELECTION_MODE, SPIN_SESSION_STATUS } from '@/types/wheel';
 
 import {
   PERSISTED_STATE_VERSION,
@@ -237,6 +237,207 @@ describe('persistedState', () => {
     savePersistedState({ ...defaultPersistedState, colorMode: COLOR_MODE.dark });
     clearPersistedState();
     expect(loadPersistedState().colorMode).toBe(COLOR_MODE.system);
+  });
+
+  it('returns defaults when the envelope is not an object with version and data', () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ foo: 'bar' }));
+    expect(loadPersistedState()).toEqual(defaultPersistedState);
+  });
+
+  it('stops migrating when a version has no migrator', () => {
+    expect(applyMigrations(-1, { colorMode: COLOR_MODE.dark })).toBeUndefined();
+    expect(loadFromEnvelope(-1, { colorMode: COLOR_MODE.dark })).toEqual(defaultPersistedState);
+  });
+
+  it('fills migration gaps when the payload or settings are not objects', () => {
+    expect(applyMigrations(0, null)).toMatchObject({
+      ...defaultPersistedState,
+      settings: DEFAULT_APP_SETTINGS,
+    });
+    expect(applyMigrations(0, 'nope')).toMatchObject({
+      ...defaultPersistedState,
+      settings: DEFAULT_APP_SETTINGS,
+    });
+    expect(applyMigrations(0, { settings: 'nope' })).toMatchObject({
+      settings: DEFAULT_APP_SETTINGS,
+    });
+    expect(applyMigrations(0, { settings: { soundEnabled: false } })).toMatchObject({
+      settings: { ...DEFAULT_APP_SETTINGS, soundEnabled: false },
+    });
+  });
+
+  it('keeps current-version snapshots for existing wheels and drops the rest', () => {
+    const wheel = {
+      id: 'wheel-1',
+      name: 'Pizza',
+      description: 'Dinner',
+      category: 'Food',
+      icon: '🍕',
+      items: [
+        {
+          id: 'pizza',
+          name: 'Pizza',
+          description: 'Main',
+          icon: '🍕',
+          color: '#ea580c' as const,
+          enabled: true,
+          weight: 1,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          children: [
+            {
+              id: 'chicken',
+              name: 'Chicken Pepperoni',
+              color: '#ca8a04' as const,
+              enabled: true,
+              weight: 1,
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        },
+      ],
+      settings: {
+        durationMs: 4000,
+        minRotations: 4,
+        maxRotations: 8,
+        soundEnabled: true,
+        confettiEnabled: true,
+        eliminationMode: false,
+        selectionMode: SELECTION_MODE.ask,
+        removeWinner: true,
+        skipDisabledItems: true,
+        appearance: { title: 'Dinner' },
+      },
+      conditions: [
+        { id: 'c-always', itemId: 'pizza', kind: ITEM_CONDITION_KIND.always },
+        {
+          id: 'c-requires',
+          itemId: 'chicken',
+          kind: ITEM_CONDITION_KIND.requiresSelectedItem,
+          requiredItemId: 'pizza',
+        },
+        { id: 'c-max', itemId: 'pizza', kind: ITEM_CONDITION_KIND.maxWins, limit: 2 },
+        { id: 'c-min', itemId: 'chicken', kind: ITEM_CONDITION_KIND.minWeight, minWeight: 1 },
+      ],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+
+    savePersistedState({
+      ...defaultPersistedState,
+      wheels: [wheel],
+      activeWheelId: 'wheel-1',
+      snapshots: {
+        'wheel-1': {
+          items: wheel.items,
+          settings: {
+            ...wheel.settings,
+            appearance: DEFAULT_WHEEL_APPEARANCE,
+          },
+          conditions: wheel.conditions,
+        },
+        missing: {
+          items: [],
+          settings: {
+            ...wheel.settings,
+            appearance: DEFAULT_WHEEL_APPEARANCE,
+          },
+        },
+      },
+    });
+
+    const loaded = loadPersistedState();
+    expect(loaded.activeWheelId).toBe('wheel-1');
+    expect(loaded.wheels[0]?.settings.appearance.title).toBe('Dinner');
+    expect(loaded.wheels[0]?.items[0]?.children?.[0]?.name).toBe('Chicken Pepperoni');
+    expect(loaded.wheels[0]?.conditions).toHaveLength(4);
+    expect(loaded.snapshots['wheel-1']?.conditions).toHaveLength(4);
+    expect(loaded.snapshots.missing).toBeUndefined();
+  });
+
+  it('keeps provided spin result fields and ignores an invalid appearance payload', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          wheels: [
+            {
+              id: 'wheel-1',
+              name: 'Pizza',
+              items: [
+                {
+                  id: 'chicken',
+                  name: 'Chicken Pepperoni',
+                  color: '#ef4444',
+                  enabled: true,
+                  weight: 1,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+              ],
+              settings: {
+                durationMs: 4000,
+                minRotations: 4,
+                maxRotations: 8,
+                soundEnabled: true,
+                confettiEnabled: true,
+                eliminationMode: false,
+                selectionMode: SELECTION_MODE.automatic,
+                removeWinner: false,
+                skipDisabledItems: true,
+                appearance: ['not-an-object'],
+              },
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          spinHistory: [
+            {
+              id: 'session-1',
+              wheelId: 'wheel-1',
+              wheelName: 'Pizza',
+              status: SPIN_SESSION_STATUS.inProgress,
+              results: [
+                {
+                  id: 'r1',
+                  sessionId: 'session-1',
+                  wheelId: 'wheel-1',
+                  itemId: 'chicken',
+                  itemName: 'Chicken Pepperoni',
+                  selectedItemId: 'chicken',
+                  selectedItemName: 'Chicken Pepperoni',
+                  parentItemId: null,
+                  path: ['chicken'],
+                  pathLabels: ['Chicken Pepperoni'],
+                  depth: 0,
+                  probability: 1,
+                  timestamp: '2026-01-01T00:00:00.000Z',
+                  spunAt: '2026-01-01T00:00:00.000Z',
+                  duration: 1200,
+                  mode: SELECTION_MODE.automatic,
+                },
+              ],
+              path: ['chicken'],
+              startedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        },
+      }),
+    );
+
+    const loaded = loadPersistedState();
+    expect(loaded.wheels[0]?.settings.appearance.theme).toBe('classic');
+    expect(loaded.spinHistory[0]?.results[0]).toMatchObject({
+      selectedItemId: 'chicken',
+      selectedItemName: 'Chicken Pepperoni',
+      pathLabels: ['Chicken Pepperoni'],
+      timestamp: '2026-01-01T00:00:00.000Z',
+      duration: 1200,
+      mode: SELECTION_MODE.automatic,
+    });
   });
 });
 
