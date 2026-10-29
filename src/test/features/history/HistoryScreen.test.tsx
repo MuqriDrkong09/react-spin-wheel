@@ -53,6 +53,24 @@ function historySession(
   };
 }
 
+function seedTwoResults() {
+  useHistoryStore.getState().addSpinSession(
+    historySession('r1', {
+      timestamp: '2026-01-04T12:00:00.000Z',
+    }),
+  );
+  useHistoryStore.getState().addSpinSession(
+    historySession('r2', {
+      wheelId: 'chores',
+      wheelName: 'Chores',
+      selectedItemName: 'Dishes',
+      pathLabels: ['Dishes'],
+      timestamp: '2026-01-05T12:00:00.000Z',
+      mode: SELECTION_MODE.ask,
+    }),
+  );
+}
+
 describe('HistoryScreen', () => {
   beforeEach(() => {
     resetHistoryStore();
@@ -62,26 +80,15 @@ describe('HistoryScreen', () => {
     renderApp({ initialEntries: [ROUTES.history] });
 
     expect(screen.getByRole('heading', { name: HISTORY_MESSAGES.title, level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: HISTORY_MESSAGES.emptyTitle })).toBeInTheDocument();
+    expect(screen.getByText(HISTORY_MESSAGES.description)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: HISTORY_MESSAGES.emptyTitle, level: 2 })).toBeInTheDocument();
+    expect(screen.getByText(HISTORY_MESSAGES.emptyDescription)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: HISTORY_MESSAGES.clearHistory })).not.toBeInTheDocument();
   });
 
   it('searches, opens details, deletes a result, and clears history', async () => {
     const user = userEvent.setup();
-    useHistoryStore.getState().addSpinSession(
-      historySession('r1', {
-        timestamp: '2026-01-04T12:00:00.000Z',
-      }),
-    );
-    useHistoryStore.getState().addSpinSession(
-      historySession('r2', {
-        wheelId: 'chores',
-        wheelName: 'Chores',
-        selectedItemName: 'Dishes',
-        pathLabels: ['Dishes'],
-        timestamp: '2026-01-05T12:00:00.000Z',
-        mode: SELECTION_MODE.ask,
-      }),
-    );
+    seedTwoResults();
     renderApp({ initialEntries: [ROUTES.history] });
 
     expect(screen.getByText('Pizza → Chicken Pepperoni → Large')).toBeInTheDocument();
@@ -139,6 +146,90 @@ describe('HistoryScreen', () => {
     expect(screen.queryByText('Item 1')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Go to next page' }));
+    expect(screen.getByText('Item 1')).toBeInTheDocument();
+  });
+
+  it('shows an empty state when filters match no results', async () => {
+    const user = userEvent.setup();
+    seedTwoResults();
+    renderApp({ initialEntries: [ROUTES.history] });
+
+    await user.type(screen.getByRole('textbox', { name: HISTORY_MESSAGES.searchLabel }), 'zzzzz');
+
+    expect(
+      screen.getByRole('heading', { name: HISTORY_MESSAGES.noMatchesTitle, level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(HISTORY_MESSAGES.noMatchesDescription)).toBeInTheDocument();
+    expect(screen.queryByText('Dishes')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: HISTORY_MESSAGES.clearHistory })).toBeInTheDocument();
+  });
+
+  it('filters by wheel and mode', async () => {
+    const user = userEvent.setup();
+    seedTwoResults();
+    renderApp({ initialEntries: [ROUTES.history] });
+
+    await user.click(screen.getByRole('combobox', { name: HISTORY_MESSAGES.wheelFilter }));
+    await user.click(screen.getByRole('option', { name: 'Chores' }));
+    expect(screen.getByText('Dishes')).toBeInTheDocument();
+    expect(screen.queryByText('Pizza → Chicken Pepperoni → Large')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: HISTORY_MESSAGES.wheelFilter }));
+    await user.click(screen.getByRole('option', { name: HISTORY_MESSAGES.allWheels }));
+    await user.click(screen.getByRole('combobox', { name: HISTORY_MESSAGES.modeFilter }));
+    await user.click(screen.getByRole('option', { name: 'Ask' }));
+    expect(screen.getByText('Dishes')).toBeInTheDocument();
+    expect(screen.queryByText('Pizza → Chicken Pepperoni → Large')).not.toBeInTheDocument();
+  });
+
+  it('cancels delete and clear dialogs without changing history', async () => {
+    const user = userEvent.setup();
+    seedTwoResults();
+    renderApp({ initialEntries: [ROUTES.history] });
+
+    await user.click(
+      screen.getByRole('button', { name: `${HISTORY_MESSAGES.deleteResult}: Dishes` }),
+    );
+    await user.click(
+      within(screen.getByRole('dialog', { name: HISTORY_MESSAGES.deleteResultTitle })).getByRole(
+        'button',
+        { name: HISTORY_MESSAGES.cancel },
+      ),
+    );
+    expect(screen.getByText('Dishes')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: HISTORY_MESSAGES.deleteResultTitle })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: HISTORY_MESSAGES.clearHistory }));
+    await user.click(
+      within(screen.getByRole('dialog', { name: HISTORY_MESSAGES.clearHistoryTitle })).getByRole(
+        'button',
+        { name: HISTORY_MESSAGES.cancel },
+      ),
+    );
+    expect(screen.getByText('Dishes')).toBeInTheDocument();
+    expect(screen.getByText('Pizza → Chicken Pepperoni → Large')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: HISTORY_MESSAGES.clearHistoryTitle })).not.toBeInTheDocument();
+  });
+
+  it('shows more rows when the page size increases', async () => {
+    const user = userEvent.setup();
+    for (let index = 1; index <= 11; index += 1) {
+      useHistoryStore.getState().addSpinSession(
+        historySession(`r${index}`, {
+          selectedItemName: `Item ${index}`,
+          pathLabels: [`Item ${index}`],
+          timestamp: `2026-01-${String(index).padStart(2, '0')}T12:00:00.000Z`,
+        }),
+      );
+    }
+    renderApp({ initialEntries: [ROUTES.history] });
+
+    expect(screen.queryByText('Item 1')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: /rows per page/i }));
+    await user.click(screen.getByRole('option', { name: '25' }));
+
+    expect(screen.getByText('Item 11')).toBeInTheDocument();
     expect(screen.getByText('Item 1')).toBeInTheDocument();
   });
 });
