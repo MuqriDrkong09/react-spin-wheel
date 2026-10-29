@@ -1,9 +1,76 @@
+import { fireEvent } from '@testing-library/react';
+
 import { ROUTES, withWheelId } from '@/constants/routes';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
+import * as selectionFlow from '@/features/spin/utils/selectionFlow';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { renderApp, screen, userEvent, waitFor, within } from '@/test/test-utils';
-import { SELECTION_MODE } from '@/types/wheel';
+import { SELECTION_MODE, type Wheel } from '@/types/wheel';
+
+const defaultUnsavedResult = {
+  sessionId: 'session-1',
+  selectedItemId: 'burger',
+  path: ['burger'],
+  labels: ['Burger'],
+  timestamp: '2026-01-05T12:00:00.000Z',
+  durationMs: 1200,
+};
+
+const spinSessionHarness = vi.hoisted(() => ({
+  mode: 'default' as 'default' | 'unsaved' | 'nameless',
+  result: {
+    sessionId: 'session-1',
+    wheelId: 'food',
+    selectedItemId: 'burger',
+    path: ['burger'],
+    labels: ['Burger'],
+    timestamp: '2026-01-05T12:00:00.000Z',
+    durationMs: 1200,
+  } as
+    | {
+        sessionId: string;
+        wheelId: string;
+        selectedItemId: string;
+        path: string[];
+        labels: string[];
+        timestamp: string;
+        durationMs: number;
+      }
+    | undefined,
+}));
+
+vi.mock('@/features/spin/hooks/useSpinSession', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/spin/hooks/useSpinSession')>();
+
+  return {
+    useSpinSession: (wheel: Wheel) => {
+      const session = actual.useSpinSession(wheel);
+      if (spinSessionHarness.mode === 'nameless') {
+        return {
+          ...session,
+          ancestors: [{ id: 'pizza', name: undefined as unknown as string }],
+        };
+      }
+
+      if (spinSessionHarness.mode !== 'unsaved') {
+        return session;
+      }
+
+      return {
+        ...session,
+        finalOpen: true,
+        winnerOpen: false,
+        get result() {
+          return spinSessionHarness.result
+            ? { ...spinSessionHarness.result, wheelId: wheel.id }
+            : undefined;
+        },
+        selection: [{ id: 'burger', name: 'Burger', icon: '🍔' }],
+      };
+    },
+  };
+});
 
 function seedFoodWheel() {
   useWheelStore.getState().createWheel({
@@ -49,6 +116,8 @@ describe('SpinScreen', () => {
   const originalMatchMedia = window.matchMedia;
 
   beforeEach(() => {
+    spinSessionHarness.mode = 'default';
+    spinSessionHarness.result = { ...defaultUnsavedResult, wheelId: 'food' };
     resetWheelStore();
     resetHistoryStore();
   });
@@ -478,6 +547,144 @@ describe('SpinScreen', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toHaveFocus();
+  });
+
+  it('opens create wheel from the empty state', async () => {
+    const user = userEvent.setup();
+    renderApp({ initialEntries: [ROUTES.spin] });
+
+    await user.click(screen.getByRole('button', { name: 'Create a wheel' }));
+
+    expect(await screen.findByRole('heading', { name: 'Create wheel', level: 1 })).toBeInTheDocument();
+  });
+
+  it('opens create wheel from the picker header', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderApp({ initialEntries: [ROUTES.spin] });
+
+    await user.click(screen.getByRole('button', { name: 'Create Wheel' }));
+
+    expect(await screen.findByRole('heading', { name: 'Create wheel', level: 1 })).toBeInTheDocument();
+  });
+
+  it('shows a missing-wheel empty state and returns to the dashboard', async () => {
+    const user = userEvent.setup();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'missing')] });
+
+    expect(screen.getByRole('heading', { name: SPIN_MESSAGES.missingWheelTitle, level: 2 })).toBeInTheDocument();
+    expect(screen.getByText(SPIN_MESSAGES.missingWheelDescription)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Back to dashboard' }));
+
+    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
+  });
+
+  it('shows an error when copying the final result fails and can dismiss it', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
+    });
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.copyResult }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(SPIN_MESSAGES.resultCopyFailed);
+
+    await user.click(within(alert).getByRole('button', { name: 'Close' }));
+    await waitFor(() => {
+      expect(screen.queryByText(SPIN_MESSAGES.resultCopyFailed)).not.toBeInTheDocument();
+    });
+  });
+
+  it('saves from the final result card and ignores a second save', async () => {
+    const user = userEvent.setup();
+    spinSessionHarness.mode = 'unsaved';
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.saveResult }));
+
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(1);
+    expect(useHistoryStore.getState().spinHistory[0]?.results[0]?.selectedItemName).toBe('Burger');
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.resultSaved })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: SPIN_MESSAGES.resultSaved }));
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(1);
+  });
+
+  it('ignores copy and save when the session result is gone', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    spinSessionHarness.mode = 'unsaved';
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    spinSessionHarness.result = undefined;
+    fireEvent.click(screen.getByRole('button', { name: SPIN_MESSAGES.copyResult }));
+    fireEvent.click(screen.getByRole('button', { name: SPIN_MESSAGES.saveResult }));
+
+    expect(writeText).not.toHaveBeenCalled();
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(0);
+  });
+
+  it('copies the final result from an unsaved card and shows a success snackbar', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    spinSessionHarness.mode = 'unsaved';
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.copyResult }));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole('alert')).toHaveTextContent(SPIN_MESSAGES.resultCopied);
+  });
+
+  it('does not save history when finish cannot build a result', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    vi.spyOn(selectionFlow, 'createHierarchicalSelectionResult').mockReturnValue(undefined);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
+
+    expect(screen.queryByRole('region', { name: SPIN_MESSAGES.finalResultTitle })).not.toBeInTheDocument();
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(0);
+  });
+
+  it('treats a missing remove-winner setting as off', () => {
+    seedFoodWheel();
+    const food = useWheelStore.getState().getWheel('food');
+    if (food) {
+      const { removeWinner: _removeWinner, ...settings } = food.settings;
+      useWheelStore.setState({
+        wheels: [{ ...food, settings: settings as typeof food.settings }],
+      });
+    }
+
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    expect(screen.getByRole('switch', { name: SPIN_MESSAGES.removeWinner })).not.toBeChecked();
+  });
+
+  it('renders a child-wheel caption when the ancestor name is missing', () => {
+    spinSessionHarness.mode = 'nameless';
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    expect(screen.getByText(/Children of/)).toBeInTheDocument();
   });
 
   it('handles a wheel with a single active item', () => {

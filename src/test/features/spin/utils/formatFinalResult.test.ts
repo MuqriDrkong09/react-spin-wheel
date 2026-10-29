@@ -1,5 +1,6 @@
 import {
   formatFinalResultCopy,
+  formatFinalResultPath,
   formatResultTimestamp,
   toSpinHistorySession,
 } from '@/features/spin/utils/formatFinalResult';
@@ -81,5 +82,55 @@ describe('formatFinalResult', () => {
       startedAt: '2026-10-27T01:20:00.000Z',
       completedAt: '2026-10-27T01:20:00.000Z',
     });
+  });
+
+  it('keeps an unparseable timestamp as-is', () => {
+    expect(formatResultTimestamp('not-a-date')).toBe('not-a-date');
+  });
+
+  it('formats a path without icons', () => {
+    expect(formatFinalResultPath([{ id: 'pizza', name: 'Pizza' }, { id: 'large', name: 'Large' }])).toBe(
+      ['Pizza', '↓', 'Large'].join('\n'),
+    );
+  });
+
+  it('maps a root-only result with default mode and missing label', () => {
+    const session = toSpinHistorySession({
+      wheelName: 'Food',
+      result: {
+        sessionId: 'session-2',
+        wheelId: 'food',
+        selectedItemId: 'burger',
+        path: ['burger'],
+        labels: [],
+        timestamp: '2026-10-27T02:00:00.000Z',
+        durationMs: 0,
+      },
+    });
+
+    expect(session.results[0]).toMatchObject({
+      itemName: 'burger',
+      selectedItemName: 'burger',
+      parentItemId: null,
+      depth: 0,
+      mode: SELECTION_MODE.manual,
+    });
+  });
+
+  it('uses a null parent when the previous path id is missing', () => {
+    const session = toSpinHistorySession({
+      wheelName: 'Food',
+      result: {
+        sessionId: 'session-3',
+        wheelId: 'food',
+        selectedItemId: 'large',
+        path: [undefined as unknown as string, 'large'],
+        labels: ['Pizza', 'Large'],
+        timestamp: '2026-10-27T03:00:00.000Z',
+        durationMs: 100,
+      },
+    });
+
+    expect(session.results[0]?.parentItemId).toBeNull();
   });
 });

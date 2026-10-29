@@ -1,5 +1,5 @@
 import { FULL_TURN, POINTER_ANGLE, buildWheelGeometry } from '@/features/spin/utils/wheelGeometry';
-import type { WheelItem } from '@/types/wheel';
+import type { HexColor, WheelItem } from '@/types/wheel';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -135,5 +135,145 @@ describe('buildWheelGeometry', () => {
     expect(geometry.segments[1]?.color).toBe('#22c55e');
     expect(geometry.segments[0]?.labelFill).toBe('#f8fafc');
     expect(geometry.labelFontSize).toBeGreaterThan(9);
+  });
+
+  it('hides labels on very narrow slices and sanitizes clip ids', () => {
+    const geometry = buildWheelGeometry(
+      Array.from({ length: 24 }, (_, index) =>
+        item(`Item ${index}`, { id: `item ${index}!`, color: '#0ea5e9' }),
+      ),
+    );
+
+    expect(geometry.segments).toHaveLength(24);
+    expect(geometry.segments.every((segment) => segment.showLabel === false)).toBe(true);
+    expect(geometry.segments[0]?.labelLines).toEqual([]);
+    expect(geometry.segments[0]?.clipPathId).toBe('spin-wheel-clip-item0');
+  });
+
+  it('uses a large arc for a slice bigger than a half turn', () => {
+    const geometry = buildWheelGeometry([
+      item('Pizza', { weight: 3 }),
+      item('Burger', { weight: 1 }),
+    ]);
+    const [pizza] = geometry.segments;
+
+    expect(pizza?.sweepAngle).toBeGreaterThan(Math.PI);
+    expect(pizza?.path).toContain('A ');
+    expect(pizza?.path).toMatch(/0 1 1/);
+  });
+
+  it('truncates an unbreakable label that cannot fit even at the minimum font', () => {
+    const geometry = buildWheelGeometry(
+      Array.from({ length: 12 }, (_, index) =>
+        item('Supercalifragilisticexpialidocious', { id: `word-${index}` }),
+      ),
+    );
+    const [segment] = geometry.segments;
+
+    expect(segment?.labelLines.length).toBeGreaterThan(0);
+    expect(segment?.labelLines[0]?.text.includes('…') || segment?.labelLines[0]!.text.length < 34).toBe(
+      true,
+    );
+  });
+
+  it('drops labels that cannot fit an ellipsis at a huge font size', () => {
+    const geometry = buildWheelGeometry(
+      Array.from({ length: 8 }, (_, index) => item(`Item${index}`, { id: `tiny-${index}` })),
+      200,
+      { appearance: { segmentColors: [], textColor: undefined as unknown as HexColor, fontSize: 200 } },
+    );
+
+    expect(geometry.segments[0]?.showLabel).toBe(false);
+    expect(geometry.segments[0]?.labelLines).toEqual([]);
+  });
+
+  it('renders a lone ellipsis when no character plus ellipsis will fit', () => {
+    const geometry = buildWheelGeometry(
+      Array.from({ length: 8 }, (_, index) =>
+        item('Supercalifragilisticexpialidocious', { id: `ellipsis-${index}` }),
+      ),
+      200,
+      { appearance: { segmentColors: [], textColor: undefined as unknown as HexColor, fontSize: 120 } },
+    );
+
+    expect(geometry.segments[0]?.labelLines.map((line) => line.text)).toEqual(['…']);
+  });
+
+  it('truncates leftover words on the last available line', () => {
+    const geometry = buildWheelGeometry(
+      Array.from({ length: 22 }, (_, index) =>
+        item('abcdefghijkl mnopqrstuvwx', { id: `pair-${index}` }),
+      ),
+    );
+    const [segment] = geometry.segments;
+
+    expect(segment?.showLabel).toBe(true);
+    expect(segment?.labelLines.length).toBe(1);
+    expect(segment?.labelLines[0]?.text.length).toBeGreaterThan(0);
+  });
+
+  it('gives up leftover tokens after truncating an oversized first word', () => {
+    const geometry = buildWheelGeometry(
+      Array.from({ length: 22 }, (_, index) =>
+        item('Supercalifragilisticexpialidocious Extra', { id: `overflow-${index}` }),
+      ),
+    );
+    const [segment] = geometry.segments;
+
+    expect(segment?.labelLines.length).toBeLessThanOrEqual(1);
+  });
+
+  it('skips blank labels and leftover whitespace tokens', () => {
+    const geometry = buildWheelGeometry([
+      item('Blank', { name: '' }),
+      item('Spaces', { name: '   ' }),
+    ]);
+
+    expect(geometry.segments.map((segment) => segment.labelLines)).toEqual([[], []]);
+    expect(geometry.segments.every((segment) => segment.showLabel === false)).toBe(true);
+  });
+
+  it('wraps leftover words onto a truncated last line', () => {
+    const geometry = buildWheelGeometry(
+      Array.from({ length: 10 }, (_, index) =>
+        item('One Two Three Four Five', { id: `phrase-${index}` }),
+      ),
+    );
+    const [segment] = geometry.segments;
+
+    expect(segment?.labelLines.length).toBeGreaterThan(0);
+    expect(segment?.labelLines.length).toBeLessThanOrEqual(2);
+  });
+
+  it('parses short, hashless, and invalid segment colors for contrast', () => {
+    const geometry = buildWheelGeometry([
+      item('Short', { color: '#fff' as HexColor }),
+      item('Hashless', { color: '00ff00' as HexColor }),
+      item('Invalid', { color: 'not-a-color' as HexColor }),
+    ]);
+
+    expect(geometry.segments[0]?.labelFill).toBe('#0f172a');
+    expect(geometry.segments[1]?.labelFill).toBe('#0f172a');
+    expect(geometry.segments[2]?.labelFill).toBe('#ffffff');
+    expect(geometry.segments[2]?.color).toBe('not-a-color');
+  });
+
+  it('falls back when a palette color is missing and scales a custom size', () => {
+    const geometry = buildWheelGeometry(
+      [item('Pizza', { color: '#ea580c' }), item('Burger', { color: '#ca8a04' })],
+      400,
+      {
+        appearance: {
+          segmentColors: ['#111111', undefined as unknown as HexColor],
+          textColor: '#f8fafc',
+          fontSize: 14,
+        },
+      },
+    );
+
+    expect(geometry.size).toBe(400);
+    expect(geometry.segments[0]?.color).toBe('#111111');
+    expect(geometry.segments[1]?.color).toBe('#ca8a04');
+    expect(geometry.radius).toBeGreaterThan(100);
   });
 });

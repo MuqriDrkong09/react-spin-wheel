@@ -1,4 +1,9 @@
-import { DEFAULT_SPIN_ANIMATION, SPIN_ANIMATION_TYPE, SPIN_EASINGS } from '@/features/spin/constants';
+import {
+  DEFAULT_SPIN_ANIMATION,
+  SPIN_ANIMATION_TYPE,
+  SPIN_EASINGS,
+  type SpinAnimationType,
+} from '@/features/spin/constants';
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
 import {
   animationDurationSeconds,
@@ -40,6 +45,9 @@ describe('spinAnimation', () => {
     expect(animationEasing(SPIN_ANIMATION_TYPE.easeOut)).toEqual(SPIN_EASINGS.easeOut);
     expect(animationEasing(SPIN_ANIMATION_TYPE.easeInOut)).toEqual(SPIN_EASINGS.easeInOut);
     expect(animationEasing(SPIN_ANIMATION_TYPE.cubic)).toEqual(SPIN_EASINGS.cubic);
+    expect(animationEasing('unknown' as SpinAnimationType)).toEqual(
+      SPIN_EASINGS[DEFAULT_SPIN_ANIMATION.animationType],
+    );
   });
 
   it('converts engine radians to CSS degrees', () => {

@@ -1,7 +1,74 @@
+import type { CSSProperties, ReactNode } from 'react';
+
 import { SpinWheel } from '@/features/spin/components/SpinWheel';
-import { SPIN_MESSAGES, WHEEL_HUB_COLOR } from '@/features/spin/constants';
-import { renderWithProviders, screen } from '@/test/test-utils';
-import type { WheelItem } from '@/types/wheel';
+import { SPIN_MESSAGES, WHEEL_HUB_COLOR, type SpinAnimationType } from '@/features/spin/constants';
+import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
+import { CENTER_BUTTON_STYLE, type WheelItem } from '@/types/wheel';
+
+const motionHarness = vi.hoisted(() => ({
+  fireComplete: false,
+  updateRotate: undefined as number | string | undefined,
+}));
+
+vi.mock('framer-motion', async (importOriginal) => {
+  const React = await import('react');
+  const actual = await importOriginal<typeof import('framer-motion')>();
+
+  function MotionDiv({
+    children,
+    onAnimationComplete,
+    onUpdate,
+    style,
+    initial,
+    animate,
+    transition,
+    ...rest
+  }: {
+    children?: ReactNode;
+    onAnimationComplete?: () => void;
+    onUpdate?: (latest: { rotate?: unknown }) => void;
+    style?: CSSProperties;
+    initial?: unknown;
+    animate?: unknown;
+    transition?: unknown;
+    [key: string]: unknown;
+  }) {
+    React.useEffect(() => {
+      if (!motionHarness.fireComplete) {
+        return;
+      }
+
+      if (motionHarness.updateRotate !== undefined) {
+        onUpdate?.({ rotate: motionHarness.updateRotate });
+      }
+
+      onAnimationComplete?.();
+    });
+
+    if (!motionHarness.fireComplete) {
+      return React.createElement(actual.motion.div, {
+        children,
+        onAnimationComplete,
+        onUpdate,
+        style,
+        initial,
+        animate,
+        transition,
+        ...rest,
+      });
+    }
+
+    return React.createElement('div', { style, ...rest }, children);
+  }
+
+  return {
+    ...actual,
+    motion: {
+      ...actual.motion,
+      div: MotionDiv,
+    },
+  };
+});
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -17,6 +84,15 @@ function item(name: string, extra?: Partial<WheelItem>): WheelItem {
 }
 
 describe('SpinWheel', () => {
+  beforeEach(() => {
+    motionHarness.fireComplete = false;
+    motionHarness.updateRotate = undefined;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('renders an empty state when there are no active items', () => {
     renderWithProviders(
       <SpinWheel items={[item('Pizza', { enabled: false }), item('Burger', { weight: 0 })]} />,
@@ -157,4 +233,154 @@ describe('SpinWheel', () => {
     expect(slice).toHaveAttribute('stroke', '#f43f5e');
     expect(slice).toHaveAttribute('stroke-width', '3');
   });
+
+  it('omits slice strokes when the border width is zero', () => {
+    const { container } = renderWithProviders(
+      <SpinWheel
+        items={[item('Pizza'), item('Burger')]}
+        appearance={{ borderWidth: 0, borderColor: '#f43f5e' }}
+      />,
+    );
+
+    const slices = [...container.querySelectorAll('path')].filter((path) => path.getAttribute('title'));
+    expect(slices.every((path) => path.getAttribute('stroke') === 'none')).toBe(true);
+  });
+
+  it('hides labels on very narrow slices', () => {
+    const items = Array.from({ length: 24 }, (_, index) => item(`Item ${index}`, { id: `item-${index}` }));
+    const { container } = renderWithProviders(<SpinWheel items={items} />);
+
+    expect(container.querySelectorAll('tspan')).toHaveLength(0);
+  });
+
+  it('uses outlined and ghost center-button styles', () => {
+    const { rerender } = renderWithProviders(
+      <SpinWheel
+        items={[item('Pizza'), item('Burger')]}
+        appearance={{ centerButtonStyle: CENTER_BUTTON_STYLE.outlined }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toHaveClass(
+      'MuiButton-outlined',
+    );
+
+    rerender(
+      <SpinWheel
+        items={[item('Pizza'), item('Burger')]}
+        appearance={{ centerButtonStyle: CENTER_BUTTON_STYLE.ghost }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toHaveClass(
+      'MuiButton-text',
+    );
+  });
+
+  it('falls back to ease-in-out when the animation type is unknown', () => {
+    renderWithProviders(
+      <SpinWheel
+        items={[item('Pizza'), item('Burger')]}
+        animationType={'unknown' as SpinAnimationType}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeEnabled();
+  });
+
+  it('starts a spin from the center button', async () => {
+    const user = userEvent.setup();
+    const onSpin = vi.fn();
+    renderWithProviders(<SpinWheel items={[item('Pizza'), item('Burger')]} onSpin={onSpin} />);
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
+
+    expect(onSpin).toHaveBeenCalledTimes(1);
+  });
+
+  it('completes a reduced-motion spin and tracks rotation frames', () => {
+    const onSpinComplete = vi.fn();
+    motionHarness.fireComplete = true;
+    motionHarness.updateRotate = 90;
+
+    renderWithProviders(
+      <SpinWheel
+        items={[item('Pizza'), item('Burger')]}
+        spinning
+        reducedMotion
+        rotationDegrees={360}
+        onSpinComplete={onSpinComplete}
+      />,
+    );
+
+    expect(onSpinComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores non-numeric rotation updates and too-short spin completions', () => {
+    const onSpinComplete = vi.fn();
+    motionHarness.fireComplete = true;
+    motionHarness.updateRotate = '90deg';
+
+    renderWithProviders(
+      <SpinWheel
+        items={[item('Pizza'), item('Burger')]}
+        spinning
+        spinDuration={4000}
+        rotationDegrees={1080}
+        onSpinComplete={onSpinComplete}
+      />,
+    );
+
+    expect(onSpinComplete).not.toHaveBeenCalled();
+  });
+
+  it('does not complete while the minimum spin duration is still running', () => {
+    const now = vi.spyOn(performance, 'now');
+    now.mockReturnValue(1_000);
+    const onSpinComplete = vi.fn();
+    const items = [item('Pizza'), item('Burger')];
+    const { rerender } = renderWithProviders(
+      <SpinWheel items={items} spinning spinDuration={4000} onSpinComplete={onSpinComplete} />,
+    );
+
+    now.mockReturnValue(1_010);
+    motionHarness.fireComplete = true;
+    rerender(
+      <SpinWheel items={items} spinning spinDuration={4000} onSpinComplete={onSpinComplete} />,
+    );
+
+    expect(onSpinComplete).not.toHaveBeenCalled();
+  });
+
+  it('completes a spin after the minimum duration has elapsed', () => {
+    const now = vi.spyOn(performance, 'now');
+    now.mockReturnValue(1_000);
+    const onSpinComplete = vi.fn();
+    const items = [item('Pizza'), item('Burger')];
+    const { rerender } = renderWithProviders(
+      <SpinWheel
+        items={items}
+        spinning
+        spinDuration={4000}
+        rotationDegrees={1080}
+        onSpinComplete={onSpinComplete}
+      />,
+    );
+
+    now.mockReturnValue(1_200);
+    motionHarness.fireComplete = true;
+    motionHarness.updateRotate = 180;
+    rerender(
+      <SpinWheel
+        items={items}
+        spinning
+        spinDuration={4000}
+        rotationDegrees={1080}
+        onSpinComplete={onSpinComplete}
+      />,
+    );
+
+    expect(onSpinComplete).toHaveBeenCalledTimes(1);
+  });
 });
+

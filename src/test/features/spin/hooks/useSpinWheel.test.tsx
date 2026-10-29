@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
+import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
 import { SPIN_ANIMATION_TYPE, SPIN_STATUS } from '@/features/spin/constants';
 import { useSpinWheel } from '@/features/spin/hooks/useSpinWheel';
 import type { WheelItem } from '@/types/wheel';
@@ -144,5 +145,106 @@ describe('useSpinWheel', () => {
 
     expect(result.current.status).toBe(SPIN_STATUS.completed);
     expect(result.current.result?.item.name).toBe('Pepperoni');
+  });
+
+  it('stays idle when there is nothing to spin', () => {
+    const { result } = renderHook(() =>
+      useSpinWheel([item('Pizza', { enabled: false })], {
+        randomValue: 0,
+        reducedMotion: false,
+      }),
+    );
+
+    act(() => {
+      result.current.spin();
+    });
+    expect(result.current.status).toBe(SPIN_STATUS.idle);
+    expect(result.current.result).toBeUndefined();
+    expect(result.current.selectedColor).toBeUndefined();
+
+    act(() => {
+      result.current.spinChildren([]);
+    });
+    expect(result.current.status).toBe(SPIN_STATUS.idle);
+  });
+
+  it('reads animation and rotation range from wheel settings', () => {
+    const { result } = renderHook(() =>
+      useSpinWheel(food, {
+        randomValue: 0,
+        reducedMotion: true,
+        wheelSettings: {
+          ...DEFAULT_WHEEL_SETTINGS,
+          durationMs: 2500,
+          minRotations: 2,
+          maxRotations: 2,
+        },
+      }),
+    );
+
+    expect(result.current.animation).toEqual({
+      spinDuration: 2500,
+      rotations: 2,
+      animationType: SPIN_ANIMATION_TYPE.easeInOut,
+    });
+
+    act(() => {
+      result.current.spin();
+    });
+
+    expect(result.current.status).toBe(SPIN_STATUS.completed);
+    expect(result.current.result?.fullRotations).toBe(2);
+    expect(result.current.rotationDegrees).toBeGreaterThan(0);
+  });
+
+  it('uses a separate rotation-random sample', () => {
+    const { result } = renderHook(() =>
+      useSpinWheel(food, {
+        randomValue: 0,
+        rotationRandom: 1,
+        reducedMotion: true,
+        wheelSettings: {
+          ...DEFAULT_WHEEL_SETTINGS,
+          minRotations: 4,
+          maxRotations: 8,
+        },
+      }),
+    );
+
+    act(() => {
+      result.current.spin();
+    });
+
+    expect(result.current.result?.item.name).toBe('Pizza');
+    expect(result.current.result?.fullRotations).toBe(8);
+  });
+
+  it('uses Math.random and prefers-reduced-motion when options are omitted', () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = (query: string): MediaQueryList => ({
+      matches: query.includes('prefers-reduced-motion'),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    });
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const { result } = renderHook(() => useSpinWheel(food));
+
+    expect(result.current.reducedMotion).toBe(true);
+
+    act(() => {
+      result.current.spin();
+    });
+
+    expect(random).toHaveBeenCalled();
+    expect(result.current.status).toBe(SPIN_STATUS.completed);
+    expect(result.current.result?.item.name).toBe('Burger');
+
+    random.mockRestore();
+    window.matchMedia = originalMatchMedia;
   });
 });

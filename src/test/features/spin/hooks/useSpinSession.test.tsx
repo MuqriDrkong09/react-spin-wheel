@@ -1,9 +1,30 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
+import { SPIN_STATUS } from '@/features/spin/constants';
 import { useSpinSession } from '@/features/spin/hooks/useSpinSession';
 import { AUTO_SELECTION_MAX_STEPS } from '@/features/spin/utils/selectionFlow';
+import * as selectionFlow from '@/features/spin/utils/selectionFlow';
 import { SELECTION_MODE, type Wheel, type WheelItem } from '@/types/wheel';
+
+const sessionHarness = vi.hoisted(() => ({
+  callDefaultPendingSpin: false,
+}));
+
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+
+  return {
+    ...actual,
+    useRef(init?: unknown) {
+      if (sessionHarness.callDefaultPendingSpin && typeof init === 'function') {
+        (init as () => void)();
+      }
+
+      return actual.useRef(init);
+    },
+  };
+});
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -92,6 +113,7 @@ describe('useSpinSession', () => {
   });
 
   afterEach(() => {
+    sessionHarness.callDefaultPendingSpin = false;
     window.matchMedia = originalMatchMedia;
     vi.restoreAllMocks();
   });
@@ -466,5 +488,213 @@ describe('useSpinSession', () => {
     expect(result.current.winner?.name).toBe('Chicken Pepperoni');
     expect(result.current.winnerOpen).toBe(true);
     expect(wheel.items[0]?.children).toHaveLength(2);
+  });
+
+  it('invokes the default pending automatic spin callback', () => {
+    sessionHarness.callDefaultPendingSpin = true;
+    const { result } = renderHook(() => useSpinSession(foodWheel()));
+
+    expect(result.current.spin.status).toBe(SPIN_STATUS.idle);
+  });
+
+  it('defaults selection mode and remove-winner when settings omit them', () => {
+    const wheel = foodWheel();
+    wheel.settings = {
+      ...wheel.settings,
+      selectionMode: undefined,
+      removeWinner: undefined,
+    } as Wheel['settings'];
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    expect(result.current.selectionMode).toBe(SELECTION_MODE.manual);
+    expect(result.current.removeWinnerEnabled).toBe(false);
+  });
+
+  it('closes the winner dialog and spins again from the same level', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { result } = renderHook(() => useSpinSession(foodWheel()));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    expect(result.current.winnerOpen).toBe(true);
+
+    act(() => {
+      result.current.closeWinner();
+    });
+    expect(result.current.winnerOpen).toBe(false);
+    expect(result.current.winner?.name).toBe('Pizza');
+
+    act(() => {
+      result.current.spinAgain();
+    });
+    expect(result.current.winnerOpen).toBe(true);
+    expect(result.current.path).toEqual(['Pizza']);
+  });
+
+  it('does not continue a child spin without a winner or children', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const { result } = renderHook(() => useSpinSession(foodWheel()));
+
+    act(() => {
+      result.current.spinChild();
+    });
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Pizza', 'Burger']);
+
+    act(() => {
+      result.current.startSpin();
+    });
+    expect(result.current.winner?.name).toBe('Burger');
+    expect(result.current.canContinue).toBe(false);
+
+    act(() => {
+      result.current.spinChild();
+    });
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Pizza', 'Burger']);
+    expect(result.current.winner?.name).toBe('Burger');
+  });
+
+  it('ignores completeSpin while idle and finishes with no result before a spin', () => {
+    const { result } = renderHook(() => useSpinSession(foodWheel()));
+
+    act(() => {
+      result.current.completeSpin();
+    });
+    expect(result.current.spin.status).toBe(SPIN_STATUS.idle);
+
+    act(() => {
+      result.current.finish();
+    });
+    expect(result.current.result).toBeUndefined();
+    expect(result.current.finalOpen).toBe(false);
+  });
+
+  it('treats a completed spin without a winner as settled', () => {
+    const { result } = renderHook(() => useSpinSession(foodWheel()));
+    result.current.spin.spin = () => ({
+      status: SPIN_STATUS.completed,
+      rotation: 0,
+      targetRotation: 0,
+    });
+
+    act(() => {
+      result.current.startSpin();
+    });
+
+    expect(result.current.winner).toBeUndefined();
+    expect(result.current.winnerOpen).toBe(false);
+  });
+
+  it('does not auto-advance when the next selection level cannot be built', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    vi.spyOn(selectionFlow, 'advanceSelectionLevel').mockReturnValue(undefined);
+    const wheel = foodWheel();
+    wheel.settings.selectionMode = SELECTION_MODE.automatic;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+
+    expect(result.current.path).toEqual(['Pizza']);
+    expect(result.current.winner?.name).toBe('Pizza');
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Pizza', 'Burger']);
+  });
+
+  it('cancels a pending automatic child spin on unmount', () => {
+    window.matchMedia = (query: string): MediaQueryList => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    });
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    wheel.settings.selectionMode = SELECTION_MODE.automatic;
+    const { result, unmount } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    act(() => {
+      result.current.completeSpin();
+    });
+
+    expect(result.current.spin.status).toBe(SPIN_STATUS.idle);
+    unmount();
+  });
+
+  it('drops a pending child spin when the item list changes', async () => {
+    window.matchMedia = (query: string): MediaQueryList => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    });
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    wheel.settings.selectionMode = SELECTION_MODE.automatic;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    act(() => {
+      result.current.completeSpin();
+    });
+
+    expect(result.current.items.map((entry) => entry.name)).toEqual([
+      'Chicken Pepperoni',
+      'Beef Pepperoni',
+    ]);
+
+    act(() => {
+      result.current.startNewSelection();
+    });
+
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
+      });
+    });
+
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Pizza', 'Burger']);
+    expect(result.current.spin.status).toBe(SPIN_STATUS.idle);
+  });
+
+  it('skips a pending resume spin while the final result is open', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    wheel.settings.selectionMode = SELECTION_MODE.automatic;
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    act(() => {
+      result.current.spinChild();
+    });
+    act(() => {
+      result.current.finish();
+    });
+    act(() => {
+      result.current.resumeFromResult();
+    });
+    act(() => {
+      result.current.finish();
+    });
+
+    expect(result.current.finalOpen).toBe(true);
+    expect(result.current.spin.status).toBe(SPIN_STATUS.idle);
   });
 });

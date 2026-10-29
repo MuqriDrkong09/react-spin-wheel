@@ -1,14 +1,17 @@
 import { FULL_TURN, POINTER_ANGLE } from '@/features/spin/constants';
 import {
+  activeWheelItems,
   calculateSegmentAngles,
   calculateTargetRotation,
   createSpinResult,
+  isActiveWheelSegment,
   landingAngle,
   selectWinner,
   SPIN_ENGINE_ERRORS,
 } from '@/features/spin/engine/spinEngine';
 import { buildWheelGeometry } from '@/features/spin/utils/wheelGeometry';
 import type { WheelItem } from '@/types/wheel';
+import * as weightedSelection from '@/utils/selectWeightedItem';
 import { WEIGHTED_SELECTION_ERRORS } from '@/utils/selectWeightedItem';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
@@ -207,12 +210,41 @@ describe('calculateTargetRotation', () => {
     expect(() => calculateTargetRotation(pizzaSegment, { fullRotations: -1 })).toThrow(
       SPIN_ENGINE_ERRORS.invalidFullRotations,
     );
+    expect(() => calculateTargetRotation(pizzaSegment, { fullRotations: Number.POSITIVE_INFINITY })).toThrow(
+      SPIN_ENGINE_ERRORS.invalidFullRotations,
+    );
     expect(() => calculateTargetRotation(pizzaSegment, { landing: 1.2 })).toThrow(
+      SPIN_ENGINE_ERRORS.invalidLanding,
+    );
+    expect(() => calculateTargetRotation(pizzaSegment, { landing: -0.1 })).toThrow(
+      SPIN_ENGINE_ERRORS.invalidLanding,
+    );
+    expect(() => calculateTargetRotation(pizzaSegment, { landing: Number.NaN })).toThrow(
       SPIN_ENGINE_ERRORS.invalidLanding,
     );
     expect(() => calculateTargetRotation(pizzaSegment, { currentRotation: Number.NaN })).toThrow(
       SPIN_ENGINE_ERRORS.invalidCurrentRotation,
     );
+    expect(() =>
+      calculateTargetRotation(pizzaSegment, { currentRotation: Number.POSITIVE_INFINITY }),
+    ).toThrow(SPIN_ENGINE_ERRORS.invalidCurrentRotation);
+  });
+
+  it('honors a custom pointer angle and does not wrap backward from a negative start', () => {
+    const withPointer = calculateTargetRotation(pizzaSegment, {
+      fullRotations: 2,
+      pointerAngle: 0,
+      landing: 0,
+    });
+    const fromBehind = calculateTargetRotation(pizzaSegment, {
+      fullRotations: 0,
+      currentRotation: -20 * FULL_TURN,
+    });
+
+    expect(withPointer).toBeGreaterThanOrEqual(2 * FULL_TURN);
+    expect(fromBehind).toBeGreaterThanOrEqual(0);
+    expect(fromBehind).toBeLessThan(FULL_TURN);
+    expect(pointsAtPointer(pizzaSegment.midAngle, fromBehind)).toBe(true);
   });
 });
 
@@ -330,5 +362,67 @@ describe('createSpinResult', () => {
     expect(() =>
       createSpinResult(food, { randomValue: 0, minRotations: 8, maxRotations: 4 }),
     ).toThrow(SPIN_ENGINE_ERRORS.invalidRotationRange);
+  });
+
+  it('uses equal min and max rotations, and defaults max to min', () => {
+    const equal = createSpinResult(food, {
+      randomValue: 0,
+      minRotations: 5,
+      maxRotations: 5,
+    });
+    const minOnly = createSpinResult(food, { randomValue: 0, minRotations: 7 });
+    const sampledDefault = createSpinResult(food, {
+      randomValue: 0,
+      minRotations: 4,
+      maxRotations: 8,
+    });
+
+    expect(equal?.fullRotations).toBe(5);
+    expect(minOnly?.fullRotations).toBe(7);
+    expect(sampledDefault?.fullRotations).toBe(4);
+  });
+
+  it('rejects an invalid rotation-random sample', () => {
+    const range = { randomValue: 0, minRotations: 4, maxRotations: 8 };
+
+    expect(() => createSpinResult(food, { ...range, rotationRandom: -0.01 })).toThrow(
+      WEIGHTED_SELECTION_ERRORS.invalidRandom,
+    );
+    expect(() => createSpinResult(food, { ...range, rotationRandom: 1.01 })).toThrow(
+      WEIGHTED_SELECTION_ERRORS.invalidRandom,
+    );
+    expect(() => createSpinResult(food, { ...range, rotationRandom: Number.NaN })).toThrow(
+      WEIGHTED_SELECTION_ERRORS.invalidRandom,
+    );
+    expect(() => createSpinResult(food, { ...range, rotationRandom: () => 2 })).toThrow(
+      WEIGHTED_SELECTION_ERRORS.invalidRandom,
+    );
+  });
+
+  it('returns undefined when the selected winner is not on the wheel', () => {
+    const spy = vi
+      .spyOn(weightedSelection, 'selectWeightedItem')
+      .mockReturnValue(item('Ghost'));
+
+    expect(createSpinResult(food, { randomValue: 0 })).toBeUndefined();
+
+    spy.mockRestore();
+  });
+});
+
+describe('activeWheelItems', () => {
+  it('keeps only enabled items with a finite positive weight', () => {
+    expect(isActiveWheelSegment(pizza)).toBe(true);
+    expect(isActiveWheelSegment(item('Salad', { enabled: false }))).toBe(false);
+    expect(isActiveWheelSegment(item('Zero', { weight: 0 }))).toBe(false);
+    expect(isActiveWheelSegment(item('Broken', { weight: Number.NaN }))).toBe(false);
+    expect(activeWheelItems([pizza, item('Zero', { weight: 0 }), sushi])).toEqual([pizza, sushi]);
+  });
+});
+
+describe('landingAngle', () => {
+  it('defaults to the slice midpoint', () => {
+    expect(landingAngle({ startAngle: 10, endAngle: 20 })).toBe(15);
+    expect(landingAngle({ startAngle: 0, endAngle: 8 }, 0.25)).toBe(2);
   });
 });
