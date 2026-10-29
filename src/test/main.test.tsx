@@ -1,10 +1,15 @@
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createRoot, render, startStorePersistence } = vi.hoisted(() => {
+const { App, createRoot, render, startStorePersistence } = vi.hoisted(() => {
   const render = vi.fn();
 
+  function App() {
+    return null;
+  }
+
   return {
+    App,
     render,
     createRoot: vi.fn(() => ({ render, unmount: vi.fn() })),
     startStorePersistence: vi.fn(() => vi.fn()),
@@ -14,6 +19,10 @@ const { createRoot, render, startStorePersistence } = vi.hoisted(() => {
 vi.mock('react-dom/client', () => ({
   createRoot,
 }));
+
+vi.mock('@/app/App', () => ({ App }));
+
+vi.mock('@/index.css', () => ({}));
 
 vi.mock('@/services/storage/storePersistence', () => ({
   startStorePersistence,
@@ -38,7 +47,6 @@ describe('main', () => {
     document.body.append(root);
 
     await import('@/main');
-    const { App } = await import('@/app/App');
 
     expect(startStorePersistence).toHaveBeenCalledTimes(1);
     expect(createRoot).toHaveBeenCalledWith(root);
