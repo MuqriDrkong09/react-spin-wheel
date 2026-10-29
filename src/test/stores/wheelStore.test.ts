@@ -1,7 +1,7 @@
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
 import type { WheelItem, WheelItemDraft } from '@/types/wheel';
 
-import { resetWheelStore, useWheelStore } from './wheelStore';
+import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 
 function draft(name: string, extra?: Partial<WheelItemDraft>): WheelItemDraft {
   return {

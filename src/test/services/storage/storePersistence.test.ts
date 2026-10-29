@@ -6,9 +6,9 @@ import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { SPIN_SESSION_STATUS } from '@/types/wheel';
 
-import { STORAGE_KEY, loadPersistedState } from './persistedState';
-import { storageService } from './storageService';
-import { startStorePersistence } from './storePersistence';
+import { STORAGE_KEY, loadPersistedState } from '@/services/storage/persistedState';
+import { storageService } from '@/services/storage/storageService';
+import { startStorePersistence } from '@/services/storage/storePersistence';
 
 function resetStores() {
   resetAppStore();

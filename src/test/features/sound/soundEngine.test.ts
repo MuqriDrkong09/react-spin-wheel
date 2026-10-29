@@ -1,6 +1,6 @@
 import { SOUND_CHANNEL, SOUND_ID } from '@/types/sound';
 
-import { clampVolume, SoundEngine, type AudioContextLike } from './soundEngine';
+import { clampVolume, SoundEngine, type AudioContextLike } from '@/features/sound/soundEngine';
 
 function createFakeContext(): AudioContextLike & { oscillators: Array<{ start: ReturnType<typeof vi.fn> }> } {
   const oscillators: Array<{ start: ReturnType<typeof vi.fn> }> = [];

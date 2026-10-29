@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { storageService } from '@/services/storage/storageService';
 
-import { useLocalStorage } from './useLocalStorage';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 function ThemeProbe() {
   const [theme, setTheme] = useLocalStorage('probe-theme', 'light');

@@ -2,7 +2,7 @@ import { POINTER_ANGLE } from '@/features/spin/constants';
 import { calculateSegmentAngles, calculateTargetRotation } from '@/features/spin/engine/spinEngine';
 import type { WheelItem } from '@/types/wheel';
 
-import { pointerSegmentIndex } from './pointerSegmentIndex';
+import { pointerSegmentIndex } from '@/features/spin/utils/pointerSegmentIndex';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {

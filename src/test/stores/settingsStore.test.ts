@@ -1,6 +1,6 @@
 import { DEFAULT_APP_SETTINGS } from '@/constants/settings';
 
-import { resetSettingsStore, useSettingsStore } from './settingsStore';
+import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
 
 describe('settingsStore', () => {
   beforeEach(() => {

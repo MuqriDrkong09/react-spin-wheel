@@ -1,6 +1,6 @@
 import { COLOR_MODE } from '@/types/colorMode';
 
-import { resetAppStore, useAppStore } from './appStore';
+import { resetAppStore, useAppStore } from '@/stores/appStore';
 
 describe('useAppStore', () => {
   beforeEach(() => {

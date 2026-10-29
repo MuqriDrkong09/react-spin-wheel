@@ -4,7 +4,7 @@ import {
   type Wheel,
   type WheelItem,
   type WheelItemDraft,
-} from './wheel';
+} from '@/types/wheel';
 
 const timestamps = {
   createdAt: '2026-10-21T00:00:00.000Z',

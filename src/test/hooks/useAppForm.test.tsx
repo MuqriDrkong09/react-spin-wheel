@@ -5,7 +5,7 @@ import { Form } from '@/components/common/Form';
 import { FormTextField } from '@/components/common/FormTextField';
 import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
 
-import { useAppForm } from './useAppForm';
+import { useAppForm } from '@/hooks/useAppForm';
 
 const schema = z.object({
   email: z.email('Enter a valid email address'),

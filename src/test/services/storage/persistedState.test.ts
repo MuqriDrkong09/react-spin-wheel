@@ -11,8 +11,8 @@ import {
   defaultPersistedState,
   loadPersistedState,
   savePersistedState,
-} from './persistedState';
-import { storageService } from './storageService';
+} from '@/services/storage/persistedState';
+import { storageService } from '@/services/storage/storageService';
 
 describe('persistedState', () => {
   beforeEach(() => {
