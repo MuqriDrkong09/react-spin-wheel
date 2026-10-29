@@ -123,9 +123,84 @@ describe('selectStatistics', () => {
         pathLabels: [`Winner ${index}`],
       }),
     );
-    const slices = toChartSlices(selectStatistics(results).winnerDistribution, 8);
+    const slices = toChartSlices(selectStatistics(results).winnerDistribution);
 
     expect(slices).toHaveLength(9);
     expect(slices[8]).toEqual({ name: 'Other', count: 2, percent: 20 });
+  });
+
+  it('copies chart slices when they already fit the limit', () => {
+    const items = [
+      { name: 'A', count: 1, percent: 50 },
+      { name: 'B', count: 1, percent: 50 },
+    ];
+
+    expect(toChartSlices(items)).toEqual(items);
+    expect(toChartSlices(items)).not.toBe(items);
+  });
+
+  it('returns 0 percent when the total is not positive', () => {
+    expect(percentOf(4, 0)).toBe(0);
+    expect(percentOf(4, -1)).toBe(0);
+  });
+
+  it('uses the selected item name when path labels are missing', () => {
+    const stats = selectStatistics([
+      result({
+        id: 'sushi',
+        pathLabels: [],
+        pathLabel: '',
+        selectedItemName: 'Sushi',
+      }),
+    ]);
+
+    expect(stats.mostSelectedParent?.name).toBe('Sushi');
+    expect(stats.mostSelectedPath?.name).toBe('Sushi');
+    expect(stats.totalSpins).toBe(1);
+  });
+
+  it('skips empty parent and path names', () => {
+    const stats = selectStatistics([
+      result({
+        id: 'empty',
+        pathLabels: [],
+        pathLabel: '',
+        selectedItemName: '',
+      }),
+    ]);
+
+    expect(stats.mostSelectedParent).toBeUndefined();
+    expect(stats.mostSelectedPath).toBeUndefined();
+    expect(stats.totalSpins).toBe(1);
+  });
+
+  it('sorts wheels with equal spins by name', () => {
+    const stats = selectStatistics([
+      result({ id: 'z', wheelId: 'zeta', wheelName: 'Zeta', pathLabels: ['Lemon'] }),
+      result({ id: 'a', wheelId: 'alpha', wheelName: 'Alpha', pathLabels: ['Apple'] }),
+    ]);
+
+    expect(stats.spinsPerWheel.map((wheel) => wheel.wheelName)).toEqual(['Alpha', 'Zeta']);
+  });
+
+  it('keeps an unparseable timestamp as a day key', () => {
+    const stats = selectStatistics([result({ id: 'bad', timestamp: 'not-a-date', pathLabels: ['Pizza'] })]);
+
+    expect(stats.dailySpinCount[0]?.date).toBe('not-a-date');
+  });
+
+  it('omits a daily series when the timestamp cannot form a day key', () => {
+    const stats = selectStatistics([result({ id: 'blank', timestamp: '', pathLabels: ['Pizza'] })]);
+
+    expect(stats.dailySpinCount).toEqual([]);
+  });
+
+  it('lists only days with spins when the range exceeds 90 days', () => {
+    const stats = selectStatistics([
+      result({ id: 'early', timestamp: '2026-01-01T12:00:00.000Z', pathLabels: ['Alpha'] }),
+      result({ id: 'late', timestamp: '2026-06-01T12:00:00.000Z', pathLabels: ['Zeta'] }),
+    ]);
+
+    expect(stats.dailySpinCount.map((entry) => entry.date)).toEqual(['2026-01-01', '2026-06-01']);
   });
 });

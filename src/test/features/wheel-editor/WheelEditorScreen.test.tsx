@@ -8,7 +8,7 @@ import { loadPersistedState } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
 import { resetSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
-import { renderApp, screen, userEvent, within } from '@/test/test-utils';
+import { renderApp, screen, userEvent, waitFor, within } from '@/test/test-utils';
 import { findItem } from '@/utils/wheelTree';
 
 function seedFoodWheel() {
@@ -90,8 +90,11 @@ describe('WheelEditorScreen', () => {
     renderApp({ initialEntries: [ROUTES.wheelEditor] });
 
     expect(screen.getByRole('heading', { name: 'Wheel editor', level: 1 })).toBeInTheDocument();
+    expect(screen.getByText('Design wheel segments and settings.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: EDITOR_MESSAGES.noWheelTitle })).toBeInTheDocument();
+    expect(screen.getByText(EDITOR_MESSAGES.noWheelDescription)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create a wheel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to dashboard' })).toBeInTheDocument();
   });
 
   it('asks which wheel to edit when the editor is opened without a wheel id', () => {
@@ -102,6 +105,7 @@ describe('WheelEditorScreen', () => {
     expect(screen.getByText(EDITOR_MESSAGES.chooseWheelDescription)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Food Wheel') })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Games Wheel') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create Wheel' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: '📁 Food Wheel', level: 2 })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Add Main Data')).not.toBeInTheDocument();
   });
@@ -123,6 +127,39 @@ describe('WheelEditorScreen', () => {
     expect(screen.getByText('Edit items in Games Wheel.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '🎮 Games Wheel', level: 2 })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: '📁 Food Wheel', level: 2 })).not.toBeInTheDocument();
+  });
+
+  it('opens create wheel from the empty state', async () => {
+    const user = userEvent.setup();
+    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+
+    await user.click(screen.getByRole('button', { name: 'Create a wheel' }));
+
+    expect(await screen.findByRole('heading', { name: 'Create wheel', level: 1 })).toBeInTheDocument();
+  });
+
+  it('opens create wheel from the picker header', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+
+    await user.click(screen.getByRole('button', { name: 'Create Wheel' }));
+
+    expect(await screen.findByRole('heading', { name: 'Create wheel', level: 1 })).toBeInTheDocument();
+  });
+
+  it('shows a missing-wheel empty state and returns to the dashboard', async () => {
+    const user = userEvent.setup();
+    renderApp({ initialEntries: [withWheelId(ROUTES.wheelEditor, 'missing')] });
+
+    expect(screen.getByRole('heading', { name: 'Wheel not found', level: 2 })).toBeInTheDocument();
+    expect(
+      screen.getByText('This wheel is missing or was deleted. Create a new wheel or open one from the dashboard.'),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Back to dashboard' }));
+
+    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
   });
 
   it('returns to the wheel picker from an open editor', async () => {
@@ -543,6 +580,24 @@ describe('WheelEditorScreen', () => {
     expect(useWheelStore.getState().getWheel('food')?.items.map((item) => item.id)).toEqual(
       expect.arrayContaining([added?.id]),
     );
+  });
+
+  it('dismisses the success snackbar', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    const form = screen.getByRole('form', { name: 'Add Main Data' });
+    await user.type(within(form).getByLabelText(/^name/i), 'Taco');
+    await user.click(within(form).getByRole('button', { name: 'Add item' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(EDITOR_MESSAGES.itemAdded('Taco'));
+    await user.click(within(alert).getByRole('button', { name: 'Close' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
   });
 
   it('assigns a unique id for each main item', async () => {
