@@ -51,4 +51,18 @@ describe('preset catalog', () => {
     expect(original?.items[0]?.name).toBe('Pizza');
     expect(original?.items[0]?.children?.[0]?.name).toBe('Chicken Pepperoni');
   });
+
+  it('returns undefined for an unknown preset id', () => {
+    expect(getPreset('missing-preset')).toBeUndefined();
+  });
+
+  it('lists independent clones and keeps the frozen catalog identity', () => {
+    const listed = listPresets();
+    const frozen = getFrozenPresetCatalog();
+
+    expect(listed).not.toBe(frozen);
+    expect(listed[0]).not.toBe(frozen[0]);
+    expect(getFrozenPresetCatalog()).toBe(frozen);
+    expect(Object.isFrozen(frozen)).toBe(true);
+  });
 });
