@@ -49,4 +49,32 @@ describe('toCreateWheelInput', () => {
       icon: undefined,
     });
   });
+
+  it('maps an empty option list', () => {
+    expect(toCreateWheelInput({ ...values, items: [] }).items).toEqual([]);
+  });
+
+  it('cycles palette colors when there are more options than colors', () => {
+    const items = [...ITEM_COLORS.map((_, index) => ({ name: `Option ${index + 1}` })), { name: 'Wrapped' }];
+    const result = toCreateWheelInput({ ...values, items });
+
+    expect(result.items.map((item) => item.color)).toEqual([...ITEM_COLORS, ITEM_COLORS[0]]);
+    expect(result.items.every((item) => item.enabled && item.weight === 1)).toBe(true);
+  });
+
+  it('falls back to indigo when a palette slot is missing', async () => {
+    vi.resetModules();
+    vi.doMock('@/constants/wheel', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/constants/wheel')>();
+      return { ...actual, ITEM_COLORS: [] };
+    });
+
+    const { toCreateWheelInput: mapWithEmptyPalette } = await import(
+      '@/features/create-wheel/utils/toCreateWheelInput'
+    );
+
+    expect(mapWithEmptyPalette({ ...values, items: [{ name: 'Pepperoni' }] }).items[0]?.color).toBe(
+      '#4f46e5',
+    );
+  });
 });

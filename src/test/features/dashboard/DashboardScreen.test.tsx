@@ -1,3 +1,4 @@
+import { APP_DESCRIPTION } from '@/constants/app';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
@@ -61,8 +62,10 @@ describe('DashboardScreen', () => {
     renderApp();
 
     expect(screen.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'No wheels yet' })).toBeInTheDocument();
+    expect(screen.getByText(APP_DESCRIPTION)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'No wheels yet', level: 2 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Wheel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create your first wheel' })).toBeInTheDocument();
     expect(screen.getByText('No favorite wheels yet.')).toBeInTheDocument();
     expect(screen.getByText('No recently used wheels yet.')).toBeInTheDocument();
     expect(screen.getByText('No selected results yet.')).toBeInTheDocument();
@@ -75,6 +78,28 @@ describe('DashboardScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Create Wheel' }));
 
     expect(await screen.findByRole('heading', { name: 'Create wheel', level: 1 })).toBeInTheDocument();
+  });
+
+  it('opens create wheel from the empty-state action', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Create your first wheel' }));
+
+    expect(await screen.findByRole('heading', { name: 'Create wheel', level: 1 })).toBeInTheDocument();
+  });
+
+  it('shows an empty state when filters match no wheels', async () => {
+    const user = userEvent.setup();
+    seedDashboard();
+    renderApp();
+
+    await user.type(screen.getByLabelText('Search wheels'), 'zzzzz');
+
+    expect(screen.getByRole('heading', { name: 'No matching wheels', level: 2 })).toBeInTheDocument();
+    expect(screen.getByText('Try a different search, category, or sort order.')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Pizza Night', level: 3 })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Chores', level: 3 })).not.toBeInTheDocument();
   });
 
   it('renders stats, lists, search, filter, favorite, open, edit, and delete', async () => {
@@ -137,6 +162,30 @@ describe('DashboardScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Edit Pizza Night' }));
     expect(screen.getByRole('heading', { name: 'Wheel editor', level: 1 })).toBeInTheDocument();
     expect(useWheelStore.getState().activeWheelId).toBe('pizza');
+  });
+
+  it('opens a favorite wheel from the side card', async () => {
+    const user = userEvent.setup();
+    seedDashboard();
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Open favorite Pizza Night' }));
+
+    expect(screen.getByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
+    expect(useWheelStore.getState().activeWheelId).toBe('pizza');
+  });
+
+  it('cancels a pending delete', async () => {
+    const user = userEvent.setup();
+    seedDashboard();
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Delete Chores' }));
+    const dialog = screen.getByRole('dialog', { name: 'Delete wheel' });
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(useWheelStore.getState().getWheel('chores')).toBeDefined();
+    expect(screen.queryByRole('dialog', { name: 'Delete wheel' })).not.toBeInTheDocument();
   });
 
   it('deletes immediately when confirmation is disabled', async () => {
