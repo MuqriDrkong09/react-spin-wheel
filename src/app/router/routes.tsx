@@ -8,6 +8,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import { PresetsPage } from '@/pages/PresetsPage';
 import { RandomGeneratorPage } from '@/pages/RandomGeneratorPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { SharedWheelPage } from '@/pages/SharedWheelPage';
 import { SpinPage } from '@/pages/SpinPage';
 import { StatisticsPage } from '@/pages/StatisticsPage';
 import { WheelEditorPage } from '@/pages/WheelEditorPage';
@@ -28,6 +29,8 @@ export const appRoutes: RouteObject[] = [
       { path: 'presets', element: <PresetsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'random-generator', element: <RandomGeneratorPage /> },
+      { path: 'share', element: <SharedWheelPage /> },
+      { path: 'share/:shareId', element: <SharedWheelPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

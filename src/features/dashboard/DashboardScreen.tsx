@@ -19,10 +19,13 @@ import { ImportWheelDialog } from '@/features/wheel-import/components/ImportWhee
 import { WheelImportDropZone } from '@/features/wheel-import/components/WheelImportDropZone';
 import { WheelImportSnackbar } from '@/features/wheel-import/components/WheelImportSnackbar';
 import { useWheelImport } from '@/features/wheel-import/hooks/useWheelImport';
+import { ShareWheelSnackbar } from '@/features/wheel-share/components/ShareWheelSnackbar';
+import { useWheelShare } from '@/features/wheel-share/hooks/useWheelShare';
 
 export function DashboardScreen() {
   const dashboard = useDashboard();
   const importer = useWheelImport();
+  const sharer = useWheelShare();
 
   return (
     <PageContainer>
@@ -82,6 +85,9 @@ export function DashboardScreen() {
                 onDelete={dashboard.requestDelete}
                 onToggleFavorite={dashboard.toggleFavorite}
                 onExport={dashboard.exportWheel}
+                onShare={(wheelId) => {
+                  void sharer.copyShareLinkById(wheelId);
+                }}
               />
             ) : (
               <EmptyState
@@ -134,6 +140,7 @@ export function DashboardScreen() {
       />
       <WheelExportSnackbar status={dashboard.exportStatus} onClose={dashboard.clearExportStatus} />
       <WheelImportSnackbar status={importer.status} onClose={importer.clearStatus} />
+      <ShareWheelSnackbar status={sharer.status} onClose={sharer.clearStatus} />
     </PageContainer>
   );
 }

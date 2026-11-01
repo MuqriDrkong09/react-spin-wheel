@@ -2,6 +2,7 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import {
   Box,
   Button,
@@ -25,6 +26,7 @@ interface WheelCardProps {
   onDelete: (wheelId: WheelId) => void;
   onToggleFavorite: (wheelId: WheelId) => void;
   onExport: (wheelId: WheelId) => void;
+  onShare: (wheelId: WheelId) => void;
 }
 
 export function WheelCard({
@@ -35,6 +37,7 @@ export function WheelCard({
   onDelete,
   onToggleFavorite,
   onExport,
+  onShare,
 }: WheelCardProps) {
   return (
     <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -84,6 +87,14 @@ export function WheelCard({
           onClick={() => onExport(wheel.id)}
         >
           Export
+        </Button>
+        <Button
+          size="small"
+          startIcon={<ShareOutlinedIcon />}
+          aria-label={`Share ${wheel.name}`}
+          onClick={() => onShare(wheel.id)}
+        >
+          Share
         </Button>
         <Button
           size="small"

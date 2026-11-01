@@ -15,10 +15,13 @@ import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { useWheelEditor } from '@/features/wheel-editor/hooks/useWheelEditor';
 import { WheelExportSnackbar } from '@/features/wheel-export/components/WheelExportSnackbar';
 import { useWheelExport } from '@/features/wheel-export/hooks/useWheelExport';
+import { ShareWheelSnackbar } from '@/features/wheel-share/components/ShareWheelSnackbar';
+import { useWheelShare } from '@/features/wheel-share/hooks/useWheelShare';
 
 export function WheelEditorScreen() {
   const editor = useWheelEditor();
   const exporter = useWheelExport();
+  const sharer = useWheelShare();
   const tree = editor.tree;
   const selectedWheel = editor.wheel;
 
@@ -45,6 +48,15 @@ export function WheelEditorScreen() {
                   onClick={() => exporter.exportWheel(selectedWheel)}
                 >
                   Export
+                </Button>
+                <Button
+                  variant="outlined"
+                  aria-label={`Share ${selectedWheel.name}`}
+                  onClick={() => {
+                    void sharer.copyShareLink(selectedWheel);
+                  }}
+                >
+                  Share
                 </Button>
                 <Button variant="outlined" onClick={editor.clearWheelSelection}>
                   {EDITOR_MESSAGES.changeWheel}
@@ -134,6 +146,7 @@ export function WheelEditorScreen() {
         </Alert>
       </Snackbar>
       <WheelExportSnackbar status={exporter.status} onClose={exporter.clearStatus} />
+      <ShareWheelSnackbar status={sharer.status} onClose={sharer.clearStatus} />
     </PageContainer>
   );
 }

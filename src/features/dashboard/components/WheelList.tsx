@@ -11,6 +11,7 @@ interface WheelListProps {
   onDelete: (wheelId: WheelId) => void;
   onToggleFavorite: (wheelId: WheelId) => void;
   onExport: (wheelId: WheelId) => void;
+  onShare: (wheelId: WheelId) => void;
 }
 
 export function WheelList({
@@ -21,6 +22,7 @@ export function WheelList({
   onDelete,
   onToggleFavorite,
   onExport,
+  onShare,
 }: WheelListProps) {
   return (
     <Box
@@ -40,6 +42,7 @@ export function WheelList({
           onDelete={onDelete}
           onToggleFavorite={onToggleFavorite}
           onExport={onExport}
+          onShare={onShare}
         />
       ))}
     </Box>

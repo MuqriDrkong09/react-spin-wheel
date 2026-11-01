@@ -6,6 +6,7 @@ import { EXPORT_MESSAGES } from '@/features/wheel-export/constants';
 import { WHEEL_EXPORT_FORMAT, WHEEL_EXPORT_VERSION } from '@/features/wheel-export/constants';
 import { downloadJsonFile } from '@/features/wheel-export/utils/downloadJsonFile';
 import { IMPORT_MESSAGES } from '@/features/wheel-import/constants';
+import { SHARE_MESSAGES } from '@/features/wheel-share/constants';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
@@ -286,6 +287,26 @@ describe('DashboardScreen', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       EXPORT_MESSAGES.success('Pizza Night', 'pizza-night-wheel.json'),
     );
+  });
+
+  it('copies a share link for a valid wheel', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    seedDashboard();
+    useWheelStore.getState().addItem('pizza', {
+      name: 'Pepperoni',
+      color: '#dc2626',
+      enabled: true,
+      weight: 1,
+    });
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Share Pizza Night' }));
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/share?s='));
+    expect(await screen.findByRole('alert')).toHaveTextContent(SHARE_MESSAGES.copied('Pizza Night'));
+    vi.unstubAllGlobals();
   });
 
   it('does not export a wheel with no items', async () => {

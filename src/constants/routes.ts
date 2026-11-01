@@ -11,6 +11,7 @@ export const ROUTES = {
   presets: '/presets',
   settings: '/settings',
   randomGenerator: '/random-generator',
+  sharedWheel: '/share',
 } as const;
 
 export function withWheelId(path: string, wheelId: WheelId): string {

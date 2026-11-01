@@ -7,6 +7,7 @@ import { SETTINGS_MESSAGES } from '@/features/settings/constants';
 import { PRESET_MESSAGES } from '@/features/presets/constants';
 import { HISTORY_MESSAGES } from '@/features/history/constants';
 import { STATISTICS_MESSAGES } from '@/features/statistics/constants';
+import { SHARE_MESSAGES } from '@/features/wheel-share/constants';
 import { renderApp, screen, userEvent } from '@/test/test-utils';
 
 const APP_PAGES = [
@@ -20,6 +21,7 @@ const APP_PAGES = [
   { path: ROUTES.presets, heading: PRESET_MESSAGES.title },
   { path: ROUTES.settings, heading: SETTINGS_MESSAGES.title },
   { path: ROUTES.randomGenerator, heading: 'Random generator' },
+  { path: ROUTES.sharedWheel, heading: SHARE_MESSAGES.pageTitle },
 ] as const;
 
 describe('App', () => {

@@ -5,6 +5,7 @@ import { WHEEL_THEME_PRESETS } from '@/constants/wheelAppearance';
 import { CUSTOMIZATION_MESSAGES } from '@/features/wheel-customization/constants';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { EXPORT_MESSAGES } from '@/features/wheel-export/constants';
+import { SHARE_MESSAGES } from '@/features/wheel-share/constants';
 import { downloadJsonFile } from '@/features/wheel-export/utils/downloadJsonFile';
 import { loadPersistedState } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
@@ -209,6 +210,20 @@ describe('WheelEditorScreen', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       EXPORT_MESSAGES.success('Food Wheel', 'food-wheel.json'),
     );
+  });
+
+  it('copies a share link for the open wheel', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Share Food Wheel' }));
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/share?s='));
+    expect(await screen.findByRole('alert')).toHaveTextContent(SHARE_MESSAGES.copied('Food Wheel'));
+    vi.unstubAllGlobals();
   });
 
   it('renders hierarchical items with one recursive tree', () => {
