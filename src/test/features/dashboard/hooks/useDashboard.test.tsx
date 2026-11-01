@@ -11,11 +11,19 @@ import {
   WHEEL_SORT,
 } from '@/features/dashboard/constants';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
+import { EXPORT_MESSAGES } from '@/features/wheel-export/constants';
+import { downloadJsonFile } from '@/features/wheel-export/utils/downloadJsonFile';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { SPIN_SESSION_STATUS } from '@/types/wheel';
+
+vi.mock('@/features/wheel-export/utils/downloadJsonFile', () => ({
+  downloadJsonFile: vi.fn(),
+}));
+
+const downloadJsonFileMock = vi.mocked(downloadJsonFile);
 
 function wrapper({ children }: { children: ReactNode }) {
   return <MemoryRouter initialEntries={[ROUTES.dashboard]}>{children}</MemoryRouter>;
@@ -81,6 +89,7 @@ describe('useDashboard', () => {
     resetHistoryStore();
     resetFavoritesStore();
     resetSettingsStore();
+    downloadJsonFileMock.mockReset();
   });
 
   it('starts empty with default filters', () => {
@@ -102,6 +111,7 @@ describe('useDashboard', () => {
     expect(result.current.sort).toBe(WHEEL_SORT.updatedDesc);
     expect(result.current.favoriteFilter).toBe(FAVORITE_FILTER.all);
     expect(result.current.usageFilter).toBe(USAGE_FILTER.all);
+    expect(result.current.exportStatus).toBeNull();
     expect(result.current.pendingDeleteWheel).toBeNull();
   });
 
@@ -307,5 +317,38 @@ describe('useDashboard', () => {
       result.current.toggleFavorite('pizza');
     });
     expect(result.current.favoriteWheelIds).toContain('pizza');
+  });
+
+  it('exports a valid wheel and reports invalid data', () => {
+    seedDashboard();
+    useWheelStore.getState().addItem('pizza', {
+      name: 'Pepperoni',
+      color: '#dc2626',
+      enabled: true,
+      weight: 1,
+    });
+    const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
+
+    act(() => {
+      result.current.exportWheel('pizza');
+    });
+    expect(downloadJsonFileMock).toHaveBeenCalledWith(
+      'pizza-night-wheel.json',
+      expect.stringContaining('"name": "Pizza Night"'),
+    );
+    expect(result.current.exportStatus?.severity).toBe('success');
+
+    act(() => {
+      result.current.exportWheel('chores');
+    });
+    expect(result.current.exportStatus).toEqual({
+      severity: 'error',
+      message: EXPORT_MESSAGES.itemsRequired,
+    });
+
+    act(() => {
+      result.current.clearExportStatus();
+    });
+    expect(result.current.exportStatus).toBeNull();
   });
 });

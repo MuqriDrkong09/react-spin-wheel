@@ -13,6 +13,7 @@ import { RecentResultsCard } from '@/features/dashboard/components/RecentResults
 import { RecentlyUsedWheelsCard } from '@/features/dashboard/components/RecentlyUsedWheelsCard';
 import { WheelList } from '@/features/dashboard/components/WheelList';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
+import { WheelExportSnackbar } from '@/features/wheel-export/components/WheelExportSnackbar';
 
 export function DashboardScreen() {
   const dashboard = useDashboard();
@@ -53,6 +54,7 @@ export function DashboardScreen() {
                 onEdit={dashboard.editWheel}
                 onDelete={dashboard.requestDelete}
                 onToggleFavorite={dashboard.toggleFavorite}
+                onExport={dashboard.exportWheel}
               />
             ) : (
               <EmptyState
@@ -95,6 +97,7 @@ export function DashboardScreen() {
         onCancel={dashboard.cancelDelete}
         onConfirm={dashboard.confirmPendingDelete}
       />
+      <WheelExportSnackbar status={dashboard.exportStatus} onClose={dashboard.clearExportStatus} />
     </PageContainer>
   );
 }

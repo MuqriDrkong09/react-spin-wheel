@@ -1,10 +1,18 @@
 import { APP_DESCRIPTION } from '@/constants/app';
+import { EXPORT_MESSAGES } from '@/features/wheel-export/constants';
+import { downloadJsonFile } from '@/features/wheel-export/utils/downloadJsonFile';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { renderApp, screen, userEvent, waitFor, within } from '@/test/test-utils';
 import { SPIN_SESSION_STATUS } from '@/types/wheel';
+
+vi.mock('@/features/wheel-export/utils/downloadJsonFile', () => ({
+  downloadJsonFile: vi.fn(),
+}));
+
+const downloadJsonFileMock = vi.mocked(downloadJsonFile);
 
 function seedDashboard() {
   useWheelStore.getState().createWheel({
@@ -56,6 +64,7 @@ describe('DashboardScreen', () => {
     resetHistoryStore();
     resetFavoritesStore();
     resetSettingsStore();
+    downloadJsonFileMock.mockReset();
   });
 
   it('shows an empty state when there are no wheels', () => {
@@ -248,5 +257,38 @@ describe('DashboardScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Delete Chores' }));
     expect(useWheelStore.getState().getWheel('chores')).toBeUndefined();
     expect(screen.queryByRole('dialog', { name: 'Delete wheel' })).not.toBeInTheDocument();
+  });
+
+  it('exports a valid wheel as json', async () => {
+    const user = userEvent.setup();
+    seedDashboard();
+    useWheelStore.getState().addItem('pizza', {
+      name: 'Pepperoni',
+      color: '#dc2626',
+      enabled: true,
+      weight: 1,
+    });
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
+
+    expect(downloadJsonFileMock).toHaveBeenCalledWith(
+      'pizza-night-wheel.json',
+      expect.stringContaining('"name": "Pizza Night"'),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      EXPORT_MESSAGES.success('Pizza Night', 'pizza-night-wheel.json'),
+    );
+  });
+
+  it('does not export a wheel with no items', async () => {
+    const user = userEvent.setup();
+    seedDashboard();
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
+
+    expect(downloadJsonFileMock).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent(EXPORT_MESSAGES.itemsRequired);
   });
 });

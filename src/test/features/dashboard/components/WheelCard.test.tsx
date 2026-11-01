@@ -37,6 +37,7 @@ function renderCard(overrides: Partial<Parameters<typeof WheelCard>[0]> = {}) {
     onEdit: vi.fn(),
     onDelete: vi.fn(),
     onToggleFavorite: vi.fn(),
+    onExport: vi.fn(),
     ...overrides,
   };
 
@@ -84,17 +85,19 @@ describe('WheelCard', () => {
     expect(screen.queryByTestId('StarBorderIcon')).not.toBeInTheDocument();
   });
 
-  it('invokes open, edit, delete, and favorite actions', async () => {
+  it('invokes open, edit, export, delete, and favorite actions', async () => {
     const user = userEvent.setup();
-    const { onOpen, onEdit, onDelete, onToggleFavorite } = renderCard();
+    const { onOpen, onEdit, onExport, onDelete, onToggleFavorite } = renderCard();
 
     await user.click(screen.getByRole('button', { name: 'Open Pizza Night' }));
     await user.click(screen.getByRole('button', { name: 'Edit Pizza Night' }));
+    await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
     await user.click(screen.getByRole('button', { name: 'Delete Pizza Night' }));
     await user.click(screen.getByRole('button', { name: 'Add Pizza Night to favorites' }));
 
     expect(onOpen).toHaveBeenCalledWith('pizza');
     expect(onEdit).toHaveBeenCalledWith('pizza');
+    expect(onExport).toHaveBeenCalledWith('pizza');
     expect(onDelete).toHaveBeenCalledWith('pizza');
     expect(onToggleFavorite).toHaveBeenCalledWith('pizza');
   });

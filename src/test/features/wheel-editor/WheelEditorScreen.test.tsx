@@ -4,12 +4,20 @@ import { ROUTES, withWheelId } from '@/constants/routes';
 import { WHEEL_THEME_PRESETS } from '@/constants/wheelAppearance';
 import { CUSTOMIZATION_MESSAGES } from '@/features/wheel-customization/constants';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
+import { EXPORT_MESSAGES } from '@/features/wheel-export/constants';
+import { downloadJsonFile } from '@/features/wheel-export/utils/downloadJsonFile';
 import { loadPersistedState } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
 import { resetSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { renderApp, screen, userEvent, waitFor, within } from '@/test/test-utils';
 import { findItem } from '@/utils/wheelTree';
+
+vi.mock('@/features/wheel-export/utils/downloadJsonFile', () => ({
+  downloadJsonFile: vi.fn(),
+}));
+
+const downloadJsonFileMock = vi.mocked(downloadJsonFile);
 
 function seedFoodWheel() {
   const store = useWheelStore.getState();
@@ -95,6 +103,7 @@ describe('WheelEditorScreen', () => {
   beforeEach(() => {
     resetWheelStore();
     resetSettingsStore();
+    downloadJsonFileMock.mockReset();
   });
 
   it('shows an empty state when no wheel is selected', () => {
@@ -182,6 +191,24 @@ describe('WheelEditorScreen', () => {
 
     expect(screen.getByText(EDITOR_MESSAGES.chooseWheelDescription)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Food Wheel') })).toBeInTheDocument();
+  });
+
+  it('exports the open wheel as json', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Export Food Wheel' }));
+
+    expect(downloadJsonFileMock).toHaveBeenCalledWith(
+      'food-wheel.json',
+      expect.stringContaining('"name": "Food Wheel"'),
+    );
+    expect(downloadJsonFileMock.mock.calls[0]?.[1]).toContain('"name": "Chicken Pepperoni"');
+    expect(downloadJsonFileMock.mock.calls[0]?.[1]).not.toContain('"id": "food"');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      EXPORT_MESSAGES.success('Food Wheel', 'food-wheel.json'),
+    );
   });
 
   it('renders hierarchical items with one recursive tree', () => {

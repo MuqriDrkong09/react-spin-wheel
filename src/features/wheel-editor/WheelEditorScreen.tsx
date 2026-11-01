@@ -13,10 +13,14 @@ import { WheelTree } from '@/features/wheel-editor/components/WheelTree';
 import { WheelCustomizationPanel } from '@/features/wheel-customization/components/WheelCustomizationPanel';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { useWheelEditor } from '@/features/wheel-editor/hooks/useWheelEditor';
+import { WheelExportSnackbar } from '@/features/wheel-export/components/WheelExportSnackbar';
+import { useWheelExport } from '@/features/wheel-export/hooks/useWheelExport';
 
 export function WheelEditorScreen() {
   const editor = useWheelEditor();
+  const exporter = useWheelExport();
   const tree = editor.tree;
+  const selectedWheel = editor.wheel;
 
   const editTitle = `Edit ${editor.dialogNode?.name ?? 'item'}`;
 
@@ -33,10 +37,19 @@ export function WheelEditorScreen() {
                 : 'Design wheel segments and settings.'
           }
           action={
-            tree ? (
-              <Button variant="outlined" onClick={editor.clearWheelSelection}>
-                {EDITOR_MESSAGES.changeWheel}
-              </Button>
+            tree && selectedWheel ? (
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <Button
+                  variant="outlined"
+                  aria-label={`Export ${selectedWheel.name}`}
+                  onClick={() => exporter.exportWheel(selectedWheel)}
+                >
+                  Export
+                </Button>
+                <Button variant="outlined" onClick={editor.clearWheelSelection}>
+                  {EDITOR_MESSAGES.changeWheel}
+                </Button>
+              </Stack>
             ) : editor.needsWheelChoice ? (
               <Button variant="contained" startIcon={<AddIcon />} onClick={editor.goToCreate}>
                 Create Wheel
@@ -120,6 +133,7 @@ export function WheelEditorScreen() {
           {editor.successMessage}
         </Alert>
       </Snackbar>
+      <WheelExportSnackbar status={exporter.status} onClose={exporter.clearStatus} />
     </PageContainer>
   );
 }

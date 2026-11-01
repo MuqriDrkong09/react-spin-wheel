@@ -20,6 +20,7 @@ import {
   selectRecentResults,
   selectRecentlyUsedWheels,
 } from '@/features/dashboard/utils/selectDashboardData';
+import { useWheelExport } from '@/features/wheel-export/hooks/useWheelExport';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useHistoryStore } from '@/stores/historyStore';
@@ -45,6 +46,7 @@ export function useDashboard() {
   const [usageFilter, setUsageFilter] = useState<UsageFilter>(USAGE_FILTER.all);
   const [wheelPendingDelete, setWheelPendingDelete] = useState<Wheel | null>(null);
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
+  const { exportWheelById, status: exportStatus, clearStatus: clearExportStatus } = useWheelExport();
 
   const stats = useMemo(
     () => selectDashboardStats(wheels, spinHistory, favoriteWheelIds),
@@ -153,6 +155,9 @@ export function useDashboard() {
     pendingDeleteWheel: wheelPendingDelete,
     favoriteWheelIds,
     toggleFavorite,
+    exportWheel: exportWheelById,
+    exportStatus,
+    clearExportStatus,
     hasWheels: wheels.length > 0,
   };
 }
