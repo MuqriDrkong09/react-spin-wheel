@@ -3,8 +3,11 @@ import { Box, FormControl, InputAdornment, InputLabel, MenuItem, Select, TextFie
 
 import {
   CATEGORY_FILTER_ALL,
+  FAVORITE_FILTER_LABELS,
   WHEEL_SORT_LABELS,
+  isFavoriteFilter,
   isWheelSort,
+  type FavoriteFilter,
   type WheelSort,
 } from '@/features/dashboard/constants';
 
@@ -16,6 +19,8 @@ interface DashboardToolbarProps {
   categoryOptions: string[];
   sort: WheelSort;
   onSortChange: (value: WheelSort) => void;
+  favoriteFilter: FavoriteFilter;
+  onFavoriteFilterChange: (value: FavoriteFilter) => void;
 }
 
 export function DashboardToolbar({
@@ -26,6 +31,8 @@ export function DashboardToolbar({
   categoryOptions,
   sort,
   onSortChange,
+  favoriteFilter,
+  onFavoriteFilterChange,
 }: DashboardToolbarProps) {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -74,6 +81,25 @@ export function DashboardToolbar({
           }}
         >
           {Object.entries(WHEEL_SORT_LABELS).map(([value, label]) => (
+            <MenuItem key={value} value={value}>
+              {label}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <FormControl size="small" sx={{ flex: { xs: '1 1 100%', sm: '0 0 180px' }, minWidth: { sm: 180 } }}>
+        <InputLabel id="dashboard-favorites-label">Favorites</InputLabel>
+        <Select
+          labelId="dashboard-favorites-label"
+          label="Favorites"
+          value={favoriteFilter}
+          onChange={(event) => {
+            if (isFavoriteFilter(event.target.value)) {
+              onFavoriteFilterChange(event.target.value);
+            }
+          }}
+        >
+          {Object.entries(FAVORITE_FILTER_LABELS).map(([value, label]) => (
             <MenuItem key={value} value={value}>
               {label}
             </MenuItem>

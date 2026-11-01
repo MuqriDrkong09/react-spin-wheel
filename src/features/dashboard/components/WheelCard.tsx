@@ -1,7 +1,5 @@
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
   Box,
@@ -10,11 +8,11 @@ import {
   CardActions,
   CardContent,
   Chip,
-  IconButton,
   Stack,
   Typography,
 } from '@mui/material';
 
+import { FavoriteStarButton } from '@/features/dashboard/components/FavoriteStarButton';
 import { getWheelCategory } from '@/features/dashboard/utils/selectDashboardData';
 import type { Wheel, WheelId } from '@/types/wheel';
 
@@ -45,15 +43,11 @@ export function WheelCard({
             </Typography>
             <Chip label={getWheelCategory(wheel)} size="small" sx={{ mt: 1 }} />
           </Box>
-          <IconButton
-            aria-label={
-              isFavorite ? `Remove ${wheel.name} from favorites` : `Add ${wheel.name} to favorites`
-            }
-            onClick={() => onToggleFavorite(wheel.id)}
-            color={isFavorite ? 'secondary' : 'default'}
-          >
-            {isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-          </IconButton>
+          <FavoriteStarButton
+            name={wheel.name}
+            isFavorite={isFavorite}
+            onToggle={() => onToggleFavorite(wheel.id)}
+          />
         </Stack>
         <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="body2">
           {wheel.description?.trim() || 'No description'}

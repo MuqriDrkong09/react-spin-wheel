@@ -52,8 +52,11 @@ describe('WheelCard', () => {
     expect(screen.getByText('Food')).toBeInTheDocument();
     expect(screen.getByText('Weekend dinner')).toBeInTheDocument();
     expect(screen.getByText('2 items')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add Pizza Night to favorites' })).toBeInTheDocument();
-    expect(screen.getByTestId('FavoriteBorderIcon')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add Pizza Night to favorites' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByTestId('StarBorderIcon')).toBeInTheDocument();
   });
 
   it('falls back to the default category and no-description copy', () => {
@@ -73,9 +76,12 @@ describe('WheelCard', () => {
   it('shows a filled favorite control when the wheel is favorited', () => {
     renderCard({ isFavorite: true });
 
-    expect(screen.getByRole('button', { name: 'Remove Pizza Night from favorites' })).toBeInTheDocument();
-    expect(screen.getByTestId('FavoriteIcon')).toBeInTheDocument();
-    expect(screen.queryByTestId('FavoriteBorderIcon')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Pizza Night from favorites' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByTestId('StarIcon')).toBeInTheDocument();
+    expect(screen.queryByTestId('StarBorderIcon')).not.toBeInTheDocument();
   });
 
   it('invokes open, edit, delete, and favorite actions', async () => {

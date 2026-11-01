@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 
 import { ROUTES, withWheelId } from '@/constants/routes';
-import { CATEGORY_FILTER_ALL, WHEEL_SORT } from '@/features/dashboard/constants';
+import { CATEGORY_FILTER_ALL, FAVORITE_FILTER, WHEEL_SORT } from '@/features/dashboard/constants';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
@@ -94,6 +94,7 @@ describe('useDashboard', () => {
     expect(result.current.search).toBe('');
     expect(result.current.category).toBe(CATEGORY_FILTER_ALL);
     expect(result.current.sort).toBe(WHEEL_SORT.updatedDesc);
+    expect(result.current.favoriteFilter).toBe(FAVORITE_FILTER.all);
     expect(result.current.pendingDeleteWheel).toBeNull();
   });
 
@@ -119,7 +120,7 @@ describe('useDashboard', () => {
     );
   });
 
-  it('filters visible wheels by search, category, and sort', () => {
+  it('filters visible wheels by search, category, favorites, and sort', () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
@@ -136,6 +137,12 @@ describe('useDashboard', () => {
 
     act(() => {
       result.current.setCategory(CATEGORY_FILTER_ALL);
+      result.current.setFavoriteFilter(FAVORITE_FILTER.favorites);
+    });
+    expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(['pizza']);
+
+    act(() => {
+      result.current.setFavoriteFilter(FAVORITE_FILTER.all);
       result.current.setSort(WHEEL_SORT.nameAsc);
     });
     expect(result.current.visibleWheels.map((wheel) => wheel.name)).toEqual(['Chores', 'Pizza Night']);

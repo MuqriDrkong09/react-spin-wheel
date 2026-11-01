@@ -69,8 +69,11 @@ export function selectFilteredWheels(
   search: string,
   category: string,
   sort: WheelSort,
+  favoriteWheelIds: readonly WheelId[] = [],
+  favoritesOnly = false,
 ): Wheel[] {
   const query = search.trim().toLowerCase();
+  const favoriteIds = new Set(favoriteWheelIds);
 
   const filtered = wheels.filter((wheel) => {
     const matchesCategory = category === CATEGORY_FILTER_ALL || getWheelCategory(wheel) === category;
@@ -78,8 +81,9 @@ export function selectFilteredWheels(
       query.length === 0 ||
       wheel.name.toLowerCase().includes(query) ||
       (wheel.description ?? '').toLowerCase().includes(query);
+    const matchesFavorite = !favoritesOnly || favoriteIds.has(wheel.id);
 
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesSearch && matchesFavorite;
   });
 
   return [...filtered].sort((left, right) => compareWheels(left, right, sort, spinHistory));

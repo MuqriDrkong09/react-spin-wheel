@@ -97,7 +97,9 @@ describe('DashboardScreen', () => {
     await user.type(screen.getByLabelText('Search wheels'), 'zzzzz');
 
     expect(screen.getByRole('heading', { name: 'No matching wheels', level: 2 })).toBeInTheDocument();
-    expect(screen.getByText('Try a different search, category, or sort order.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Try a different search, category, favorites filter, or sort order.'),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Pizza Night', level: 3 })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Chores', level: 3 })).not.toBeInTheDocument();
   });
@@ -133,7 +135,14 @@ describe('DashboardScreen', () => {
     await user.click(screen.getByRole('option', { name: 'Name A-Z' }));
     expect(screen.getByRole('heading', { name: 'Chores', level: 3 })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Remove Pizza Night from favorites' }));
+    await user.click(screen.getByRole('combobox', { name: 'Favorites' }));
+    await user.click(screen.getByRole('option', { name: 'Favorites only' }));
+    expect(screen.getByRole('heading', { name: 'Pizza Night', level: 3 })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Chores', level: 3 })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: 'Favorites' }));
+    await user.click(screen.getByRole('option', { name: 'All wheels' }));
+    await user.click(screen.getAllByRole('button', { name: 'Remove Pizza Night from favorites' })[0]!);
     expect(useFavoritesStore.getState().favoriteWheelIds).not.toContain('pizza');
     await user.click(screen.getByRole('button', { name: 'Add Pizza Night to favorites' }));
     expect(useFavoritesStore.getState().favoriteWheelIds).toContain('pizza');
@@ -173,6 +182,24 @@ describe('DashboardScreen', () => {
 
     expect(screen.getByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
     expect(useWheelStore.getState().activeWheelId).toBe('pizza');
+  });
+
+  it('unfavorites a wheel from the favorite section', async () => {
+    const user = userEvent.setup();
+    seedDashboard();
+    renderApp();
+
+    const favoriteHeading = screen.getByRole('heading', { name: 'Favorite wheels', level: 2 });
+    const favoriteCard = favoriteHeading.parentElement;
+    expect(favoriteCard).toBeTruthy();
+    await user.click(
+      within(favoriteCard as HTMLElement).getByRole('button', {
+        name: 'Remove Pizza Night from favorites',
+      }),
+    );
+
+    expect(useFavoritesStore.getState().favoriteWheelIds).not.toContain('pizza');
+    expect(screen.getByText('No favorite wheels yet.')).toBeInTheDocument();
   });
 
   it('cancels a pending delete', async () => {

@@ -1,6 +1,6 @@
 import DonutLargeOutlinedIcon from '@mui/icons-material/DonutLargeOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
+import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined';
 import ReplayOutlinedIcon from '@mui/icons-material/ReplayOutlined';
 import { Box } from '@mui/material';
 
@@ -38,7 +38,7 @@ export function DashboardStatsCards({ stats }: DashboardStatsProps) {
       <StatCard
         label="Favorite wheels"
         value={stats.favoriteCount}
-        icon={<FavoriteBorderOutlinedIcon color="primary" />}
+        icon={<StarBorderOutlinedIcon color="primary" />}
       />
     </Box>
   );

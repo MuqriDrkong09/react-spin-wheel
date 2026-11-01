@@ -40,6 +40,8 @@ export function DashboardScreen() {
               categoryOptions={dashboard.categoryOptions}
               sort={dashboard.sort}
               onSortChange={dashboard.setSort}
+              favoriteFilter={dashboard.favoriteFilter}
+              onFavoriteFilterChange={dashboard.setFavoriteFilter}
             />
             {dashboard.visibleWheels.length > 0 ? (
               <WheelList
@@ -53,7 +55,7 @@ export function DashboardScreen() {
             ) : (
               <EmptyState
                 title="No matching wheels"
-                description="Try a different search, category, or sort order."
+                description="Try a different search, category, favorites filter, or sort order."
                 titleComponent="h2"
               />
             )}
@@ -77,7 +79,11 @@ export function DashboardScreen() {
             gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
           }}
         >
-          <FavoriteWheelsCard wheels={dashboard.favoriteWheels} onOpen={dashboard.openWheel} />
+          <FavoriteWheelsCard
+            wheels={dashboard.favoriteWheels}
+            onOpen={dashboard.openWheel}
+            onToggleFavorite={dashboard.toggleFavorite}
+          />
           <RecentlyUsedWheelsCard wheels={dashboard.recentlyUsedWheels} onOpen={dashboard.openWheel} />
           <RecentResultsCard results={dashboard.recentResults} onOpen={dashboard.openWheel} />
         </Box>

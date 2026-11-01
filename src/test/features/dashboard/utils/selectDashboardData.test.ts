@@ -240,6 +240,30 @@ describe('selectDashboardData', () => {
         (wheel) => wheel.id,
       ),
     ).toEqual(['newer', 'games']);
+
+    expect(
+      selectFilteredWheels(
+        wheels,
+        history,
+        '',
+        CATEGORY_FILTER_ALL,
+        WHEEL_SORT.nameAsc,
+        ['pizza'],
+        true,
+      ).map((wheel) => wheel.id),
+    ).toEqual(['pizza']);
+
+    expect(
+      selectFilteredWheels(
+        wheels,
+        history,
+        'chore',
+        CATEGORY_FILTER_ALL,
+        WHEEL_SORT.nameAsc,
+        ['pizza'],
+        true,
+      ),
+    ).toEqual([]);
   });
 
   it('selects favorite wheels in stored order and caps the list', () => {

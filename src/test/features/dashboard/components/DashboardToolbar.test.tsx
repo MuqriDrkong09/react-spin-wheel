@@ -4,6 +4,8 @@ import { DashboardToolbar } from '@/features/dashboard/components/DashboardToolb
 import * as dashboardConstants from '@/features/dashboard/constants';
 import {
   CATEGORY_FILTER_ALL,
+  FAVORITE_FILTER,
+  FAVORITE_FILTER_LABELS,
   WHEEL_SORT,
   WHEEL_SORT_LABELS,
 } from '@/features/dashboard/constants';
@@ -20,6 +22,8 @@ function renderToolbar(
     categoryOptions: [CATEGORY_FILTER_ALL, 'Food', 'Decisions'],
     sort: WHEEL_SORT.updatedDesc,
     onSortChange: vi.fn(),
+    favoriteFilter: FAVORITE_FILTER.all,
+    onFavoriteFilterChange: vi.fn(),
     ...overrides,
   };
 
@@ -32,8 +36,8 @@ describe('DashboardToolbar', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders search, category, and sort controls', () => {
-    renderToolbar({ search: 'pizza', category: 'Food' });
+  it('renders search, category, sort, and favorites controls', () => {
+    renderToolbar({ search: 'pizza', category: 'Food', favoriteFilter: FAVORITE_FILTER.favorites });
 
     expect(screen.getByLabelText('Search wheels')).toHaveValue('pizza');
     expect(screen.getByPlaceholderText('Search by name')).toBeInTheDocument();
@@ -41,6 +45,9 @@ describe('DashboardToolbar', () => {
     expect(screen.getByRole('combobox', { name: 'Category' })).toHaveTextContent('Food');
     expect(screen.getByRole('combobox', { name: 'Sort' })).toHaveTextContent(
       WHEEL_SORT_LABELS[WHEEL_SORT.updatedDesc],
+    );
+    expect(screen.getByRole('combobox', { name: 'Favorites' })).toHaveTextContent(
+      FAVORITE_FILTER_LABELS[FAVORITE_FILTER.favorites],
     );
   });
 
@@ -63,6 +70,8 @@ describe('DashboardToolbar', () => {
           categoryOptions={[CATEGORY_FILTER_ALL, 'Food']}
           sort={WHEEL_SORT.updatedDesc}
           onSortChange={vi.fn()}
+          favoriteFilter={FAVORITE_FILTER.all}
+          onFavoriteFilterChange={vi.fn()}
         />
       );
     }
@@ -117,5 +126,31 @@ describe('DashboardToolbar', () => {
     await user.click(screen.getByRole('option', { name: WHEEL_SORT_LABELS[WHEEL_SORT.nameAsc] }));
 
     expect(onSortChange).not.toHaveBeenCalled();
+  });
+
+  it('reports a valid favorites filter change', async () => {
+    const user = userEvent.setup();
+    const { onFavoriteFilterChange } = renderToolbar();
+
+    await user.click(screen.getByRole('combobox', { name: 'Favorites' }));
+    for (const label of Object.values(FAVORITE_FILTER_LABELS)) {
+      expect(screen.getByRole('option', { name: label })).toBeInTheDocument();
+    }
+    await user.click(screen.getByRole('option', { name: FAVORITE_FILTER_LABELS[FAVORITE_FILTER.favorites] }));
+
+    expect(onFavoriteFilterChange).toHaveBeenCalledWith(FAVORITE_FILTER.favorites);
+  });
+
+  it('ignores a favorites filter value that fails the guard', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(dashboardConstants, 'isFavoriteFilter').mockReturnValue(false);
+    const { onFavoriteFilterChange } = renderToolbar();
+
+    await user.click(screen.getByRole('combobox', { name: 'Favorites' }));
+    await user.click(
+      screen.getByRole('option', { name: FAVORITE_FILTER_LABELS[FAVORITE_FILTER.favorites] }),
+    );
+
+    expect(onFavoriteFilterChange).not.toHaveBeenCalled();
   });
 });

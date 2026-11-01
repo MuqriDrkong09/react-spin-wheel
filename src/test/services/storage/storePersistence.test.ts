@@ -8,7 +8,7 @@ import { SPIN_SESSION_STATUS } from '@/types/wheel';
 
 import { STORAGE_KEY, loadPersistedState } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
-import { startStorePersistence } from '@/services/storage/storePersistence';
+import { persistStores, startStorePersistence } from '@/services/storage/storePersistence';
 
 function resetStores() {
   resetAppStore();
@@ -75,6 +75,19 @@ describe('storePersistence', () => {
     expect(persisted.settings.confettiEnabled).toBe(false);
     expect(persisted.colorMode).toBe(COLOR_MODE.light);
 
+    stop();
+  });
+
+  it('restores favorite wheel ids on hydrate', () => {
+    useWheelStore.getState().createWheel({ id: 'pizza', name: 'Pizza' });
+    useFavoritesStore.getState().addFavorite('pizza');
+    persistStores();
+    resetStores();
+
+    expect(useFavoritesStore.getState().favoriteWheelIds).toEqual([]);
+
+    const stop = startStorePersistence();
+    expect(useFavoritesStore.getState().favoriteWheelIds).toEqual(['pizza']);
     stop();
   });
 });

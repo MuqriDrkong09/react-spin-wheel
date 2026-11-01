@@ -2,7 +2,13 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES, withWheelId } from '@/constants/routes';
-import { CATEGORY_FILTER_ALL, WHEEL_SORT, type WheelSort } from '@/features/dashboard/constants';
+import {
+  CATEGORY_FILTER_ALL,
+  FAVORITE_FILTER,
+  WHEEL_SORT,
+  type FavoriteFilter,
+  type WheelSort,
+} from '@/features/dashboard/constants';
 import {
   getCategoryOptions,
   selectDashboardStats,
@@ -31,6 +37,7 @@ export function useDashboard() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState(CATEGORY_FILTER_ALL);
   const [sort, setSort] = useState<WheelSort>(WHEEL_SORT.updatedDesc);
+  const [favoriteFilter, setFavoriteFilter] = useState<FavoriteFilter>(FAVORITE_FILTER.all);
   const [wheelPendingDelete, setWheelPendingDelete] = useState<Wheel | null>(null);
 
   const stats = useMemo(
@@ -41,8 +48,17 @@ export function useDashboard() {
   const categoryOptions = useMemo(() => getCategoryOptions(wheels), [wheels]);
 
   const visibleWheels = useMemo(
-    () => selectFilteredWheels(wheels, spinHistory, search, category, sort),
-    [wheels, spinHistory, search, category, sort],
+    () =>
+      selectFilteredWheels(
+        wheels,
+        spinHistory,
+        search,
+        category,
+        sort,
+        favoriteWheelIds,
+        favoriteFilter === FAVORITE_FILTER.favorites,
+      ),
+    [wheels, spinHistory, search, category, sort, favoriteWheelIds, favoriteFilter],
   );
 
   const favoriteWheels = useMemo(
@@ -110,6 +126,8 @@ export function useDashboard() {
     categoryOptions,
     sort,
     setSort,
+    favoriteFilter,
+    setFavoriteFilter,
     openCreate,
     openWheel,
     editWheel,
