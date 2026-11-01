@@ -1,6 +1,11 @@
+import { fireEvent } from '@testing-library/react';
+
 import { APP_DESCRIPTION } from '@/constants/app';
+import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
 import { EXPORT_MESSAGES } from '@/features/wheel-export/constants';
+import { WHEEL_EXPORT_FORMAT, WHEEL_EXPORT_VERSION } from '@/features/wheel-export/constants';
 import { downloadJsonFile } from '@/features/wheel-export/utils/downloadJsonFile';
+import { IMPORT_MESSAGES } from '@/features/wheel-import/constants';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
@@ -74,6 +79,8 @@ describe('DashboardScreen', () => {
     expect(screen.getByText(APP_DESCRIPTION)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'No wheels yet', level: 2 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Wheel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Import wheel JSON' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create your first wheel' })).toBeInTheDocument();
     expect(screen.getByText('No favorite wheels yet.')).toBeInTheDocument();
     expect(screen.getByText('No recently used wheels yet.')).toBeInTheDocument();
@@ -291,4 +298,93 @@ describe('DashboardScreen', () => {
     expect(downloadJsonFileMock).not.toHaveBeenCalled();
     expect(await screen.findByRole('alert')).toHaveTextContent(EXPORT_MESSAGES.itemsRequired);
   });
+
+  it('imports a valid json file after the user confirms a name', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const file = new File(
+      [
+        JSON.stringify({
+          format: WHEEL_EXPORT_FORMAT,
+          version: WHEEL_EXPORT_VERSION,
+          id: 'imported-wheel',
+          name: 'Food Picker',
+          items: [
+            {
+              id: 'pizza',
+              name: 'Pizza',
+              color: '#ea580c',
+              enabled: true,
+              weight: 1,
+              children: [{ id: 'pepperoni', name: 'Pepperoni', color: '#dc2626', enabled: true, weight: 2 }],
+            },
+          ],
+          settings: DEFAULT_WHEEL_SETTINGS,
+        }),
+      ],
+      'food-picker-wheel.json',
+      { type: 'application/json' },
+    );
+
+    await user.upload(screen.getByLabelText('Choose wheel JSON file'), file);
+
+    const dialog = await screen.findByRole('dialog', { name: 'Import wheel' });
+    const nameField = within(dialog).getByRole('textbox', { name: 'Wheel name' });
+    expect(nameField).toHaveValue('Food Picker');
+    await user.clear(nameField);
+    await user.type(nameField, 'Dinner Wheel');
+    await user.click(within(dialog).getByRole('button', { name: 'Import wheel' }));
+
+    const imported = useWheelStore.getState().wheels.find((wheel) => wheel.name === 'Dinner Wheel');
+    expect(imported).toBeDefined();
+    expect(imported?.id).not.toBe('imported-wheel');
+    expect(imported?.items[0]?.id).not.toBe('pizza');
+    expect(imported?.items[0]?.children?.[0]?.name).toBe('Pepperoni');
+    expect(await screen.findByRole('alert')).toHaveTextContent(IMPORT_MESSAGES.success('Dinner Wheel'));
+    expect(screen.getByRole('heading', { name: 'Dinner Wheel', level: 3 })).toBeInTheDocument();
+  });
+
+  it('shows an error for malformed json and does not import', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.upload(
+      screen.getByLabelText('Choose wheel JSON file'),
+      new File(['{'], 'bad.json', { type: 'application/json' }),
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(IMPORT_MESSAGES.malformed);
+    expect(screen.queryByRole('dialog', { name: 'Import wheel' })).not.toBeInTheDocument();
+    expect(useWheelStore.getState().wheels).toHaveLength(0);
+  });
+
+  it('imports from a dropped json file', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const file = new File(
+      [
+        JSON.stringify({
+          format: WHEEL_EXPORT_FORMAT,
+          version: WHEEL_EXPORT_VERSION,
+          name: 'Dropped Wheel',
+          items: [{ name: 'Yes', color: '#16a34a', enabled: true, weight: 1 }],
+          settings: DEFAULT_WHEEL_SETTINGS,
+        }),
+      ],
+      'dropped-wheel.json',
+      { type: 'application/json' },
+    );
+
+    fireEvent.drop(screen.getByLabelText('Import wheel JSON'), {
+      dataTransfer: { files: [file] },
+    });
+
+    const dialog = await screen.findByRole('dialog', { name: 'Import wheel' });
+    expect(within(dialog).getByRole('textbox', { name: 'Wheel name' })).toHaveValue('Dropped Wheel');
+    await user.click(within(dialog).getByRole('button', { name: 'Import wheel' }));
+
+    expect(useWheelStore.getState().wheels.some((wheel) => wheel.name === 'Dropped Wheel')).toBe(true);
+    expect(await screen.findByRole('alert')).toHaveTextContent(IMPORT_MESSAGES.success('Dropped Wheel'));
+  });
 });
+

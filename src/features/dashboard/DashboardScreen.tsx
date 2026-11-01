@@ -1,4 +1,5 @@
 import AddIcon from '@mui/icons-material/Add';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import { Box, Button, Stack } from '@mui/material';
 
 import { PageContainer } from '@/components/common/PageContainer';
@@ -14,23 +15,49 @@ import { RecentlyUsedWheelsCard } from '@/features/dashboard/components/Recently
 import { WheelList } from '@/features/dashboard/components/WheelList';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { WheelExportSnackbar } from '@/features/wheel-export/components/WheelExportSnackbar';
+import { ImportWheelDialog } from '@/features/wheel-import/components/ImportWheelDialog';
+import { WheelImportDropZone } from '@/features/wheel-import/components/WheelImportDropZone';
+import { WheelImportSnackbar } from '@/features/wheel-import/components/WheelImportSnackbar';
+import { useWheelImport } from '@/features/wheel-import/hooks/useWheelImport';
 
 export function DashboardScreen() {
   const dashboard = useDashboard();
+  const importer = useWheelImport();
 
   return (
     <PageContainer>
-      <Stack spacing={3}>
+      <Stack
+        spacing={3}
+        onDragEnter={importer.onDragEnter}
+        onDragOver={importer.onDragOver}
+        onDragLeave={importer.onDragLeave}
+        onDrop={importer.onDrop}
+      >
         <PageHeader
           title="Dashboard"
           description={APP_DESCRIPTION}
           action={
-            <Button variant="contained" startIcon={<AddIcon />} onClick={dashboard.openCreate}>
-              Create Wheel
-            </Button>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <Button
+                variant="outlined"
+                startIcon={<FileUploadOutlinedIcon />}
+                onClick={importer.openFilePicker}
+              >
+                Import
+              </Button>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={dashboard.openCreate}>
+                Create Wheel
+              </Button>
+            </Stack>
           }
         />
         <DashboardStatsCards stats={dashboard.stats} />
+        <WheelImportDropZone
+          inputRef={importer.inputRef}
+          dragging={importer.dragging}
+          onInputChange={importer.onInputChange}
+          onPickFile={importer.openFilePicker}
+        />
         {dashboard.hasWheels ? (
           <>
             <DashboardToolbar
@@ -97,7 +124,16 @@ export function DashboardScreen() {
         onCancel={dashboard.cancelDelete}
         onConfirm={dashboard.confirmPendingDelete}
       />
+      <ImportWheelDialog
+        document={importer.pendingDocument}
+        name={importer.name}
+        nameError={importer.nameError}
+        onNameChange={importer.setName}
+        onCancel={importer.cancelImport}
+        onConfirm={importer.confirmImport}
+      />
       <WheelExportSnackbar status={dashboard.exportStatus} onClose={dashboard.clearExportStatus} />
+      <WheelImportSnackbar status={importer.status} onClose={importer.clearStatus} />
     </PageContainer>
   );
 }
