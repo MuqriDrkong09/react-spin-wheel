@@ -63,30 +63,47 @@ export function selectDashboardStats(
   };
 }
 
+export interface WheelListQuery {
+  search: string;
+  category: string;
+  sort: WheelSort;
+  favoriteWheelIds?: readonly WheelId[];
+  favoritesOnly?: boolean;
+  recentlyUsedOnly?: boolean;
+}
+
+export function matchesWheelSearch(wheel: Wheel, search: string): boolean {
+  const query = search.trim().toLowerCase();
+  if (query.length === 0) {
+    return true;
+  }
+
+  return (
+    wheel.name.toLowerCase().includes(query) ||
+    (wheel.description ?? '').toLowerCase().includes(query) ||
+    getWheelCategory(wheel).toLowerCase().includes(query)
+  );
+}
+
 export function selectFilteredWheels(
   wheels: Wheel[],
   spinHistory: SpinSession[],
-  search: string,
-  category: string,
-  sort: WheelSort,
-  favoriteWheelIds: readonly WheelId[] = [],
-  favoritesOnly = false,
+  query: WheelListQuery,
 ): Wheel[] {
-  const query = search.trim().toLowerCase();
-  const favoriteIds = new Set(favoriteWheelIds);
+  const favoriteIds = new Set(query.favoriteWheelIds ?? []);
+  const usedIds = new Set(spinHistory.map((session) => session.wheelId));
+  const useCounts = countWheelUses(spinHistory);
 
   const filtered = wheels.filter((wheel) => {
-    const matchesCategory = category === CATEGORY_FILTER_ALL || getWheelCategory(wheel) === category;
-    const matchesSearch =
-      query.length === 0 ||
-      wheel.name.toLowerCase().includes(query) ||
-      (wheel.description ?? '').toLowerCase().includes(query);
-    const matchesFavorite = !favoritesOnly || favoriteIds.has(wheel.id);
+    const matchesCategory =
+      query.category === CATEGORY_FILTER_ALL || getWheelCategory(wheel) === query.category;
+    const matchesFavorite = !query.favoritesOnly || favoriteIds.has(wheel.id);
+    const matchesRecent = !query.recentlyUsedOnly || usedIds.has(wheel.id);
 
-    return matchesCategory && matchesSearch && matchesFavorite;
+    return matchesCategory && matchesWheelSearch(wheel, query.search) && matchesFavorite && matchesRecent;
   });
 
-  return [...filtered].sort((left, right) => compareWheels(left, right, sort, spinHistory));
+  return [...filtered].sort((left, right) => compareWheels(left, right, query.sort, useCounts));
 }
 
 export function selectFavoriteWheels(wheels: Wheel[], favoriteWheelIds: WheelId[]): Wheel[] {
@@ -155,24 +172,36 @@ export function selectRecentResults(spinHistory: SpinSession[]): RecentResult[] 
   return results;
 }
 
+function countWheelUses(spinHistory: SpinSession[]): Map<WheelId, number> {
+  const counts = new Map<WheelId, number>();
+
+  for (const session of spinHistory) {
+    counts.set(session.wheelId, (counts.get(session.wheelId) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
 function compareWheels(
   left: Wheel,
   right: Wheel,
   sort: WheelSort,
-  spinHistory: SpinSession[],
+  useCounts: Map<WheelId, number>,
 ): number {
   if (sort === WHEEL_SORT.nameAsc) {
     return left.name.localeCompare(right.name);
   }
 
-  if (sort === WHEEL_SORT.nameDesc) {
-    return right.name.localeCompare(left.name);
+  if (sort === WHEEL_SORT.createdDesc) {
+    return right.createdAt.localeCompare(left.createdAt);
   }
 
-  if (sort === WHEEL_SORT.usedDesc) {
-    const leftUsed = getLastUsedAt(left.id, spinHistory) ?? left.updatedAt;
-    const rightUsed = getLastUsedAt(right.id, spinHistory) ?? right.updatedAt;
-    return rightUsed.localeCompare(leftUsed);
+  if (sort === WHEEL_SORT.usedCountDesc) {
+    const leftCount = useCounts.get(left.id) ?? 0;
+    const rightCount = useCounts.get(right.id) ?? 0;
+    if (leftCount !== rightCount) {
+      return rightCount - leftCount;
+    }
   }
 
   return right.updatedAt.localeCompare(left.updatedAt);

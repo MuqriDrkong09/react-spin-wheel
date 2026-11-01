@@ -3,7 +3,13 @@ import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 
 import { ROUTES, withWheelId } from '@/constants/routes';
-import { CATEGORY_FILTER_ALL, FAVORITE_FILTER, WHEEL_SORT } from '@/features/dashboard/constants';
+import {
+  CATEGORY_FILTER_ALL,
+  FAVORITE_FILTER,
+  SEARCH_DEBOUNCE_MS,
+  USAGE_FILTER,
+  WHEEL_SORT,
+} from '@/features/dashboard/constants';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
@@ -95,6 +101,7 @@ describe('useDashboard', () => {
     expect(result.current.category).toBe(CATEGORY_FILTER_ALL);
     expect(result.current.sort).toBe(WHEEL_SORT.updatedDesc);
     expect(result.current.favoriteFilter).toBe(FAVORITE_FILTER.all);
+    expect(result.current.usageFilter).toBe(USAGE_FILTER.all);
     expect(result.current.pendingDeleteWheel).toBeNull();
   });
 
@@ -120,17 +127,51 @@ describe('useDashboard', () => {
     );
   });
 
-  it('filters visible wheels by search, category, favorites, and sort', () => {
+  it('debounces search against name, description, and category', () => {
+    vi.useFakeTimers();
+    seedDashboard();
+    const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
+
+    try {
+      act(() => {
+        result.current.setSearch('chore');
+      });
+      expect(result.current.search).toBe('chore');
+      expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(
+        expect.arrayContaining(['pizza', 'chores']),
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+      expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(['chores']);
+
+      act(() => {
+        result.current.setSearch('food');
+      });
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+      expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(['pizza']);
+
+      act(() => {
+        result.current.setSearch('weekend');
+      });
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+      expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(['pizza']);
+    } finally {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
+  it('filters visible wheels by category, favorites, recently used, and sort', () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
     act(() => {
-      result.current.setSearch('chore');
-    });
-    expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(['chores']);
-
-    act(() => {
-      result.current.setSearch('');
       result.current.setCategory('Food');
     });
     expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(['pizza']);
@@ -143,9 +184,27 @@ describe('useDashboard', () => {
 
     act(() => {
       result.current.setFavoriteFilter(FAVORITE_FILTER.all);
+      result.current.setUsageFilter(USAGE_FILTER.recent);
+    });
+    expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(['pizza']);
+
+    act(() => {
+      result.current.setUsageFilter(USAGE_FILTER.all);
       result.current.setSort(WHEEL_SORT.nameAsc);
     });
     expect(result.current.visibleWheels.map((wheel) => wheel.name)).toEqual(['Chores', 'Pizza Night']);
+
+    act(() => {
+      result.current.setSort(WHEEL_SORT.createdDesc);
+    });
+    expect(result.current.visibleWheels.map((wheel) => wheel.id)).toEqual(
+      expect.arrayContaining(['pizza', 'chores']),
+    );
+
+    act(() => {
+      result.current.setSort(WHEEL_SORT.usedCountDesc);
+    });
+    expect(result.current.visibleWheels[0]?.id).toBe('pizza');
   });
 
   it('navigates to create, spin, and editor routes', () => {

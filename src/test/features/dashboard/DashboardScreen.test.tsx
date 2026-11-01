@@ -3,7 +3,7 @@ import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore'
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
-import { renderApp, screen, userEvent, within } from '@/test/test-utils';
+import { renderApp, screen, userEvent, waitFor, within } from '@/test/test-utils';
 import { SPIN_SESSION_STATUS } from '@/types/wheel';
 
 function seedDashboard() {
@@ -96,9 +96,9 @@ describe('DashboardScreen', () => {
 
     await user.type(screen.getByLabelText('Search wheels'), 'zzzzz');
 
-    expect(screen.getByRole('heading', { name: 'No matching wheels', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No matching wheels', level: 2 })).toBeInTheDocument();
     expect(
-      screen.getByText('Try a different search, category, favorites filter, or sort order.'),
+      screen.getByText('Try a different search, category, favorites, recently used filter, or sort order.'),
     ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Pizza Night', level: 3 })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Chores', level: 3 })).not.toBeInTheDocument();
@@ -120,10 +120,22 @@ describe('DashboardScreen', () => {
     expect(screen.getByText('Pepperoni')).toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Search wheels'), 'chore');
-    expect(screen.queryByRole('heading', { name: 'Pizza Night', level: 3 })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Pizza Night', level: 3 })).not.toBeInTheDocument();
+    });
     expect(screen.getByRole('heading', { name: 'Chores', level: 3 })).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText('Search wheels'));
+    await user.type(screen.getByLabelText('Search wheels'), 'food');
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Chores', level: 3 })).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('heading', { name: 'Pizza Night', level: 3 })).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('Search wheels'));
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Chores', level: 3 })).toBeInTheDocument();
+    });
     await user.click(screen.getByRole('combobox', { name: 'Category' }));
     await user.click(screen.getByRole('option', { name: 'Food' }));
     expect(screen.getByRole('heading', { name: 'Pizza Night', level: 3 })).toBeInTheDocument();
@@ -132,8 +144,20 @@ describe('DashboardScreen', () => {
     await user.click(screen.getByRole('combobox', { name: 'Category' }));
     await user.click(screen.getByRole('option', { name: 'All categories' }));
     await user.click(screen.getByRole('combobox', { name: 'Sort' }));
-    await user.click(screen.getByRole('option', { name: 'Name A-Z' }));
+    await user.click(screen.getByRole('option', { name: 'Name' }));
     expect(screen.getByRole('heading', { name: 'Chores', level: 3 })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: 'Sort' }));
+    await user.click(screen.getByRole('option', { name: 'Created date' }));
+    await user.click(screen.getByRole('combobox', { name: 'Sort' }));
+    await user.click(screen.getByRole('option', { name: 'Most used' }));
+    await user.click(screen.getByRole('combobox', { name: 'Recently used' }));
+    await user.click(screen.getByRole('option', { name: 'Recently used' }));
+    expect(screen.getByRole('heading', { name: 'Pizza Night', level: 3 })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Chores', level: 3 })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: 'Recently used' }));
+    await user.click(screen.getByRole('option', { name: 'All wheels' }));
 
     await user.click(screen.getByRole('combobox', { name: 'Favorites' }));
     await user.click(screen.getByRole('option', { name: 'Favorites only' }));

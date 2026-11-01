@@ -42,6 +42,8 @@ export function DashboardScreen() {
               onSortChange={dashboard.setSort}
               favoriteFilter={dashboard.favoriteFilter}
               onFavoriteFilterChange={dashboard.setFavoriteFilter}
+              usageFilter={dashboard.usageFilter}
+              onUsageFilterChange={dashboard.setUsageFilter}
             />
             {dashboard.visibleWheels.length > 0 ? (
               <WheelList
@@ -55,7 +57,7 @@ export function DashboardScreen() {
             ) : (
               <EmptyState
                 title="No matching wheels"
-                description="Try a different search, category, favorites filter, or sort order."
+                description="Try a different search, category, favorites, recently used filter, or sort order."
                 titleComponent="h2"
               />
             )}

@@ -5,8 +5,11 @@ import { ROUTES, withWheelId } from '@/constants/routes';
 import {
   CATEGORY_FILTER_ALL,
   FAVORITE_FILTER,
+  SEARCH_DEBOUNCE_MS,
+  USAGE_FILTER,
   WHEEL_SORT,
   type FavoriteFilter,
+  type UsageFilter,
   type WheelSort,
 } from '@/features/dashboard/constants';
 import {
@@ -17,6 +20,7 @@ import {
   selectRecentResults,
   selectRecentlyUsedWheels,
 } from '@/features/dashboard/utils/selectDashboardData';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -38,7 +42,9 @@ export function useDashboard() {
   const [category, setCategory] = useState(CATEGORY_FILTER_ALL);
   const [sort, setSort] = useState<WheelSort>(WHEEL_SORT.updatedDesc);
   const [favoriteFilter, setFavoriteFilter] = useState<FavoriteFilter>(FAVORITE_FILTER.all);
+  const [usageFilter, setUsageFilter] = useState<UsageFilter>(USAGE_FILTER.all);
   const [wheelPendingDelete, setWheelPendingDelete] = useState<Wheel | null>(null);
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
 
   const stats = useMemo(
     () => selectDashboardStats(wheels, spinHistory, favoriteWheelIds),
@@ -49,16 +55,24 @@ export function useDashboard() {
 
   const visibleWheels = useMemo(
     () =>
-      selectFilteredWheels(
-        wheels,
-        spinHistory,
-        search,
+      selectFilteredWheels(wheels, spinHistory, {
+        search: debouncedSearch,
         category,
         sort,
         favoriteWheelIds,
-        favoriteFilter === FAVORITE_FILTER.favorites,
-      ),
-    [wheels, spinHistory, search, category, sort, favoriteWheelIds, favoriteFilter],
+        favoritesOnly: favoriteFilter === FAVORITE_FILTER.favorites,
+        recentlyUsedOnly: usageFilter === USAGE_FILTER.recent,
+      }),
+    [
+      wheels,
+      spinHistory,
+      debouncedSearch,
+      category,
+      sort,
+      favoriteWheelIds,
+      favoriteFilter,
+      usageFilter,
+    ],
   );
 
   const favoriteWheels = useMemo(
@@ -128,6 +142,8 @@ export function useDashboard() {
     setSort,
     favoriteFilter,
     setFavoriteFilter,
+    usageFilter,
+    setUsageFilter,
     openCreate,
     openWheel,
     editWheel,

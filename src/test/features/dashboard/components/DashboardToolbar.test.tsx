@@ -6,6 +6,8 @@ import {
   CATEGORY_FILTER_ALL,
   FAVORITE_FILTER,
   FAVORITE_FILTER_LABELS,
+  USAGE_FILTER,
+  USAGE_FILTER_LABELS,
   WHEEL_SORT,
   WHEEL_SORT_LABELS,
 } from '@/features/dashboard/constants';
@@ -24,6 +26,8 @@ function renderToolbar(
     onSortChange: vi.fn(),
     favoriteFilter: FAVORITE_FILTER.all,
     onFavoriteFilterChange: vi.fn(),
+    usageFilter: USAGE_FILTER.all,
+    onUsageFilterChange: vi.fn(),
     ...overrides,
   };
 
@@ -36,11 +40,16 @@ describe('DashboardToolbar', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders search, category, sort, and favorites controls', () => {
-    renderToolbar({ search: 'pizza', category: 'Food', favoriteFilter: FAVORITE_FILTER.favorites });
+  it('renders search, category, sort, favorites, and recently used controls', () => {
+    renderToolbar({
+      search: 'pizza',
+      category: 'Food',
+      favoriteFilter: FAVORITE_FILTER.favorites,
+      usageFilter: USAGE_FILTER.recent,
+    });
 
     expect(screen.getByLabelText('Search wheels')).toHaveValue('pizza');
-    expect(screen.getByPlaceholderText('Search by name')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by name, description, or category')).toBeInTheDocument();
     expect(screen.getByTestId('SearchIcon')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Category' })).toHaveTextContent('Food');
     expect(screen.getByRole('combobox', { name: 'Sort' })).toHaveTextContent(
@@ -48,6 +57,9 @@ describe('DashboardToolbar', () => {
     );
     expect(screen.getByRole('combobox', { name: 'Favorites' })).toHaveTextContent(
       FAVORITE_FILTER_LABELS[FAVORITE_FILTER.favorites],
+    );
+    expect(screen.getByRole('combobox', { name: 'Recently used' })).toHaveTextContent(
+      USAGE_FILTER_LABELS[USAGE_FILTER.recent],
     );
   });
 
@@ -72,6 +84,8 @@ describe('DashboardToolbar', () => {
           onSortChange={vi.fn()}
           favoriteFilter={FAVORITE_FILTER.all}
           onFavoriteFilterChange={vi.fn()}
+          usageFilter={USAGE_FILTER.all}
+          onUsageFilterChange={vi.fn()}
         />
       );
     }
@@ -152,5 +166,29 @@ describe('DashboardToolbar', () => {
     );
 
     expect(onFavoriteFilterChange).not.toHaveBeenCalled();
+  });
+
+  it('reports a valid recently used filter change', async () => {
+    const user = userEvent.setup();
+    const { onUsageFilterChange } = renderToolbar();
+
+    await user.click(screen.getByRole('combobox', { name: 'Recently used' }));
+    for (const label of Object.values(USAGE_FILTER_LABELS)) {
+      expect(screen.getByRole('option', { name: label })).toBeInTheDocument();
+    }
+    await user.click(screen.getByRole('option', { name: USAGE_FILTER_LABELS[USAGE_FILTER.recent] }));
+
+    expect(onUsageFilterChange).toHaveBeenCalledWith(USAGE_FILTER.recent);
+  });
+
+  it('ignores a recently used filter value that fails the guard', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(dashboardConstants, 'isUsageFilter').mockReturnValue(false);
+    const { onUsageFilterChange } = renderToolbar();
+
+    await user.click(screen.getByRole('combobox', { name: 'Recently used' }));
+    await user.click(screen.getByRole('option', { name: USAGE_FILTER_LABELS[USAGE_FILTER.recent] }));
+
+    expect(onUsageFilterChange).not.toHaveBeenCalled();
   });
 });

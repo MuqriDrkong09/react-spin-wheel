@@ -8,11 +8,13 @@ import {
   getCategoryOptions,
   getLastUsedAt,
   getWheelCategory,
+  matchesWheelSearch,
   selectDashboardStats,
   selectFavoriteWheels,
   selectFilteredWheels,
   selectRecentResults,
   selectRecentlyUsedWheels,
+  type WheelListQuery,
 } from '@/features/dashboard/utils/selectDashboardData';
 import { SPIN_SESSION_STATUS, type SpinResult, type SpinSession, type Wheel } from '@/types/wheel';
 
@@ -66,6 +68,7 @@ const pizza = createWheel({
   name: 'Pizza Night',
   description: 'Weekend dinner',
   category: 'Food',
+  createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-03T00:00:00.000Z',
 });
 
@@ -73,6 +76,7 @@ const chores = createWheel({
   id: 'chores',
   name: 'Chores',
   category: 'Decisions',
+  createdAt: '2026-01-02T00:00:00.000Z',
   updatedAt: '2026-01-04T00:00:00.000Z',
 });
 
@@ -80,8 +84,18 @@ const games = createWheel({
   id: 'games',
   name: 'Game Night',
   category: 'Games',
+  createdAt: '2026-01-05T00:00:00.000Z',
   updatedAt: '2026-01-02T00:00:00.000Z',
 });
+
+function query(overrides: Partial<WheelListQuery> = {}): WheelListQuery {
+  return {
+    search: '',
+    category: CATEGORY_FILTER_ALL,
+    sort: WHEEL_SORT.nameAsc,
+    ...overrides,
+  };
+}
 
 const history: SpinSession[] = [
   createSession({
@@ -187,81 +201,69 @@ describe('selectDashboardData', () => {
     });
   });
 
+  it('matches search against name, description, and category', () => {
+    expect(matchesWheelSearch(pizza, '  pizza  ')).toBe(true);
+    expect(matchesWheelSearch(pizza, 'weekend')).toBe(true);
+    expect(matchesWheelSearch(pizza, 'food')).toBe(true);
+    expect(matchesWheelSearch(pizza, 'games')).toBe(false);
+    expect(matchesWheelSearch(chores, 'decisions')).toBe(true);
+    expect(matchesWheelSearch(pizza, '')).toBe(true);
+  });
+
   it('filters and sorts wheels', () => {
     const wheels = [pizza, chores, games];
-
-    expect(
-      selectFilteredWheels(wheels, history, '  pizza  ', CATEGORY_FILTER_ALL, WHEEL_SORT.nameAsc).map(
-        (wheel) => wheel.id,
-      ),
-    ).toEqual(['pizza']);
-
-    expect(
-      selectFilteredWheels(wheels, history, 'weekend', CATEGORY_FILTER_ALL, WHEEL_SORT.nameAsc).map(
-        (wheel) => wheel.id,
-      ),
-    ).toEqual(['pizza']);
-
-    expect(
-      selectFilteredWheels(wheels, history, '', 'Food', WHEEL_SORT.nameAsc).map((wheel) => wheel.id),
-    ).toEqual(['pizza']);
-
-    expect(
-      selectFilteredWheels(wheels, history, '', CATEGORY_FILTER_ALL, WHEEL_SORT.nameAsc).map(
-        (wheel) => wheel.id,
-      ),
-    ).toEqual(['chores', 'games', 'pizza']);
-
-    expect(
-      selectFilteredWheels(wheels, history, '', CATEGORY_FILTER_ALL, WHEEL_SORT.nameDesc).map(
-        (wheel) => wheel.id,
-      ),
-    ).toEqual(['pizza', 'games', 'chores']);
-
-    expect(
-      selectFilteredWheels(wheels, history, '', CATEGORY_FILTER_ALL, WHEEL_SORT.updatedDesc).map(
-        (wheel) => wheel.id,
-      ),
-    ).toEqual(['chores', 'pizza', 'games']);
-
-    expect(
-      selectFilteredWheels(wheels, history, '', CATEGORY_FILTER_ALL, WHEEL_SORT.usedDesc).map(
-        (wheel) => wheel.id,
-      ),
-    ).toEqual(['chores', 'pizza', 'games']);
-
-    const unusedNewer = createWheel({
-      id: 'newer',
-      name: 'Newer',
-      updatedAt: '2026-01-10T00:00:00.000Z',
+    const extraPizzaUse = createSession({
+      id: 's3',
+      wheelId: 'pizza',
+      wheelName: 'Pizza Night',
+      startedAt: '2026-01-06T00:00:00.000Z',
     });
+    const rankedHistory = [extraPizzaUse, ...history];
+
+    expect(selectFilteredWheels(wheels, history, query({ search: '  pizza  ' })).map((wheel) => wheel.id)).toEqual([
+      'pizza',
+    ]);
+    expect(selectFilteredWheels(wheels, history, query({ search: 'weekend' })).map((wheel) => wheel.id)).toEqual([
+      'pizza',
+    ]);
+    expect(selectFilteredWheels(wheels, history, query({ search: 'food' })).map((wheel) => wheel.id)).toEqual([
+      'pizza',
+    ]);
+    expect(selectFilteredWheels(wheels, history, query({ category: 'Food' })).map((wheel) => wheel.id)).toEqual([
+      'pizza',
+    ]);
+    expect(selectFilteredWheels(wheels, history, query()).map((wheel) => wheel.id)).toEqual([
+      'chores',
+      'games',
+      'pizza',
+    ]);
     expect(
-      selectFilteredWheels([games, unusedNewer], [], '', CATEGORY_FILTER_ALL, WHEEL_SORT.usedDesc).map(
+      selectFilteredWheels(wheels, history, query({ sort: WHEEL_SORT.updatedDesc })).map((wheel) => wheel.id),
+    ).toEqual(['chores', 'pizza', 'games']);
+    expect(
+      selectFilteredWheels(wheels, history, query({ sort: WHEEL_SORT.createdDesc })).map((wheel) => wheel.id),
+    ).toEqual(['games', 'chores', 'pizza']);
+    expect(
+      selectFilteredWheels(wheels, history, query({ sort: WHEEL_SORT.usedCountDesc })).map((wheel) => wheel.id),
+    ).toEqual(['chores', 'pizza', 'games']);
+    expect(
+      selectFilteredWheels(wheels, rankedHistory, query({ sort: WHEEL_SORT.usedCountDesc })).map(
         (wheel) => wheel.id,
       ),
-    ).toEqual(['newer', 'games']);
-
+    ).toEqual(['pizza', 'chores', 'games']);
     expect(
-      selectFilteredWheels(
-        wheels,
-        history,
-        '',
-        CATEGORY_FILTER_ALL,
-        WHEEL_SORT.nameAsc,
-        ['pizza'],
-        true,
-      ).map((wheel) => wheel.id),
+      selectFilteredWheels(wheels, history, query({ recentlyUsedOnly: true })).map((wheel) => wheel.id),
+    ).toEqual(['chores', 'pizza']);
+    expect(
+      selectFilteredWheels(wheels, history, query({ favoriteWheelIds: ['pizza'], favoritesOnly: true })).map(
+        (wheel) => wheel.id,
+      ),
     ).toEqual(['pizza']);
-
     expect(
       selectFilteredWheels(
         wheels,
         history,
-        'chore',
-        CATEGORY_FILTER_ALL,
-        WHEEL_SORT.nameAsc,
-        ['pizza'],
-        true,
+        query({ search: 'chore', favoriteWheelIds: ['pizza'], favoritesOnly: true }),
       ),
     ).toEqual([]);
   });

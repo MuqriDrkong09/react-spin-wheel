@@ -8,19 +8,21 @@ export const CATEGORY_FILTER_ALL = 'all';
 
 export const WHEEL_SORT = {
   nameAsc: 'name-asc',
-  nameDesc: 'name-desc',
+  createdDesc: 'created-desc',
   updatedDesc: 'updated-desc',
-  usedDesc: 'used-desc',
+  usedCountDesc: 'used-count-desc',
 } as const;
 
 export type WheelSort = (typeof WHEEL_SORT)[keyof typeof WHEEL_SORT];
 
 export const WHEEL_SORT_LABELS: Record<WheelSort, string> = {
-  [WHEEL_SORT.nameAsc]: 'Name A-Z',
-  [WHEEL_SORT.nameDesc]: 'Name Z-A',
-  [WHEEL_SORT.updatedDesc]: 'Recently updated',
-  [WHEEL_SORT.usedDesc]: 'Recently used',
+  [WHEEL_SORT.nameAsc]: 'Name',
+  [WHEEL_SORT.createdDesc]: 'Created date',
+  [WHEEL_SORT.updatedDesc]: 'Updated date',
+  [WHEEL_SORT.usedCountDesc]: 'Most used',
 };
+
+export const SEARCH_DEBOUNCE_MS = 250;
 
 export const DASHBOARD_LIST_LIMIT = 5;
 
@@ -42,4 +44,20 @@ export function isWheelSort(value: string): value is WheelSort {
 
 export function isFavoriteFilter(value: string): value is FavoriteFilter {
   return Object.values(FAVORITE_FILTER).some((filter) => filter === value);
+}
+
+export const USAGE_FILTER = {
+  all: 'all',
+  recent: 'recent',
+} as const;
+
+export type UsageFilter = (typeof USAGE_FILTER)[keyof typeof USAGE_FILTER];
+
+export const USAGE_FILTER_LABELS: Record<UsageFilter, string> = {
+  [USAGE_FILTER.all]: 'All wheels',
+  [USAGE_FILTER.recent]: 'Recently used',
+};
+
+export function isUsageFilter(value: string): value is UsageFilter {
+  return Object.values(USAGE_FILTER).some((filter) => filter === value);
 }

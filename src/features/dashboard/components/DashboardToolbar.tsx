@@ -4,10 +4,13 @@ import { Box, FormControl, InputAdornment, InputLabel, MenuItem, Select, TextFie
 import {
   CATEGORY_FILTER_ALL,
   FAVORITE_FILTER_LABELS,
+  USAGE_FILTER_LABELS,
   WHEEL_SORT_LABELS,
   isFavoriteFilter,
+  isUsageFilter,
   isWheelSort,
   type FavoriteFilter,
+  type UsageFilter,
   type WheelSort,
 } from '@/features/dashboard/constants';
 
@@ -21,6 +24,8 @@ interface DashboardToolbarProps {
   onSortChange: (value: WheelSort) => void;
   favoriteFilter: FavoriteFilter;
   onFavoriteFilterChange: (value: FavoriteFilter) => void;
+  usageFilter: UsageFilter;
+  onUsageFilterChange: (value: UsageFilter) => void;
 }
 
 export function DashboardToolbar({
@@ -33,6 +38,8 @@ export function DashboardToolbar({
   onSortChange,
   favoriteFilter,
   onFavoriteFilterChange,
+  usageFilter,
+  onUsageFilterChange,
 }: DashboardToolbarProps) {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -40,7 +47,7 @@ export function DashboardToolbar({
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         label="Search wheels"
-        placeholder="Search by name"
+        placeholder="Search by name, description, or category"
         size="small"
         sx={{ flex: { xs: '1 1 100%', sm: 1 }, minWidth: { sm: 180 } }}
         slotProps={{
@@ -100,6 +107,25 @@ export function DashboardToolbar({
           }}
         >
           {Object.entries(FAVORITE_FILTER_LABELS).map(([value, label]) => (
+            <MenuItem key={value} value={value}>
+              {label}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <FormControl size="small" sx={{ flex: { xs: '1 1 100%', sm: '0 0 180px' }, minWidth: { sm: 180 } }}>
+        <InputLabel id="dashboard-used-label">Recently used</InputLabel>
+        <Select
+          labelId="dashboard-used-label"
+          label="Recently used"
+          value={usageFilter}
+          onChange={(event) => {
+            if (isUsageFilter(event.target.value)) {
+              onUsageFilterChange(event.target.value);
+            }
+          }}
+        >
+          {Object.entries(USAGE_FILTER_LABELS).map(([value, label]) => (
             <MenuItem key={value} value={value}>
               {label}
             </MenuItem>
