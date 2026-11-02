@@ -1,5 +1,7 @@
 import { ROUTES } from '@/constants/routes';
 import { HISTORY_MESSAGES } from '@/features/history/constants';
+import { GENERATOR_MESSAGES } from '@/features/random-generator/constants';
+import { resetGeneratorHistoryStore, useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { renderApp, screen, userEvent, within } from '@/test/test-utils';
 import { SELECTION_MODE, SPIN_SESSION_STATUS, type SpinSession } from '@/types/wheel';
@@ -74,6 +76,7 @@ function seedTwoResults() {
 describe('HistoryScreen', () => {
   beforeEach(() => {
     resetHistoryStore();
+    resetGeneratorHistoryStore();
   });
 
   it('shows an empty state when there is no history', () => {
@@ -231,5 +234,41 @@ describe('HistoryScreen', () => {
 
     expect(screen.getByText('Item 11')).toBeInTheDocument();
     expect(screen.getByText('Item 1')).toBeInTheDocument();
+  });
+
+  it('shows saved team results and can delete them', async () => {
+    const user = userEvent.setup();
+    useGeneratorHistoryStore.getState().addTeamGeneration({
+      id: 'team-1',
+      createdAt: '2026-01-01T12:00:00.000Z',
+      teamCount: 2,
+      balanced: true,
+      random: true,
+      preventDuplicates: true,
+      teams: [
+        { name: 'Team A', members: ['Ahmad', 'Sarah', 'David'] },
+        { name: 'Team B', members: ['Ali', 'John', 'Lisa'] },
+      ],
+    });
+    renderApp({ initialEntries: [ROUTES.history] });
+
+    expect(screen.queryByRole('heading', { name: HISTORY_MESSAGES.emptyTitle })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: GENERATOR_MESSAGES.teamHistoryTitle })).toBeInTheDocument();
+    expect(screen.getByText('Team A — Ahmad, Sarah, David')).toBeInTheDocument();
+    expect(screen.getByText('Team B — Ali, John, Lisa')).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: `${GENERATOR_MESSAGES.deleteTeamResult}: Team A, Team B`,
+      }),
+    );
+    await user.click(
+      within(screen.getByRole('dialog', { name: GENERATOR_MESSAGES.deleteTeamResultTitle })).getByRole(
+        'button',
+        { name: GENERATOR_MESSAGES.deleteTeamResult },
+      ),
+    );
+
+    expect(screen.getByRole('heading', { name: HISTORY_MESSAGES.emptyTitle })).toBeInTheDocument();
   });
 });

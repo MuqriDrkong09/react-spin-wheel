@@ -9,9 +9,15 @@ import { HistoryList } from '@/features/history/components/HistoryList';
 import { HistoryToolbar } from '@/features/history/components/HistoryToolbar';
 import { HISTORY_MESSAGES, HISTORY_PAGE_SIZE_OPTIONS } from '@/features/history/constants';
 import { useHistory } from '@/features/history/hooks/useHistory';
+import { TeamHistoryList } from '@/features/random-generator/components/TeamHistoryList';
+import { useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 
 export function HistoryScreen() {
   const history = useHistory();
+  const teamHistory = useGeneratorHistoryStore((state) => state.generatorHistory);
+  const deleteTeamGeneration = useGeneratorHistoryStore((state) => state.deleteTeamGeneration);
+  const clearTeamHistory = useGeneratorHistoryStore((state) => state.clearTeamHistory);
+  const hasAnyHistory = history.hasHistory || teamHistory.length > 0;
 
   return (
     <PageContainer>
@@ -27,43 +33,52 @@ export function HistoryScreen() {
             ) : null
           }
         />
-        {history.hasHistory ? (
+        {hasAnyHistory ? (
           <>
-            <HistoryToolbar
-              search={history.search}
-              onSearchChange={history.setSearch}
-              wheelId={history.wheelId}
-              onWheelIdChange={history.setWheelId}
-              wheels={history.wheels}
-              mode={history.mode}
-              onModeChange={history.setMode}
-              sort={history.sort}
-              onSortChange={history.setSort}
-            />
-            {history.visible.length > 0 ? (
+            {history.hasHistory ? (
               <>
-                <HistoryList
-                  results={history.visible}
-                  onView={history.openDetails}
-                  onDelete={history.requestDelete}
+                <HistoryToolbar
+                  search={history.search}
+                  onSearchChange={history.setSearch}
+                  wheelId={history.wheelId}
+                  onWheelIdChange={history.setWheelId}
+                  wheels={history.wheels}
+                  mode={history.mode}
+                  onModeChange={history.setMode}
+                  sort={history.sort}
+                  onSortChange={history.setSort}
                 />
-                <TablePagination
-                  component="div"
-                  count={history.filteredCount}
-                  page={history.page}
-                  onPageChange={(_, nextPage) => history.setPage(nextPage)}
-                  rowsPerPage={history.pageSize}
-                  onRowsPerPageChange={(event) => history.setPageSize(Number(event.target.value))}
-                  rowsPerPageOptions={HISTORY_PAGE_SIZE_OPTIONS}
-                />
+                {history.visible.length > 0 ? (
+                  <>
+                    <HistoryList
+                      results={history.visible}
+                      onView={history.openDetails}
+                      onDelete={history.requestDelete}
+                    />
+                    <TablePagination
+                      component="div"
+                      count={history.filteredCount}
+                      page={history.page}
+                      onPageChange={(_, nextPage) => history.setPage(nextPage)}
+                      rowsPerPage={history.pageSize}
+                      onRowsPerPageChange={(event) => history.setPageSize(Number(event.target.value))}
+                      rowsPerPageOptions={HISTORY_PAGE_SIZE_OPTIONS}
+                    />
+                  </>
+                ) : (
+                  <EmptyState
+                    title={HISTORY_MESSAGES.noMatchesTitle}
+                    description={HISTORY_MESSAGES.noMatchesDescription}
+                    titleComponent="h2"
+                  />
+                )}
               </>
-            ) : (
-              <EmptyState
-                title={HISTORY_MESSAGES.noMatchesTitle}
-                description={HISTORY_MESSAGES.noMatchesDescription}
-                titleComponent="h2"
-              />
-            )}
+            ) : null}
+            <TeamHistoryList
+              entries={teamHistory}
+              onDelete={deleteTeamGeneration}
+              onClear={clearTeamHistory}
+            />
           </>
         ) : (
           <EmptyState

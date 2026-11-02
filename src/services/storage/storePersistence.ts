@@ -1,5 +1,6 @@
 import { useAppStore } from '@/stores/appStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
+import { useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useWheelStore } from '@/stores/wheelStore';
@@ -10,6 +11,7 @@ export function collectPersistedState(): PersistedState {
   const { colorMode } = useAppStore.getState();
   const { wheels, activeWheelId, snapshots } = useWheelStore.getState();
   const { spinHistory } = useHistoryStore.getState();
+  const { generatorHistory } = useGeneratorHistoryStore.getState();
   const { settings } = useSettingsStore.getState();
   const { favoriteWheelIds } = useFavoritesStore.getState();
 
@@ -19,6 +21,7 @@ export function collectPersistedState(): PersistedState {
     activeWheelId,
     snapshots,
     spinHistory,
+    generatorHistory,
     settings,
     favoriteWheelIds,
   };
@@ -34,6 +37,7 @@ export function hydrateStoresFromStorage(): PersistedState {
     snapshots: state.snapshots,
   });
   useHistoryStore.setState({ spinHistory: state.spinHistory });
+  useGeneratorHistoryStore.setState({ generatorHistory: state.generatorHistory });
   useSettingsStore.setState({ settings: state.settings });
   useFavoritesStore.setState({ favoriteWheelIds: state.favoriteWheelIds });
 
@@ -49,6 +53,7 @@ export function subscribeStoresToStorage(): () => void {
     useAppStore.subscribe(persistNow),
     useWheelStore.subscribe(persistNow),
     useHistoryStore.subscribe(persistNow),
+    useGeneratorHistoryStore.subscribe(persistNow),
     useSettingsStore.subscribe(persistNow),
     useFavoritesStore.subscribe(persistNow),
   ];

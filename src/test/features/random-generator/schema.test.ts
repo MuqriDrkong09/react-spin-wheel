@@ -1,9 +1,11 @@
 import { GENERATOR_MESSAGES, NAME_STYLE, NUMBER_MODE } from '@/features/random-generator/constants';
 import {
+  defaultTeamGeneratorValues,
   randomChoiceFormSchema,
   randomItemFormSchema,
   randomNameFormSchema,
   randomNumberFormSchema,
+  teamGeneratorFormSchema,
 } from '@/features/random-generator/schema';
 
 describe('random generator schemas', () => {
@@ -21,6 +23,7 @@ describe('random generator schemas', () => {
         options: [{ name: 'Yes' }, { name: 'No' }],
       }).success,
     ).toBe(true);
+    expect(teamGeneratorFormSchema.safeParse(defaultTeamGeneratorValues).success).toBe(true);
   });
 
   it('rejects inverted number ranges and incomplete custom choices', () => {
@@ -40,5 +43,14 @@ describe('random generator schemas', () => {
       options: [{ name: 'Yes' }, { name: '  ' }],
     });
     expect(choices.success).toBe(false);
+
+    const teams = teamGeneratorFormSchema.safeParse({
+      ...defaultTeamGeneratorValues,
+      teamCount: 7,
+    });
+    expect(teams.success).toBe(false);
+    if (!teams.success) {
+      expect(teams.error.issues[0]?.message).toBe(GENERATOR_MESSAGES.tooManyTeams);
+    }
   });
 });

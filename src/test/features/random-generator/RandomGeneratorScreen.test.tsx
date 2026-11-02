@@ -1,11 +1,13 @@
 import { ROUTES } from '@/constants/routes';
 import { GENERATOR_MESSAGES } from '@/features/random-generator/constants';
 import { FIRST_NAMES, LAST_NAMES } from '@/features/random-generator/data/names';
+import { resetGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 import { renderApp, screen, userEvent, within } from '@/test/test-utils';
 
 describe('RandomGeneratorScreen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    resetGeneratorHistoryStore();
   });
 
   it('renders the four tools and generates a random integer', async () => {
@@ -74,5 +76,43 @@ describe('RandomGeneratorScreen', () => {
     await user.click(within(choiceForm).getByRole('button', { name: GENERATOR_MESSAGES.generateChoice }));
 
     expect(await within(choiceForm).findByText(GENERATOR_MESSAGES.choicesRequired)).toBeInTheDocument();
+  });
+
+  it('generates balanced teams, rerolls, and saves results to history', async () => {
+    const user = userEvent.setup();
+    renderApp({ initialEntries: [ROUTES.randomGenerator] });
+
+    await user.click(screen.getByRole('tab', { name: GENERATOR_MESSAGES.teamTab }));
+    const teamForm = screen.getByRole('form', { name: GENERATOR_MESSAGES.teamTab });
+
+    expect(within(teamForm).getByLabelText(GENERATOR_MESSAGES.participantsLabel)).toHaveValue(
+      'Ahmad\nAli\nJohn\nSarah\nDavid\nLisa',
+    );
+
+    await user.click(within(teamForm).getByRole('switch', { name: GENERATOR_MESSAGES.randomAssignmentLabel }));
+    await user.click(within(teamForm).getByRole('button', { name: GENERATOR_MESSAGES.generateTeams }));
+
+    const result = within(teamForm).getByLabelText(GENERATOR_MESSAGES.teamResultLabel);
+    expect(result).toHaveTextContent('Team A');
+    expect(result).toHaveTextContent('- Ahmad');
+    expect(result).toHaveTextContent('- John');
+    expect(result).toHaveTextContent('- David');
+    expect(result).toHaveTextContent('Team B');
+    expect(result).toHaveTextContent('- Ali');
+    expect(result).toHaveTextContent('- Sarah');
+    expect(result).toHaveTextContent('- Lisa');
+
+    const saved = screen.getByRole('region', { name: GENERATOR_MESSAGES.teamHistoryAria });
+    expect(saved).toHaveTextContent('Team A — Ahmad, John, David');
+    expect(saved).toHaveTextContent('Team B — Ali, Sarah, Lisa');
+
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    await user.click(within(teamForm).getByRole('switch', { name: GENERATOR_MESSAGES.randomAssignmentLabel }));
+    await user.click(within(teamForm).getByRole('button', { name: GENERATOR_MESSAGES.rerollTeams }));
+
+    expect(result).toHaveTextContent('- Ali');
+    expect(result).toHaveTextContent('- Sarah');
+    expect(result).toHaveTextContent('- Lisa');
+    expect(screen.getAllByText(/Team A —/).length).toBeGreaterThan(1);
   });
 });

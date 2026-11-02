@@ -6,6 +6,7 @@ import {
   randomFloat,
   randomInt,
   resolveUnitRandom,
+  shuffle,
 } from '@/utils/random';
 
 describe('resolveUnitRandom', () => {
@@ -68,5 +69,18 @@ describe('pickItem', () => {
 
   it('returns undefined for an empty list', () => {
     expect(pickItem([], 0.5)).toBeUndefined();
+  });
+});
+
+describe('shuffle', () => {
+  it('shuffles with an injected unit value and leaves short lists unchanged', () => {
+    const spy = vi.spyOn(Math, 'random');
+
+    expect(shuffle(['Ahmad', 'Ali', 'John'], 0)).toEqual(['Ali', 'John', 'Ahmad']);
+    expect(shuffle(['Ahmad'], 0)).toEqual(['Ahmad']);
+    expect(shuffle([], 0)).toEqual([]);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
   });
 });

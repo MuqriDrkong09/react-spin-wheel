@@ -2,11 +2,16 @@ import { z } from 'zod';
 
 import {
   CHOICE_PRESET,
+  DEFAULT_TEAM_PARTICIPANTS,
   GENERATOR_LIMITS,
   GENERATOR_MESSAGES,
   NAME_STYLE,
   NUMBER_MODE,
 } from '@/features/random-generator/constants';
+import {
+  parseParticipants,
+  uniqueParticipants,
+} from '@/features/random-generator/utils/generateTeams';
 
 export const randomNumberFormSchema = z
   .object({
@@ -78,10 +83,64 @@ export const randomChoiceFormSchema = z
     }
   });
 
+export const teamGeneratorFormSchema = z
+  .object({
+    participants: z.string().trim().min(1, GENERATOR_MESSAGES.participantsRequired),
+    teamCount: z.coerce
+      .number()
+      .int({ error: GENERATOR_MESSAGES.teamCountRequired })
+      .min(GENERATOR_LIMITS.minTeamCount, GENERATOR_MESSAGES.teamCountRequired)
+      .max(GENERATOR_LIMITS.maxTeamCount, GENERATOR_MESSAGES.teamCountRequired),
+    balanced: z.boolean(),
+    random: z.boolean(),
+    preventDuplicates: z.boolean(),
+  })
+  .superRefine((value, context) => {
+    const parsed = parseParticipants(value.participants);
+
+    if (parsed.length > GENERATOR_LIMITS.maxParticipants) {
+      context.addIssue({
+        code: 'custom',
+        path: ['participants'],
+        message: GENERATOR_MESSAGES.tooManyParticipants,
+      });
+      return;
+    }
+
+    if (parsed.some((name) => name.length > GENERATOR_LIMITS.maxParticipantName)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['participants'],
+        message: GENERATOR_MESSAGES.participantNameTooLong,
+      });
+      return;
+    }
+
+    const people = value.preventDuplicates ? uniqueParticipants(parsed) : parsed;
+
+    if (people.length < GENERATOR_LIMITS.minParticipants) {
+      context.addIssue({
+        code: 'custom',
+        path: ['participants'],
+        message: GENERATOR_MESSAGES.participantsRequired,
+      });
+      return;
+    }
+
+    if (value.teamCount > people.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['teamCount'],
+        message: GENERATOR_MESSAGES.tooManyTeams,
+      });
+    }
+  });
+
 export type RandomNumberFormValues = z.infer<typeof randomNumberFormSchema>;
 export type RandomItemFormValues = z.infer<typeof randomItemFormSchema>;
 export type RandomNameFormValues = z.infer<typeof randomNameFormSchema>;
 export type RandomChoiceFormValues = z.infer<typeof randomChoiceFormSchema>;
+export type TeamGeneratorFormValues = z.infer<typeof teamGeneratorFormSchema>;
 
 export const defaultRandomNumberValues: RandomNumberFormValues = {
   min: 1,
@@ -105,4 +164,12 @@ export const defaultRandomNameValues: RandomNameFormValues = {
 export const defaultRandomChoiceValues: RandomChoiceFormValues = {
   preset: CHOICE_PRESET.yesNo,
   options: [{ name: '' }, { name: '' }],
+};
+
+export const defaultTeamGeneratorValues: TeamGeneratorFormValues = {
+  participants: DEFAULT_TEAM_PARTICIPANTS.join('\n'),
+  teamCount: 2,
+  balanced: true,
+  random: true,
+  preventDuplicates: true,
 };

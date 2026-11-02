@@ -174,6 +174,21 @@ describe('persistedState', () => {
     expect(result?.mode).toBe('manual');
   });
 
+  it('defaults missing generator history on current-version data', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          generatorHistory: undefined,
+        },
+      }),
+    );
+
+    expect(loadPersistedState().generatorHistory).toEqual([]);
+  });
+
   it('returns defaults for corrupted JSON', () => {
     window.localStorage.setItem(STORAGE_KEY, '{bad');
     expect(loadPersistedState()).toEqual(defaultPersistedState);

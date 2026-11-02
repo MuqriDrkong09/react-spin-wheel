@@ -15,6 +15,29 @@ export interface RandomListItem {
   weight: number;
 }
 
+export interface Team {
+  name: string;
+  members: string[];
+}
+
+export interface GenerateTeamsInput {
+  participants: readonly string[] | string;
+  teamCount: number;
+  balanced: boolean;
+  random: boolean;
+  preventDuplicates: boolean;
+}
+
+export interface TeamGeneratorHistoryEntry {
+  id: string;
+  createdAt: string;
+  teamCount: number;
+  balanced: boolean;
+  random: boolean;
+  preventDuplicates: boolean;
+  teams: Team[];
+}
+
 export type GeneratorSuccess<T> = { ok: true; value: T };
 export type GeneratorFailure = { ok: false; error: string };
 export type GeneratorResult<T> = GeneratorSuccess<T> | GeneratorFailure;

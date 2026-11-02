@@ -75,6 +75,25 @@ export function pickItem<T>(items: readonly T[], randomValue: RandomValue): T | 
   return items[pickIndex(items.length, randomValue)];
 }
 
+export function shuffle<T>(items: readonly T[], randomValue: RandomValue): T[] {
+  const copy = [...items];
+
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = pickIndex(index + 1, randomValue);
+    const current = copy[index];
+    const swap = copy[swapIndex];
+
+    if (current === undefined || swap === undefined) {
+      continue;
+    }
+
+    copy[index] = swap;
+    copy[swapIndex] = current;
+  }
+
+  return copy;
+}
+
 function assertFiniteBounds(min: number, max: number): void {
   if (!Number.isFinite(min) || !Number.isFinite(max)) {
     throw new Error(RANDOM_ERRORS.invalidBound);

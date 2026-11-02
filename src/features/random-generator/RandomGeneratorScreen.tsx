@@ -7,6 +7,7 @@ import { RandomChoiceTool } from '@/features/random-generator/components/RandomC
 import { RandomItemTool } from '@/features/random-generator/components/RandomItemTool';
 import { RandomNameTool } from '@/features/random-generator/components/RandomNameTool';
 import { RandomNumberTool } from '@/features/random-generator/components/RandomNumberTool';
+import { TeamGeneratorTool } from '@/features/random-generator/components/TeamGeneratorTool';
 import { GENERATOR_MESSAGES, GENERATOR_TOOL } from '@/features/random-generator/constants';
 import type { GeneratorTool } from '@/features/random-generator/types';
 
@@ -52,6 +53,12 @@ export function RandomGeneratorScreen() {
             id="generator-tab-choice"
             aria-controls="generator-panel-choice"
           />
+          <Tab
+            value={GENERATOR_TOOL.team}
+            label={GENERATOR_MESSAGES.teamTab}
+            id="generator-tab-team"
+            aria-controls="generator-panel-team"
+          />
         </Tabs>
         <Box
           role="tabpanel"
@@ -62,6 +69,7 @@ export function RandomGeneratorScreen() {
           {tool === GENERATOR_TOOL.item ? <RandomItemTool /> : null}
           {tool === GENERATOR_TOOL.name ? <RandomNameTool /> : null}
           {tool === GENERATOR_TOOL.choice ? <RandomChoiceTool /> : null}
+          {tool === GENERATOR_TOOL.team ? <TeamGeneratorTool /> : null}
         </Box>
       </Stack>
     </PageContainer>

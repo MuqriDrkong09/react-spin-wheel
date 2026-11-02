@@ -1,4 +1,5 @@
 import { DEFAULT_APP_SETTINGS } from '@/constants/settings';
+import type { TeamGeneratorHistoryEntry } from '@/features/random-generator/types';
 import {
   isAppearanceInput,
   resolveAppearance,
@@ -32,6 +33,7 @@ export interface PersistedState {
   activeWheelId: WheelId | null;
   snapshots: Record<WheelId, WheelSnapshot>;
   spinHistory: SpinSession[];
+  generatorHistory: TeamGeneratorHistoryEntry[];
   settings: AppSettings;
   favoriteWheelIds: WheelId[];
 }
@@ -42,6 +44,7 @@ export const defaultPersistedState: PersistedState = {
   activeWheelId: null,
   snapshots: {},
   spinHistory: [],
+  generatorHistory: [],
   settings: { ...DEFAULT_APP_SETTINGS },
   favoriteWheelIds: [],
 };
@@ -174,12 +177,28 @@ const spinSessionSchema: z.ZodType<SpinSession> = z.object({
   completedAt: z.string().optional(),
 });
 
-const persistedStateSchema: z.ZodType<PersistedState> = z.object({
+const teamSchema: z.ZodType<{ name: string; members: string[] }> = z.object({
+  name: z.string(),
+  members: z.array(z.string()),
+});
+
+const generatorHistoryEntrySchema: z.ZodType<TeamGeneratorHistoryEntry> = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  teamCount: z.number(),
+  balanced: z.boolean(),
+  random: z.boolean(),
+  preventDuplicates: z.boolean(),
+  teams: z.array(teamSchema),
+});
+
+const persistedStateSchema = z.object({
   colorMode: z.enum([COLOR_MODE.light, COLOR_MODE.dark, COLOR_MODE.system]),
   wheels: z.array(wheelSchema),
   activeWheelId: z.string().nullable(),
   snapshots: z.record(z.string(), snapshotSchema),
   spinHistory: z.array(spinSessionSchema),
+  generatorHistory: z.array(generatorHistoryEntrySchema).optional().transform((value) => value ?? []),
   settings: z.object({
     soundEnabled: z.boolean(),
     masterVolume: z.number().min(0).max(1).default(DEFAULT_APP_SETTINGS.masterVolume),
