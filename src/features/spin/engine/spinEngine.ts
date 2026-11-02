@@ -4,11 +4,8 @@ import {
   POINTER_ANGLE,
 } from '@/features/spin/constants';
 import type { WheelItem } from '@/types/wheel';
-import {
-  selectWeightedItem,
-  type RandomValue,
-  WEIGHTED_SELECTION_ERRORS,
-} from '@/utils/selectWeightedItem';
+import { randomFloat, type RandomValue } from '@/utils/random';
+import { selectWeightedItem } from '@/utils/selectWeightedItem';
 
 export const SPIN_ENGINE_ERRORS = {
   invalidFullRotations: 'Full rotations must be a finite number of 0 or more.',
@@ -176,18 +173,8 @@ function resolveFullRotations(options: CreateSpinResultOptions): number {
     return minRotations;
   }
 
-  const sample = options.rotationRandom === undefined ? 0 : resolveRandomValue(options.rotationRandom);
-  return minRotations + sample * (maxRotations - minRotations);
-}
-
-function resolveRandomValue(randomValue: RandomValue): number {
-  const value = typeof randomValue === 'function' ? randomValue() : randomValue;
-
-  if (!Number.isFinite(value) || value < 0 || value > 1) {
-    throw new Error(WEIGHTED_SELECTION_ERRORS.invalidRandom);
-  }
-
-  return value;
+  const sample = options.rotationRandom === undefined ? 0 : options.rotationRandom;
+  return randomFloat(minRotations, maxRotations, sample);
 }
 
 function normalizePositive(angle: number): number {

@@ -1,12 +1,13 @@
 import type { WheelItem } from '@/types/wheel';
+import { RANDOM_ERRORS, resolveUnitRandom, type RandomValue } from '@/utils/random';
+
+export type { RandomValue } from '@/utils/random';
 
 export type WeightedCandidate = Pick<WheelItem, 'enabled' | 'weight'>;
 
-export type RandomValue = number | (() => number);
-
 export const WEIGHTED_SELECTION_ERRORS = {
   invalidWeight: 'Item weights must be finite and cannot be negative.',
-  invalidRandom: 'Random value must be a finite number between 0 and 1.',
+  invalidRandom: RANDOM_ERRORS.invalidUnit,
 } as const;
 
 export function selectWeightedItem<T extends WeightedCandidate>(
@@ -23,7 +24,7 @@ export function selectWeightedItem<T extends WeightedCandidate>(
     return undefined;
   }
 
-  const target = resolveRandomValue(randomValue) * totalWeight;
+  const target = resolveUnitRandom(randomValue) * totalWeight;
   let cumulative = 0;
 
   for (const item of candidates) {
@@ -56,16 +57,6 @@ function enabledCandidates<T extends WeightedCandidate>(items: readonly T[]): T[
   }
 
   return candidates;
-}
-
-function resolveRandomValue(randomValue: RandomValue): number {
-  const value = typeof randomValue === 'function' ? randomValue() : randomValue;
-
-  if (!Number.isFinite(value) || value < 0 || value > 1) {
-    throw new Error(WEIGHTED_SELECTION_ERRORS.invalidRandom);
-  }
-
-  return value;
 }
 
 function lastPositiveWeightItem<T extends WeightedCandidate>(items: readonly T[]): T | undefined {
