@@ -187,6 +187,8 @@ describe('persistedState', () => {
     );
 
     expect(loadPersistedState().generatorHistory).toEqual([]);
+    expect(loadPersistedState().activeTournament).toBeNull();
+    expect(loadPersistedState().tournamentHistory).toEqual([]);
   });
 
   it('returns defaults for corrupted JSON', () => {

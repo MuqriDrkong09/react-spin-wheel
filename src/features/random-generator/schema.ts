@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   CHOICE_PRESET,
   DEFAULT_TEAM_PARTICIPANTS,
+  DEFAULT_TOURNAMENT_PARTICIPANTS,
   GENERATOR_LIMITS,
   GENERATOR_MESSAGES,
   NAME_STYLE,
@@ -136,11 +137,45 @@ export const teamGeneratorFormSchema = z
     }
   });
 
+export const tournamentFormSchema = z.object({
+  participants: z
+    .string()
+    .trim()
+    .min(1, GENERATOR_MESSAGES.tournamentRequired)
+    .superRefine((value, context) => {
+      const parsed = parseParticipants(value);
+
+      if (parsed.length > GENERATOR_LIMITS.maxParticipants) {
+        context.addIssue({
+          code: 'custom',
+          message: GENERATOR_MESSAGES.tooManyParticipants,
+        });
+        return;
+      }
+
+      if (parsed.some((name) => name.length > GENERATOR_LIMITS.maxParticipantName)) {
+        context.addIssue({
+          code: 'custom',
+          message: GENERATOR_MESSAGES.participantNameTooLong,
+        });
+        return;
+      }
+
+      if (parsed.length < GENERATOR_LIMITS.minTournamentParticipants) {
+        context.addIssue({
+          code: 'custom',
+          message: GENERATOR_MESSAGES.tournamentRequired,
+        });
+      }
+    }),
+});
+
 export type RandomNumberFormValues = z.infer<typeof randomNumberFormSchema>;
 export type RandomItemFormValues = z.infer<typeof randomItemFormSchema>;
 export type RandomNameFormValues = z.infer<typeof randomNameFormSchema>;
 export type RandomChoiceFormValues = z.infer<typeof randomChoiceFormSchema>;
 export type TeamGeneratorFormValues = z.infer<typeof teamGeneratorFormSchema>;
+export type TournamentFormValues = z.infer<typeof tournamentFormSchema>;
 
 export const defaultRandomNumberValues: RandomNumberFormValues = {
   min: 1,
@@ -172,4 +207,8 @@ export const defaultTeamGeneratorValues: TeamGeneratorFormValues = {
   balanced: true,
   random: true,
   preventDuplicates: true,
+};
+
+export const defaultTournamentValues: TournamentFormValues = {
+  participants: DEFAULT_TOURNAMENT_PARTICIPANTS.join('\n'),
 };

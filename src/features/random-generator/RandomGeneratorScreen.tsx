@@ -8,6 +8,7 @@ import { RandomItemTool } from '@/features/random-generator/components/RandomIte
 import { RandomNameTool } from '@/features/random-generator/components/RandomNameTool';
 import { RandomNumberTool } from '@/features/random-generator/components/RandomNumberTool';
 import { TeamGeneratorTool } from '@/features/random-generator/components/TeamGeneratorTool';
+import { TournamentTool } from '@/features/random-generator/components/TournamentTool';
 import { GENERATOR_MESSAGES, GENERATOR_TOOL } from '@/features/random-generator/constants';
 import type { GeneratorTool } from '@/features/random-generator/types';
 
@@ -59,6 +60,12 @@ export function RandomGeneratorScreen() {
             id="generator-tab-team"
             aria-controls="generator-panel-team"
           />
+          <Tab
+            value={GENERATOR_TOOL.tournament}
+            label={GENERATOR_MESSAGES.tournamentTab}
+            id="generator-tab-tournament"
+            aria-controls="generator-panel-tournament"
+          />
         </Tabs>
         <Box
           role="tabpanel"
@@ -70,6 +77,7 @@ export function RandomGeneratorScreen() {
           {tool === GENERATOR_TOOL.name ? <RandomNameTool /> : null}
           {tool === GENERATOR_TOOL.choice ? <RandomChoiceTool /> : null}
           {tool === GENERATOR_TOOL.team ? <TeamGeneratorTool /> : null}
+          {tool === GENERATOR_TOOL.tournament ? <TournamentTool /> : null}
         </Box>
       </Stack>
     </PageContainer>

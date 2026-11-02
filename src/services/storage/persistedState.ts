@@ -1,5 +1,10 @@
 import { DEFAULT_APP_SETTINGS } from '@/constants/settings';
-import type { TeamGeneratorHistoryEntry } from '@/features/random-generator/types';
+import {
+  MATCH_STATUS,
+  TOURNAMENT_ROUND,
+  TOURNAMENT_STATUS,
+} from '@/features/random-generator/constants';
+import type { TeamGeneratorHistoryEntry, TournamentBracket } from '@/features/random-generator/types';
 import {
   isAppearanceInput,
   resolveAppearance,
@@ -34,6 +39,8 @@ export interface PersistedState {
   snapshots: Record<WheelId, WheelSnapshot>;
   spinHistory: SpinSession[];
   generatorHistory: TeamGeneratorHistoryEntry[];
+  activeTournament: TournamentBracket | null;
+  tournamentHistory: TournamentBracket[];
   settings: AppSettings;
   favoriteWheelIds: WheelId[];
 }
@@ -45,6 +52,8 @@ export const defaultPersistedState: PersistedState = {
   snapshots: {},
   spinHistory: [],
   generatorHistory: [],
+  activeTournament: null,
+  tournamentHistory: [],
   settings: { ...DEFAULT_APP_SETTINGS },
   favoriteWheelIds: [],
 };
@@ -192,6 +201,51 @@ const generatorHistoryEntrySchema: z.ZodType<TeamGeneratorHistoryEntry> = z.obje
   teams: z.array(teamSchema),
 });
 
+const tournamentSlotSchema = z.object({
+  participantId: z.string().nullable(),
+});
+
+const tournamentMatchSchema = z.object({
+  id: z.string(),
+  roundIndex: z.number(),
+  matchIndex: z.number(),
+  slots: z.tuple([tournamentSlotSchema, tournamentSlotSchema]),
+  winnerId: z.string().nullable(),
+  status: z.enum([
+    MATCH_STATUS.pending,
+    MATCH_STATUS.ready,
+    MATCH_STATUS.bye,
+    MATCH_STATUS.complete,
+  ]),
+});
+
+const tournamentRoundSchema = z.object({
+  index: z.number(),
+  kind: z.enum([
+    TOURNAMENT_ROUND.quarterFinals,
+    TOURNAMENT_ROUND.semiFinals,
+    TOURNAMENT_ROUND.final,
+    TOURNAMENT_ROUND.roundOf,
+  ]),
+  label: z.string(),
+  matches: z.array(tournamentMatchSchema),
+});
+
+const tournamentBracketSchema: z.ZodType<TournamentBracket> = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  status: z.enum([TOURNAMENT_STATUS.ready, TOURNAMENT_STATUS.inProgress, TOURNAMENT_STATUS.complete]),
+  participants: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
+  rounds: z.array(tournamentRoundSchema),
+  winnerId: z.string().nullable(),
+  eliminatedIds: z.array(z.string()),
+});
+
 const persistedStateSchema = z.object({
   colorMode: z.enum([COLOR_MODE.light, COLOR_MODE.dark, COLOR_MODE.system]),
   wheels: z.array(wheelSchema),
@@ -199,6 +253,8 @@ const persistedStateSchema = z.object({
   snapshots: z.record(z.string(), snapshotSchema),
   spinHistory: z.array(spinSessionSchema),
   generatorHistory: z.array(generatorHistoryEntrySchema).optional().transform((value) => value ?? []),
+  activeTournament: tournamentBracketSchema.nullable().optional().transform((value) => value ?? null),
+  tournamentHistory: z.array(tournamentBracketSchema).optional().transform((value) => value ?? []),
   settings: z.object({
     soundEnabled: z.boolean(),
     masterVolume: z.number().min(0).max(1).default(DEFAULT_APP_SETTINGS.masterVolume),

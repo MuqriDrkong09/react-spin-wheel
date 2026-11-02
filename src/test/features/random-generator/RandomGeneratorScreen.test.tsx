@@ -2,12 +2,14 @@ import { ROUTES } from '@/constants/routes';
 import { GENERATOR_MESSAGES } from '@/features/random-generator/constants';
 import { FIRST_NAMES, LAST_NAMES } from '@/features/random-generator/data/names';
 import { resetGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
+import { resetTournamentStore } from '@/stores/tournamentStore';
 import { renderApp, screen, userEvent, within } from '@/test/test-utils';
 
 describe('RandomGeneratorScreen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     resetGeneratorHistoryStore();
+    resetTournamentStore();
   });
 
   it('renders the four tools and generates a random integer', async () => {
@@ -114,5 +116,41 @@ describe('RandomGeneratorScreen', () => {
     expect(result).toHaveTextContent('- Sarah');
     expect(result).toHaveTextContent('- Lisa');
     expect(screen.getAllByText(/Team A —/).length).toBeGreaterThan(1);
+  });
+
+  it('generates a tournament bracket, tracks a winner, rerolls, and saves history', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    renderApp({ initialEntries: [ROUTES.randomGenerator] });
+
+    await user.click(screen.getByRole('tab', { name: GENERATOR_MESSAGES.tournamentTab }));
+    const form = screen.getByRole('form', { name: GENERATOR_MESSAGES.tournamentTab });
+
+    expect(within(form).getByLabelText(GENERATOR_MESSAGES.participantsLabel)).toHaveValue(
+      'A\nB\nC\nD\nE\nF\nG\nH',
+    );
+
+    await user.click(within(form).getByRole('button', { name: GENERATOR_MESSAGES.generateTournament }));
+
+    expect(within(form).getByRole('heading', { name: GENERATOR_MESSAGES.quarterFinalsLabel })).toBeInTheDocument();
+    expect(within(form).getByRole('heading', { name: GENERATOR_MESSAGES.semiFinalsLabel })).toBeInTheDocument();
+    expect(within(form).getByRole('heading', { name: GENERATOR_MESSAGES.finalLabel })).toBeInTheDocument();
+    expect(within(form).getByRole('heading', { name: GENERATOR_MESSAGES.winnerTitle })).toBeInTheDocument();
+    expect(within(form).getByText(GENERATOR_MESSAGES.noWinner)).toBeInTheDocument();
+
+    await user.click(
+      within(form).getByRole('button', {
+        name: GENERATOR_MESSAGES.selectWinner(GENERATOR_MESSAGES.quarterFinalsLabel, 1, 'B'),
+      }),
+    );
+
+    expect(within(form).getByText(GENERATOR_MESSAGES.eliminatedTitle)).toBeInTheDocument();
+    expect(within(form).getAllByText('C').length).toBeGreaterThan(0);
+
+    await user.click(within(form).getByRole('button', { name: GENERATOR_MESSAGES.rerollTournament }));
+    expect(screen.getByRole('region', { name: GENERATOR_MESSAGES.tournamentHistoryAria })).toBeInTheDocument();
+    expect(
+      screen.getAllByText('Quarter Finals → Semi Finals → Final → Winner').length,
+    ).toBeGreaterThan(1);
   });
 });

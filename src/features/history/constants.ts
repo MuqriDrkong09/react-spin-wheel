@@ -2,7 +2,7 @@ import { SELECTION_MODE, type SelectionMode } from '@/types/wheel';
 
 export const HISTORY_MESSAGES = {
   title: 'History',
-  description: 'Review past spin results and generated teams.',
+  description: 'Review past spin results, generated teams, and tournaments.',
   searchLabel: 'Search results',
   searchPlaceholder: 'Search by path or wheel',
   wheelFilter: 'Wheel',
@@ -11,7 +11,7 @@ export const HISTORY_MESSAGES = {
   allModes: 'All modes',
   sort: 'Sort',
   emptyTitle: 'No spin history yet',
-  emptyDescription: 'Finish a selection or generate teams to save them here.',
+  emptyDescription: 'Finish a selection, generate teams, or run a tournament to save them here.',
   noMatchesTitle: 'No matching results',
   noMatchesDescription: 'Try a different search, wheel, or sort order.',
   clearHistory: 'Clear history',

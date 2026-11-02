@@ -4,6 +4,27 @@ export const GENERATOR_TOOL = {
   name: 'name',
   choice: 'choice',
   team: 'team',
+  tournament: 'tournament',
+} as const;
+
+export const TOURNAMENT_ROUND = {
+  quarterFinals: 'quarterFinals',
+  semiFinals: 'semiFinals',
+  final: 'final',
+  roundOf: 'roundOf',
+} as const;
+
+export const MATCH_STATUS = {
+  pending: 'pending',
+  ready: 'ready',
+  bye: 'bye',
+  complete: 'complete',
+} as const;
+
+export const TOURNAMENT_STATUS = {
+  ready: 'ready',
+  inProgress: 'inProgress',
+  complete: 'complete',
 } as const;
 
 export const NUMBER_MODE = {
@@ -44,30 +65,38 @@ export const GENERATOR_LIMITS = {
   maxParticipants: 200,
   maxParticipantName: 80,
   maxTeamHistory: 50,
+  maxTournamentHistory: 50,
+  minTournamentParticipants: 2,
 } as const;
 
 export const DEFAULT_TEAM_PARTICIPANTS = ['Ahmad', 'Ali', 'John', 'Sarah', 'David', 'Lisa'] as const;
+export const DEFAULT_TOURNAMENT_PARTICIPANTS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as const;
 
 export const GENERATOR_MESSAGES = {
   title: 'Random generator',
-  description: 'Generate random numbers, weighted items, names, choices, and teams.',
+  description: 'Generate random numbers, weighted items, names, choices, teams, and tournaments.',
   toolsLabel: 'Generator tools',
   numberTab: 'Random number',
   itemTab: 'Random item',
   nameTab: 'Random name',
   choiceTab: 'Random choice',
   teamTab: 'Team generator',
+  tournamentTab: 'Tournament',
   numberHint: 'Pick a number between a minimum and maximum, as an integer or decimal.',
   itemHint: 'Add a list of items and optional weights. Higher weights are more likely.',
   nameHint: 'Generate one or more names from the shared name lists.',
   choiceHint: 'Pick one option from a preset or your own list. Every option has equal chance.',
   teamHint: 'Split participants into teams. Balanced teams stay close in size. Random assignment shuffles names first.',
+  tournamentHint:
+    'Pair participants into a single-elimination bracket. Odd counts get a bye. Select a winner in each match to advance.',
   generateNumber: 'Generate number',
   generateItem: 'Generate item',
   generateName: 'Generate name',
   generateChoice: 'Generate choice',
   generateTeams: 'Generate teams',
+  generateTournament: 'Generate tournament',
   rerollTeams: 'Reroll',
+  rerollTournament: 'Reroll',
   generateAgain: 'Generate again',
   resultLabel: 'Result',
   emptyResult: 'Generate to see a result.',
@@ -124,4 +153,31 @@ export const GENERATOR_MESSAGES = {
   participantNameTooLong: 'Each participant name must be 80 characters or fewer.',
   teamCountRequired: 'Enter a team count between 2 and 26.',
   tooManyTeams: 'Number of teams cannot exceed the number of participants.',
+  tournamentRequired: 'Enter at least two participants for a tournament.',
+  byeLabel: 'Bye',
+  tbdLabel: 'TBD',
+  vsLabel: 'vs',
+  eliminatedTitle: 'Eliminated',
+  noEliminated: 'No one is eliminated yet.',
+  winnerTitle: 'Winner',
+  noWinner: 'Winner to be decided.',
+  bracketLabel: 'Tournament bracket',
+  emptyTournament: 'Generate a tournament to see the bracket.',
+  roundOf: (size: number) => `Round of ${size}`,
+  quarterFinalsLabel: 'Quarter Finals',
+  semiFinalsLabel: 'Semi Finals',
+  finalLabel: 'Final',
+  selectWinner: (round: string, match: number, name: string) =>
+    `${round} match ${match}: select ${name}`,
+  matchAlreadyComplete: 'This match already has a winner.',
+  matchNotReady: 'This match is not ready yet.',
+  invalidWinner: 'Choose a participant in this match.',
+  tournamentHistoryTitle: 'Saved tournaments',
+  tournamentHistoryAria: 'Tournament history',
+  clearTournamentHistory: 'Clear tournament history',
+  clearTournamentHistoryTitle: 'Clear tournament history',
+  clearTournamentHistoryDescription: 'Delete every saved tournament? This cannot be undone.',
+  deleteTournamentResult: 'Delete tournament',
+  deleteTournamentResultTitle: 'Delete tournament',
+  deleteTournamentResultDescription: 'Delete this tournament? This cannot be undone.',
 } as const;

@@ -3,6 +3,7 @@ import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useTournamentStore } from '@/stores/tournamentStore';
 import { useWheelStore } from '@/stores/wheelStore';
 
 import { loadPersistedState, savePersistedState, type PersistedState } from './persistedState';
@@ -12,6 +13,7 @@ export function collectPersistedState(): PersistedState {
   const { wheels, activeWheelId, snapshots } = useWheelStore.getState();
   const { spinHistory } = useHistoryStore.getState();
   const { generatorHistory } = useGeneratorHistoryStore.getState();
+  const { activeTournament, tournamentHistory } = useTournamentStore.getState();
   const { settings } = useSettingsStore.getState();
   const { favoriteWheelIds } = useFavoritesStore.getState();
 
@@ -22,6 +24,8 @@ export function collectPersistedState(): PersistedState {
     snapshots,
     spinHistory,
     generatorHistory,
+    activeTournament,
+    tournamentHistory,
     settings,
     favoriteWheelIds,
   };
@@ -38,6 +42,10 @@ export function hydrateStoresFromStorage(): PersistedState {
   });
   useHistoryStore.setState({ spinHistory: state.spinHistory });
   useGeneratorHistoryStore.setState({ generatorHistory: state.generatorHistory });
+  useTournamentStore.setState({
+    activeTournament: state.activeTournament,
+    tournamentHistory: state.tournamentHistory,
+  });
   useSettingsStore.setState({ settings: state.settings });
   useFavoritesStore.setState({ favoriteWheelIds: state.favoriteWheelIds });
 
@@ -54,6 +62,7 @@ export function subscribeStoresToStorage(): () => void {
     useWheelStore.subscribe(persistNow),
     useHistoryStore.subscribe(persistNow),
     useGeneratorHistoryStore.subscribe(persistNow),
+    useTournamentStore.subscribe(persistNow),
     useSettingsStore.subscribe(persistNow),
     useFavoritesStore.subscribe(persistNow),
   ];

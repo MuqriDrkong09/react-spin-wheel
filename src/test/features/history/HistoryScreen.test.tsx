@@ -1,8 +1,10 @@
 import { ROUTES } from '@/constants/routes';
 import { HISTORY_MESSAGES } from '@/features/history/constants';
 import { GENERATOR_MESSAGES } from '@/features/random-generator/constants';
+import { generateTournament } from '@/features/random-generator/utils/generateTournament';
 import { resetGeneratorHistoryStore, useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
+import { resetTournamentStore, useTournamentStore } from '@/stores/tournamentStore';
 import { renderApp, screen, userEvent, within } from '@/test/test-utils';
 import { SELECTION_MODE, SPIN_SESSION_STATUS, type SpinSession } from '@/types/wheel';
 
@@ -77,6 +79,7 @@ describe('HistoryScreen', () => {
   beforeEach(() => {
     resetHistoryStore();
     resetGeneratorHistoryStore();
+    resetTournamentStore();
   });
 
   it('shows an empty state when there is no history', () => {
@@ -266,6 +269,43 @@ describe('HistoryScreen', () => {
       within(screen.getByRole('dialog', { name: GENERATOR_MESSAGES.deleteTeamResultTitle })).getByRole(
         'button',
         { name: GENERATOR_MESSAGES.deleteTeamResult },
+      ),
+    );
+
+    expect(screen.getByRole('heading', { name: HISTORY_MESSAGES.emptyTitle })).toBeInTheDocument();
+  });
+
+  it('shows saved tournaments and can delete them', async () => {
+    const user = userEvent.setup();
+    const created = generateTournament(
+      { participants: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], random: false },
+      0,
+      {
+        createBracketId: () => 't1',
+        createParticipantId: (index) => `p${index}`,
+        now: () => '2026-01-01T12:00:00.000Z',
+      },
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+
+    useTournamentStore.getState().startTournament(created.value);
+    renderApp({ initialEntries: [ROUTES.history] });
+
+    expect(screen.getByRole('heading', { name: GENERATOR_MESSAGES.tournamentHistoryTitle })).toBeInTheDocument();
+    expect(screen.getByText('Quarter Finals → Semi Finals → Final → Winner')).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: `${GENERATOR_MESSAGES.deleteTournamentResult}: Quarter Finals → Semi Finals → Final → Winner`,
+      }),
+    );
+    await user.click(
+      within(screen.getByRole('dialog', { name: GENERATOR_MESSAGES.deleteTournamentResultTitle })).getByRole(
+        'button',
+        { name: GENERATOR_MESSAGES.deleteTournamentResult },
       ),
     );
 

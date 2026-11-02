@@ -3,10 +3,12 @@ import { resetAppStore, useAppStore } from '@/stores/appStore';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetGeneratorHistoryStore, useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
+import { resetTournamentStore, useTournamentStore } from '@/stores/tournamentStore';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { SPIN_SESSION_STATUS } from '@/types/wheel';
 
+import { generateTournament } from '@/features/random-generator/utils/generateTournament';
 import { STORAGE_KEY, loadPersistedState } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
 import { persistStores, startStorePersistence } from '@/services/storage/storePersistence';
@@ -16,6 +18,7 @@ function resetStores() {
   resetWheelStore();
   resetHistoryStore();
   resetGeneratorHistoryStore();
+  resetTournamentStore();
   resetSettingsStore();
   resetFavoritesStore();
 }
@@ -120,6 +123,35 @@ describe('storePersistence', () => {
       'David',
     ]);
     expect(useHistoryStore.getState().spinHistory).toEqual([]);
+    stop();
+  });
+
+  it('persists tournament brackets separately from wheels and spin history', () => {
+    const created = generateTournament(
+      { participants: ['A', 'B'], random: false },
+      0,
+      {
+        createBracketId: () => 't1',
+        createParticipantId: (index) => `p${index}`,
+        now: () => '2026-01-01T00:00:00.000Z',
+      },
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+
+    useTournamentStore.getState().startTournament(created.value);
+    persistStores();
+    resetStores();
+
+    expect(useTournamentStore.getState().activeTournament).toBeNull();
+
+    const stop = startStorePersistence();
+    expect(useTournamentStore.getState().activeTournament?.id).toBe('t1');
+    expect(useTournamentStore.getState().tournamentHistory).toHaveLength(1);
+    expect(useHistoryStore.getState().spinHistory).toEqual([]);
+    expect(useWheelStore.getState().wheels).toEqual([]);
     stop();
   });
 });

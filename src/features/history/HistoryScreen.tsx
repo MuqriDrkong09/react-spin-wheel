@@ -10,14 +10,19 @@ import { HistoryToolbar } from '@/features/history/components/HistoryToolbar';
 import { HISTORY_MESSAGES, HISTORY_PAGE_SIZE_OPTIONS } from '@/features/history/constants';
 import { useHistory } from '@/features/history/hooks/useHistory';
 import { TeamHistoryList } from '@/features/random-generator/components/TeamHistoryList';
+import { TournamentHistoryList } from '@/features/random-generator/components/TournamentHistoryList';
 import { useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
+import { useTournamentStore } from '@/stores/tournamentStore';
 
 export function HistoryScreen() {
   const history = useHistory();
   const teamHistory = useGeneratorHistoryStore((state) => state.generatorHistory);
   const deleteTeamGeneration = useGeneratorHistoryStore((state) => state.deleteTeamGeneration);
   const clearTeamHistory = useGeneratorHistoryStore((state) => state.clearTeamHistory);
-  const hasAnyHistory = history.hasHistory || teamHistory.length > 0;
+  const tournamentHistory = useTournamentStore((state) => state.tournamentHistory);
+  const deleteTournament = useTournamentStore((state) => state.deleteTournament);
+  const clearTournamentHistory = useTournamentStore((state) => state.clearTournamentHistory);
+  const hasAnyHistory = history.hasHistory || teamHistory.length > 0 || tournamentHistory.length > 0;
 
   return (
     <PageContainer>
@@ -78,6 +83,11 @@ export function HistoryScreen() {
               entries={teamHistory}
               onDelete={deleteTeamGeneration}
               onClear={clearTeamHistory}
+            />
+            <TournamentHistoryList
+              entries={tournamentHistory}
+              onDelete={deleteTournament}
+              onClear={clearTournamentHistory}
             />
           </>
         ) : (
