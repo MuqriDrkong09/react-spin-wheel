@@ -687,6 +687,92 @@ describe('SpinScreen', () => {
     expect(screen.getByText(/Children of/)).toBeInTheDocument();
   });
 
+  it('runs auto spin, saves each result, and lists winners', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    const count = screen.getByLabelText(SPIN_MESSAGES.autoSpinCount);
+    const delay = screen.getByLabelText(SPIN_MESSAGES.autoSpinDelay);
+    await user.clear(count);
+    await user.type(count, '3');
+    await user.clear(delay);
+    await user.type(delay, '0');
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.autoSpinStart }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Spin 1 → Burger')).toBeInTheDocument();
+      expect(screen.getByText('Spin 2 → Burger')).toBeInTheDocument();
+      expect(screen.getByText('Spin 3 → Burger')).toBeInTheDocument();
+    });
+
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(3);
+    expect(useHistoryStore.getState().spinHistory[0]?.results[0]?.selectedItemName).toBe('Burger');
+    expect(screen.queryByRole('dialog', { name: SPIN_MESSAGES.winnerTitle })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeEnabled();
+      expect(screen.getByRole('button', { name: SPIN_MESSAGES.changeWheel })).toBeEnabled();
+    });
+  });
+
+  it('disables conflicting controls during auto spin and stops between spins', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.clear(screen.getByLabelText(SPIN_MESSAGES.autoSpinCount));
+    await user.type(screen.getByLabelText(SPIN_MESSAGES.autoSpinCount), '10');
+    await user.clear(screen.getByLabelText(SPIN_MESSAGES.autoSpinDelay));
+    await user.type(screen.getByLabelText(SPIN_MESSAGES.autoSpinDelay), '5000');
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.autoSpinStart }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Spin 1 → Burger')).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeDisabled();
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.changeWheel })).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: SPIN_MESSAGES.selectionMode })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(screen.getByRole('switch', { name: SPIN_MESSAGES.removeWinner })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: SPIN_MESSAGES.autoSpinRemoveWinners })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.autoSpinStop }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: SPIN_MESSAGES.autoSpinStart })).toBeEnabled();
+    });
+    expect(screen.queryByText('Spin 2 → Burger')).not.toBeInTheDocument();
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(1);
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.changeWheel })).toBeEnabled();
+  });
+
+  it('skips history when auto spin save results is off', async () => {
+    stubReducedMotion(true);
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    seedFoodWheel();
+    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+
+    await user.click(screen.getByRole('switch', { name: SPIN_MESSAGES.autoSpinSaveResults }));
+    await user.clear(screen.getByLabelText(SPIN_MESSAGES.autoSpinCount));
+    await user.type(screen.getByLabelText(SPIN_MESSAGES.autoSpinCount), '1');
+    await user.clear(screen.getByLabelText(SPIN_MESSAGES.autoSpinDelay));
+    await user.type(screen.getByLabelText(SPIN_MESSAGES.autoSpinDelay), '0');
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.autoSpinStart }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Spin 1 → Burger')).toBeInTheDocument();
+    });
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(0);
+  });
+
   it('handles a wheel with a single active item', () => {
     useWheelStore.getState().createWheel({
       id: 'solo',

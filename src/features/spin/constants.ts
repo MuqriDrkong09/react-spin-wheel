@@ -41,6 +41,24 @@ export const SPIN_MESSAGES = {
   childWheelOf: (name: string) => `Children of ${name}`,
   wheelLabel: (names: string[]) =>
     names.length === 0 ? 'Empty spin wheel' : `Spin wheel with ${names.join(', ')}`,
+  autoSpinTitle: 'Auto Spin',
+  autoSpinCount: 'Number of spins',
+  autoSpinDelay: 'Delay between spins',
+  autoSpinDelayHint: 'Milliseconds to wait after each completed spin',
+  autoSpinRemoveWinners: 'Remove winners',
+  autoSpinSaveResults: 'Save results',
+  autoSpinStart: 'Start Auto Spin',
+  autoSpinStop: 'Stop',
+  autoSpinStopping: 'Stopping',
+  autoSpinProgress: (current: number, total: number) => `Spin ${current} of ${total}`,
+  autoSpinResult: (index: number, labels: readonly string[]) =>
+    `Spin ${index} → ${labels.join(' → ')}`,
+  autoSpinNoItems: 'Nothing left to spin. Restore items or add more before auto spinning.',
+  autoSpinInvalidCount: 'Enter a number of spins between 1 and 100.',
+  autoSpinInvalidDelay: 'Enter a delay between 0 and 10,000 milliseconds.',
+  autoSpinFailed: 'Auto Spin could not complete this spin.',
+  autoSpinComplete: 'Auto Spin complete',
+  autoSpinStopped: 'Auto Spin stopped',
 } as const;
 
 export const SPIN_STATUS = {
@@ -50,6 +68,27 @@ export const SPIN_STATUS = {
 } as const;
 
 export type SpinStatus = (typeof SPIN_STATUS)[keyof typeof SPIN_STATUS];
+
+export const AUTO_SPIN_STATUS = {
+  idle: 'idle',
+  running: 'running',
+  delaying: 'delaying',
+  stopping: 'stopping',
+  completed: 'completed',
+  stopped: 'stopped',
+  error: 'error',
+} as const;
+
+export type AutoSpinStatus = (typeof AUTO_SPIN_STATUS)[keyof typeof AUTO_SPIN_STATUS];
+
+export const AUTO_SPIN_LIMITS = {
+  minCount: 1,
+  maxCount: 100,
+  minDelayMs: 0,
+  maxDelayMs: 10_000,
+  defaultCount: 10,
+  defaultDelayMs: 500,
+} as const;
 
 export const SPIN_ANIMATION_TYPE = {
   easeOut: 'easeOut',

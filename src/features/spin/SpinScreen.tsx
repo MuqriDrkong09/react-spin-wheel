@@ -1,10 +1,11 @@
 import AddIcon from '@mui/icons-material/Add';
 import { Alert, Box, Button, Snackbar, Stack, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 
 import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { AutoSpinPanel } from '@/features/spin/components/AutoSpinPanel';
 import { FinalResult } from '@/features/spin/components/FinalResult';
 import { RemoveWinnerSwitch } from '@/features/spin/components/RemoveWinnerSwitch';
 import { SelectionModeSelect } from '@/features/spin/components/SelectionModeSelect';
@@ -13,6 +14,7 @@ import { SpinWheel } from '@/features/spin/components/SpinWheel';
 import { SpinWheelPicker } from '@/features/spin/components/SpinWheelPicker';
 import { WinnerDialog } from '@/features/spin/components/WinnerDialog';
 import { SPIN_MESSAGES, SPIN_STATUS } from '@/features/spin/constants';
+import { useAutoSpin } from '@/features/spin/hooks/useAutoSpin';
 import { useSpinScreen } from '@/features/spin/hooks/useSpinScreen';
 import { useSpinSession } from '@/features/spin/hooks/useSpinSession';
 import { formatFinalResultCopy, toSpinHistorySession } from '@/features/spin/utils/formatFinalResult';
@@ -36,6 +38,7 @@ export function SpinScreen() {
     setSelectionMode,
     setRemoveWinner,
   } = useSpinScreen();
+  const [controlsLocked, setControlsLocked] = useState(false);
 
   return (
     <PageContainer>
@@ -65,12 +68,14 @@ export function SpinScreen() {
                 <SelectionModeSelect
                   value={wheel.settings.selectionMode}
                   onChange={setSelectionMode}
+                  disabled={controlsLocked}
                 />
                 <RemoveWinnerSwitch
                   checked={wheel.settings.removeWinner ?? false}
                   onChange={setRemoveWinner}
+                  disabled={controlsLocked}
                 />
-                <Button variant="outlined" onClick={clearWheelSelection}>
+                <Button variant="outlined" onClick={clearWheelSelection} disabled={controlsLocked}>
                   {SPIN_MESSAGES.changeWheel}
                 </Button>
               </Stack>
@@ -82,7 +87,12 @@ export function SpinScreen() {
           }
         />
         {wheel ? (
-          <ActiveWheelSpin key={wheel.id} wheel={wheel} />
+          <ActiveWheelSpin
+            key={wheel.id}
+            wheel={wheel}
+            onControlsLockedChange={setControlsLocked}
+            onRemoveWinnersChange={setRemoveWinner}
+          />
         ) : needsWheelChoice ? (
           <SpinWheelPicker wheels={availableWheels} onSelect={selectWheel} />
         ) : (
@@ -115,13 +125,47 @@ export function SpinScreen() {
   );
 }
 
-function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
+function ActiveWheelSpin({
+  wheel,
+  onControlsLockedChange,
+  onRemoveWinnersChange,
+}: {
+  wheel: Wheel;
+  onControlsLockedChange: (locked: boolean) => void;
+  onRemoveWinnersChange: (enabled: boolean) => void;
+}) {
   const session = useSpinSession(wheel);
   const addSpinSession = useHistoryStore((state) => state.addSpinSession);
   const [saved, setSaved] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const appearance = resolveAppearance(wheel.settings.appearance);
   const title = displayWheelTitle(appearance, wheel.name);
+  const autoSpin = useAutoSpin({
+    itemCount: session.items.length,
+    spinStatus: session.spin.status,
+    willAutoAdvance: session.willAutoAdvance,
+    sessionId: session.sessionId,
+    result: session.result,
+    startSpin: session.startSpin,
+    startNewSelection: session.startNewSelection,
+    onSave: (completed) => {
+      addSpinSession(
+        toSpinHistorySession({
+          result: completed,
+          wheelName: wheel.name,
+          mode: session.selectionMode,
+        }),
+      );
+    },
+  });
+
+  useLayoutEffect(() => {
+    onControlsLockedChange(autoSpin.controlsLocked);
+  }, [autoSpin.controlsLocked, onControlsLockedChange]);
+
+  useLayoutEffect(() => {
+    return () => onControlsLockedChange(false);
+  }, [onControlsLockedChange]);
 
   async function copyResult() {
     if (!session.result) {
@@ -184,12 +228,12 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
     <>
       {session.canRestoreItems ? (
         <Stack direction="row" sx={{ justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
-          <Button variant="outlined" onClick={restoreItems}>
+          <Button variant="outlined" onClick={restoreItems} disabled={autoSpin.controlsLocked}>
             {SPIN_MESSAGES.restoreItems}
           </Button>
         </Stack>
       ) : null}
-      {session.finalOpen && session.result ? (
+      {session.finalOpen && session.result && !autoSpin.controlsLocked ? (
         <FinalResult
           wheelName={wheel.name}
           steps={session.selection}
@@ -255,6 +299,7 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
             appearance={appearance}
             onSpin={session.startSpin}
             spinning={session.spin.spinning}
+            spinLocked={autoSpin.controlsLocked}
             rotationDegrees={session.spin.rotationDegrees}
             spinDuration={session.spin.animation.spinDuration}
             animationType={session.spin.animation.animationType}
@@ -269,8 +314,28 @@ function ActiveWheelSpin({ wheel }: { wheel: Wheel }) {
           ) : null}
         </Box>
       )}
+      <AutoSpinPanel
+        countInput={autoSpin.countInput}
+        delayInput={autoSpin.delayInput}
+        saveResults={autoSpin.saveResults}
+        removeWinners={wheel.settings.removeWinner ?? false}
+        status={autoSpin.status}
+        error={autoSpin.error}
+        results={autoSpin.results}
+        total={autoSpin.total}
+        currentIndex={autoSpin.currentIndex}
+        progressPercent={autoSpin.progressPercent}
+        busy={session.spin.spinning}
+        reducedMotion={session.spin.reducedMotion}
+        onCountChange={autoSpin.setCountInput}
+        onDelayChange={autoSpin.setDelayInput}
+        onSaveResultsChange={autoSpin.setSaveResults}
+        onRemoveWinnersChange={onRemoveWinnersChange}
+        onStart={autoSpin.start}
+        onStop={autoSpin.stop}
+      />
       <WinnerDialog
-        open={session.winnerOpen}
+        open={session.winnerOpen && !autoSpin.controlsLocked}
         item={session.winner}
         path={session.selection}
         selectionMode={session.selectionMode}

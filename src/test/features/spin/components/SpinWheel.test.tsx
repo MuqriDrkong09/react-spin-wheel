@@ -212,6 +212,14 @@ describe('SpinWheel', () => {
     expect(button.closest('[aria-busy="true"]')).toBeTruthy();
   });
 
+  it('disables the spin button when auto spin has locked controls', () => {
+    renderWithProviders(
+      <SpinWheel items={[item('Pizza', { icon: '🍕' })]} spinLocked />,
+    );
+
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeDisabled();
+  });
+
   it('applies custom pointer, hub, and border colors from appearance', () => {
     const { container } = renderWithProviders(
       <SpinWheel

@@ -6,16 +6,18 @@ import { isSelectionMode, SELECTION_MODE, type SelectionMode } from '@/types/whe
 interface SelectionModeSelectProps {
   value: SelectionMode;
   onChange: (value: SelectionMode) => void;
+  disabled?: boolean;
 }
 
-export function SelectionModeSelect({ value, onChange }: SelectionModeSelectProps) {
+export function SelectionModeSelect({ value, onChange, disabled = false }: SelectionModeSelectProps) {
   return (
-    <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+    <FormControl size="small" disabled={disabled} sx={{ minWidth: { xs: '100%', sm: 180 } }}>
       <InputLabel id="selection-mode-label">{SPIN_MESSAGES.selectionMode}</InputLabel>
       <Select
         labelId="selection-mode-label"
         label={SPIN_MESSAGES.selectionMode}
         value={value}
+        disabled={disabled}
         onChange={(event) => {
           if (isSelectionMode(event.target.value)) {
             onChange(event.target.value);

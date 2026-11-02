@@ -1,4 +1,6 @@
 import {
+  AUTO_SPIN_LIMITS,
+  AUTO_SPIN_STATUS,
   DEFAULT_SPIN_ANIMATION,
   SPIN_ANIMATION_TYPE,
   SPIN_EASINGS,
@@ -30,6 +32,16 @@ describe('SPIN_MESSAGES', () => {
   it('labels the wheel for empty and populated slices', () => {
     expect(SPIN_MESSAGES.wheelLabel([])).toBe('Empty spin wheel');
     expect(SPIN_MESSAGES.wheelLabel(['Pizza', 'Burger'])).toBe('Spin wheel with Pizza, Burger');
+  });
+
+  it('formats auto spin progress and result lines', () => {
+    expect(SPIN_MESSAGES.autoSpinProgress(1, 10)).toBe('Spin 1 of 10');
+    expect(SPIN_MESSAGES.autoSpinResult(1, ['Pizza'])).toBe('Spin 1 → Pizza');
+    expect(SPIN_MESSAGES.autoSpinResult(2, ['Pizza', 'Pepperoni'])).toBe(
+      'Spin 2 → Pizza → Pepperoni',
+    );
+    expect(AUTO_SPIN_LIMITS.maxCount).toBe(100);
+    expect(Object.values(AUTO_SPIN_STATUS)).toContain('stopping');
   });
 });
 

@@ -43,6 +43,15 @@ describe('SelectionModeSelect', () => {
     expect(onChange).toHaveBeenCalledWith(SELECTION_MODE.automatic);
   });
 
+  it('disables the control when locked', () => {
+    renderSelect({ disabled: true });
+
+    expect(screen.getByRole('combobox', { name: SPIN_MESSAGES.selectionMode })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+  });
+
   it('ignores a value that fails the selection-mode guard', async () => {
     const user = userEvent.setup();
     vi.spyOn(wheelTypes, 'isSelectionMode').mockReturnValue(false);

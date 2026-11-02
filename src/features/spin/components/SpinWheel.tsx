@@ -21,6 +21,7 @@ interface SpinWheelProps {
   appearance?: Partial<WheelAppearance>;
   onSpin?: () => void;
   spinning?: boolean;
+  spinLocked?: boolean;
   rotationDegrees?: number;
   spinDuration?: number;
   animationType?: SpinAnimationType;
@@ -34,6 +35,7 @@ export function SpinWheel({
   appearance: appearanceInput,
   onSpin,
   spinning = false,
+  spinLocked = false,
   rotationDegrees = 0,
   spinDuration = DEFAULT_SPIN_ANIMATION.spinDuration,
   animationType = DEFAULT_SPIN_ANIMATION.animationType,
@@ -213,7 +215,7 @@ export function SpinWheel({
             sounds.handleSpinPress();
             onSpin?.();
           }}
-          disabled={spinning}
+          disabled={spinning || spinLocked}
           aria-label={SPIN_MESSAGES.spinButton}
           sx={centerButtonSx(appearance, geometry.centerButtonPercent, hubColor)}
         >

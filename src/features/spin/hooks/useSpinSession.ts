@@ -277,6 +277,7 @@ export function useSpinSession(wheel: Wheel) {
     winnerOpen,
     finalOpen,
     winner,
+    willAutoAdvance: autoHandoff,
     startSpin,
     completeSpin,
     closeWinner,
