@@ -1,4 +1,5 @@
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
@@ -6,6 +7,8 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 
 import { STATISTICS_CHART_HEIGHT, STATISTICS_MESSAGES } from '@/features/statistics/constants';
@@ -17,9 +20,42 @@ interface SelectionFrequencyTableProps {
 }
 
 export function SelectionFrequencyTable({ rows }: SelectionFrequencyTableProps) {
+  const theme = useTheme();
+  const compact = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
+
   if (rows.length === 0) {
     return (
       <Typography color="text.secondary">{STATISTICS_MESSAGES.emptyDescription}</Typography>
+    );
+  }
+
+  if (compact) {
+    return (
+      <Box
+        component="ul"
+        aria-label={STATISTICS_MESSAGES.frequencyAria}
+        sx={{ display: 'grid', m: 0, p: 0, gap: 1, listStyle: 'none' }}
+      >
+        {rows.map((row) => (
+          <Box
+            key={row.name}
+            component="li"
+            sx={{
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 2,
+              px: 1.5,
+              py: 1.25,
+            }}
+          >
+            <Typography sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{row.name}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {STATISTICS_MESSAGES.count} {row.count} · {STATISTICS_MESSAGES.percentage}{' '}
+              {formatPercent(row.percent)}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
     );
   }
 
@@ -36,7 +72,7 @@ export function SelectionFrequencyTable({ rows }: SelectionFrequencyTableProps) 
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.name}>
-              <TableCell>{row.name}</TableCell>
+              <TableCell sx={{ overflowWrap: 'anywhere' }}>{row.name}</TableCell>
               <TableCell align="right">{row.count}</TableCell>
               <TableCell align="right">{formatPercent(row.percent)}</TableCell>
             </TableRow>

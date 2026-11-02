@@ -68,6 +68,22 @@ export function HistoryScreen() {
                       rowsPerPage={history.pageSize}
                       onRowsPerPageChange={(event) => history.setPageSize(Number(event.target.value))}
                       rowsPerPageOptions={HISTORY_PAGE_SIZE_OPTIONS}
+                      sx={{
+                        overflow: 'visible',
+                        '& .MuiTablePagination-toolbar': {
+                          flexWrap: 'wrap',
+                          justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                          gap: 0.5,
+                          pl: 0,
+                          pr: 0,
+                          minHeight: 52,
+                        },
+                        '& .MuiTablePagination-spacer': { display: 'none' },
+                        '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                          m: 0,
+                        },
+                        '& .MuiTablePagination-actions': { ml: { xs: 'auto', sm: 1 } },
+                      }}
                     />
                   </>
                 ) : (

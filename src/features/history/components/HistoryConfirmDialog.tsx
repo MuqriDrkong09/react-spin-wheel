@@ -25,13 +25,23 @@ export function HistoryConfirmDialog({
       onClose={onCancel}
       transitionDuration={0}
       closeAfterTransition={false}
+      fullWidth
+      maxWidth="xs"
       aria-labelledby="history-confirm-title"
     >
       <DialogTitle id="history-confirm-title">{title}</DialogTitle>
       <DialogContent>
         <DialogContentText>{description}</DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions
+        sx={{
+          flexDirection: { xs: 'column-reverse', sm: 'row' },
+          px: 3,
+          pb: 2,
+          gap: 1,
+          '& > :not(style)': { m: 0, width: { xs: '100%', sm: 'auto' } },
+        }}
+      >
         <Button onClick={onCancel}>{HISTORY_MESSAGES.cancel}</Button>
         <Button color="error" variant="contained" onClick={onConfirm}>
           {confirmLabel}

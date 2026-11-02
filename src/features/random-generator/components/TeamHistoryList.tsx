@@ -37,7 +37,11 @@ export function TeamHistoryList({ entries, onDelete, onClear }: TeamHistoryListP
 
   return (
     <Stack spacing={1.5}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1}
+        sx={{ alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between' }}
+      >
         <Typography variant="h6" component="h2">
           {GENERATOR_MESSAGES.teamHistoryTitle}
         </Typography>
@@ -58,29 +62,42 @@ export function TeamHistoryList({ entries, onDelete, onClear }: TeamHistoryListP
             <ListItem
               key={entry.id}
               divider={index < entries.length - 1}
-              secondaryAction={
+              disablePadding
+              sx={{ alignItems: 'flex-start' }}
+            >
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{ width: '100%', alignItems: 'flex-start', minWidth: 0, py: 1.5, pl: 2, pr: 0.75 }}
+              >
+                <ListItemText
+                  sx={{ minWidth: 0, m: 0 }}
+                  primary={
+                    <Stack spacing={0.25}>
+                      {entry.teams.map((team) => (
+                        <Typography
+                          key={team.name}
+                          component="span"
+                          sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}
+                        >
+                          {formatTeamLine(team)}
+                        </Typography>
+                      ))}
+                    </Stack>
+                  }
+                  secondary={`${formatDateTime(entry.createdAt)} · ${formatTeamSettings(entry)}`}
+                  slotProps={{
+                    secondary: { sx: { overflowWrap: 'anywhere' } },
+                  }}
+                />
                 <IconButton
-                  edge="end"
                   aria-label={`${GENERATOR_MESSAGES.deleteTeamResult}: ${formatTeamHistoryLabel(entry)}`}
                   onClick={() => setPendingDeleteId(entry.id)}
+                  sx={{ flexShrink: 0 }}
                 >
                   <DeleteOutlinedIcon />
                 </IconButton>
-              }
-              sx={{ alignItems: 'flex-start', py: 1.5 }}
-            >
-              <ListItemText
-                primary={
-                  <Stack spacing={0.25}>
-                    {entry.teams.map((team) => (
-                      <Typography key={team.name} component="span" sx={{ fontWeight: 600 }}>
-                        {formatTeamLine(team)}
-                      </Typography>
-                    ))}
-                  </Stack>
-                }
-                secondary={`${formatDateTime(entry.createdAt)} · ${formatTeamSettings(entry)}`}
-              />
+              </Stack>
             </ListItem>
           ))}
         </List>

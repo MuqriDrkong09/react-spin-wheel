@@ -15,6 +15,8 @@ export function DeleteWheelDialog({ wheel, onCancel, onConfirm }: DeleteWheelDia
       onClose={onCancel}
       transitionDuration={0}
       closeAfterTransition={false}
+      fullWidth
+      maxWidth="xs"
       aria-labelledby="delete-wheel-title"
     >
       <DialogTitle id="delete-wheel-title">Delete wheel</DialogTitle>
@@ -25,7 +27,15 @@ export function DeleteWheelDialog({ wheel, onCancel, onConfirm }: DeleteWheelDia
             : 'Delete this wheel? This cannot be undone.'}
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions
+        sx={{
+          flexDirection: { xs: 'column-reverse', sm: 'row' },
+          px: 3,
+          pb: 2,
+          gap: 1,
+          '& > :not(style)': { m: 0, width: { xs: '100%', sm: 'auto' } },
+        }}
+      >
         <Button onClick={onCancel}>Cancel</Button>
         <Button color="error" variant="contained" onClick={onConfirm}>
           Delete

@@ -32,6 +32,13 @@ export function PresetPreviewDialog({
       closeAfterTransition={false}
       aria-labelledby="preset-preview-title"
       aria-describedby="preset-preview-hint"
+      sx={{
+        '& .MuiDialog-paper': {
+          m: { xs: 2, sm: 4 },
+          width: { xs: 'calc(100% - 32px)', sm: undefined },
+          maxHeight: { xs: 'calc(100% - 32px)' },
+        },
+      }}
     >
       <DialogTitle id="preset-preview-title">
         {preset ? PRESET_MESSAGES.previewTitle(preset.name) : PRESET_MESSAGES.preview}
@@ -52,7 +59,17 @@ export function PresetPreviewDialog({
           </Stack>
         ) : null}
       </DialogContent>
-      <DialogActions sx={{ flexWrap: 'wrap', gap: 1, px: 3, pb: 2 }}>
+      <DialogActions
+        sx={{
+          flexDirection: { xs: 'column-reverse', sm: 'row' },
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+          gap: 1,
+          px: 3,
+          pb: 2,
+          '& > :not(style)': { m: 0, width: { xs: '100%', sm: 'auto' } },
+        }}
+      >
         <Button onClick={onClose}>{PRESET_MESSAGES.closePreview}</Button>
         <Button aria-label={preset ? `Modify ${preset.name}` : PRESET_MESSAGES.modify} onClick={onModify}>
           {PRESET_MESSAGES.modify}

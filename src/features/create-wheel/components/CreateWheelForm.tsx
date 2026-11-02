@@ -75,9 +75,15 @@ export function CreateWheelForm({ onSubmit, onCancel }: CreateWheelFormProps) {
               ))}
             </FormTextField>
             <InitialOptionsField />
-            <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'flex-end' }}>
-              <Button onClick={onCancel}>Cancel</Button>
-              <Button type="submit" variant="contained">
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1.5}
+              sx={{ justifyContent: 'flex-end' }}
+            >
+              <Button onClick={onCancel} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained" sx={{ width: { xs: '100%', sm: 'auto' } }}>
                 Create wheel
               </Button>
             </Stack>

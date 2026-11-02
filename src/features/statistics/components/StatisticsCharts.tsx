@@ -160,7 +160,7 @@ export function StatisticsCharts({ snapshot }: StatisticsChartsProps) {
 
 function ChartFrame({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <Box aria-label={label} sx={{ width: '100%', height: STATISTICS_CHART_HEIGHT }}>
+    <Box aria-label={label} sx={{ width: '100%', minWidth: 0, height: STATISTICS_CHART_HEIGHT }}>
       <ResponsiveContainer width="100%" height="100%">
         {children}
       </ResponsiveContainer>

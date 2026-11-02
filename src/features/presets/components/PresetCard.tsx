@@ -47,7 +47,7 @@ export function PresetCard({ preset, onPreview, onCreate, onModify }: PresetCard
           {nestedCount > 0 ? ` · ${PRESET_MESSAGES.nestedCount(nestedCount)}` : ''}
         </Typography>
       </CardContent>
-      <CardActions sx={{ px: 2, pb: 2, flexWrap: 'wrap', gap: 1 }}>
+      <CardActions sx={{ px: 2, pb: 2, flexWrap: 'wrap', gap: 1, '& .MuiButton-root': { minHeight: 40 } }}>
         <Button
           size="small"
           startIcon={<VisibilityOutlinedIcon />}

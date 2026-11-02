@@ -57,7 +57,14 @@ export function AddChildDataDialog({
         aria-labelledby="add-child-title"
         slotProps={{
           paper: {
-            sx: { borderTopLeftRadius: 16, borderTopRightRadius: 16, px: 2, py: 3 },
+            sx: {
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              px: 2,
+              py: 3,
+              maxHeight: '100%',
+              overflow: 'auto',
+            },
           },
         }}
       >

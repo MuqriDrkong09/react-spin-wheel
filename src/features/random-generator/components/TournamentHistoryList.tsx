@@ -37,7 +37,11 @@ export function TournamentHistoryList({ entries, onDelete, onClear }: Tournament
 
   return (
     <Stack spacing={1.5}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1}
+        sx={{ alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between' }}
+      >
         <Typography variant="h6" component="h2">
           {GENERATOR_MESSAGES.tournamentHistoryTitle}
         </Typography>
@@ -58,25 +62,34 @@ export function TournamentHistoryList({ entries, onDelete, onClear }: Tournament
             <ListItem
               key={entry.id}
               divider={index < entries.length - 1}
-              secondaryAction={
+              disablePadding
+              sx={{ alignItems: 'flex-start' }}
+            >
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{ width: '100%', alignItems: 'flex-start', minWidth: 0, py: 1.5, pl: 2, pr: 0.75 }}
+              >
+                <ListItemText
+                  sx={{ minWidth: 0, m: 0 }}
+                  primary={
+                    <Typography component="span" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                      {formatTournamentRoundFlow(entry)}
+                    </Typography>
+                  }
+                  secondary={`${formatDateTime(entry.createdAt)} · ${formatTournamentSettings(entry)}`}
+                  slotProps={{
+                    secondary: { sx: { overflowWrap: 'anywhere' } },
+                  }}
+                />
                 <IconButton
-                  edge="end"
                   aria-label={`${GENERATOR_MESSAGES.deleteTournamentResult}: ${formatTournamentHistoryLabel(entry)}`}
                   onClick={() => setPendingDeleteId(entry.id)}
+                  sx={{ flexShrink: 0 }}
                 >
                   <DeleteOutlinedIcon />
                 </IconButton>
-              }
-              sx={{ alignItems: 'flex-start', py: 1.5 }}
-            >
-              <ListItemText
-                primary={
-                  <Typography component="span" sx={{ fontWeight: 600 }}>
-                    {formatTournamentRoundFlow(entry)}
-                  </Typography>
-                }
-                secondary={`${formatDateTime(entry.createdAt)} · ${formatTournamentSettings(entry)}`}
-              />
+              </Stack>
             </ListItem>
           ))}
         </List>

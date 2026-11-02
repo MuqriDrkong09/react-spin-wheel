@@ -20,11 +20,17 @@ export function HistoryDetailsDialog({ result, onClose }: HistoryDetailsDialogPr
       fullWidth
       maxWidth="sm"
       aria-labelledby="history-details-title"
+      sx={{
+        '& .MuiDialog-paper': {
+          m: { xs: 2, sm: 4 },
+          width: { xs: 'calc(100% - 32px)', sm: undefined },
+        },
+      }}
     >
       <DialogTitle id="history-details-title">{HISTORY_MESSAGES.detailsTitle}</DialogTitle>
       <DialogContent>
         {result ? (
-          <Stack spacing={1.5} component="dl" sx={{ m: 0 }}>
+          <Stack spacing={1.5} component="dl" sx={{ m: 0, overflowWrap: 'anywhere' }}>
             <Detail label={HISTORY_MESSAGES.wheel} value={result.wheelName} />
             <Detail label={HISTORY_MESSAGES.path} value={result.pathLabel} />
             <Detail label={HISTORY_MESSAGES.selectedItem} value={result.selectedItemName} />

@@ -36,39 +36,47 @@ export function HistoryList({ results, onView, onDelete }: HistoryListProps) {
             key={result.id}
             divider={index < results.length - 1}
             disablePadding
-            secondaryAction={
-              <Stack direction="row" spacing={0.5}>
+            sx={{ alignItems: 'stretch' }}
+          >
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ width: '100%', alignItems: 'flex-start', minWidth: 0 }}
+            >
+              <ListItemButton onClick={() => onView(result)} sx={{ flex: 1, minWidth: 0, py: 1.5 }}>
+                <ListItemText
+                  primary={result.pathLabel}
+                  secondary={
+                    <Typography component="span" variant="body2" color="text.secondary">
+                      {result.wheelName} · {formatDateTime(result.timestamp)} ·{' '}
+                      {HISTORY_MODE_LABELS[result.mode]} · {formatDuration(result.duration)}
+                    </Typography>
+                  }
+                  slotProps={{
+                    primary: { sx: { fontWeight: 600, overflowWrap: 'anywhere' } },
+                    secondary: { sx: { overflowWrap: 'anywhere' } },
+                  }}
+                />
+              </ListItemButton>
+              <Stack
+                direction="row"
+                spacing={0.25}
+                sx={{ flexShrink: 0, pt: 0.75, pr: 0.75 }}
+              >
                 <IconButton
-                  edge="end"
                   aria-label={`${HISTORY_MESSAGES.viewDetails}: ${result.pathLabel}`}
                   onClick={() => onView(result)}
                 >
                   <VisibilityOutlinedIcon />
                 </IconButton>
                 <IconButton
-                  edge="end"
                   aria-label={`${HISTORY_MESSAGES.deleteResult}: ${result.pathLabel}`}
                   onClick={() => onDelete(result)}
                 >
                   <DeleteOutlinedIcon />
                 </IconButton>
               </Stack>
-            }
-          >
-            <ListItemButton onClick={() => onView(result)} sx={{ pr: 12 }}>
-              <ListItemText
-                primary={result.pathLabel}
-                secondary={
-                  <Typography component="span" variant="body2" color="text.secondary">
-                    {result.wheelName} · {formatDateTime(result.timestamp)} ·{' '}
-                    {HISTORY_MODE_LABELS[result.mode]} · {formatDuration(result.duration)}
-                  </Typography>
-                }
-                slotProps={{
-                  primary: { sx: { fontWeight: 600 } },
-                }}
-              />
-            </ListItemButton>
+            </Stack>
           </ListItem>
         ))}
       </List>

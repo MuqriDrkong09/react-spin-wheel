@@ -71,6 +71,12 @@ export function WinnerDialog({
       maxWidth="xs"
       aria-labelledby="winner-dialog-title"
       aria-describedby={extraId ? `winner-dialog-name ${extraId}` : 'winner-dialog-name'}
+      sx={{
+        '& .MuiDialog-paper': {
+          m: { xs: 2, sm: 4 },
+          width: { xs: 'calc(100% - 32px)', sm: undefined },
+        },
+      }}
     >
       {item ? (
         <motion.div

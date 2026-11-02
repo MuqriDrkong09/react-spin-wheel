@@ -62,7 +62,7 @@ export function WheelCard({
           {wheel.items.length} {wheel.items.length === 1 ? 'item' : 'items'}
         </Typography>
       </CardContent>
-      <CardActions sx={{ px: 2, pb: 2, flexWrap: 'wrap', gap: 1 }}>
+      <CardActions sx={{ px: 2, pb: 2, flexWrap: 'wrap', gap: 1, '& .MuiButton-root': { minHeight: 40 } }}>
         <Button
           variant="contained"
           size="small"

@@ -33,6 +33,13 @@ export function ItemFormDialog({
       fullWidth
       maxWidth="sm"
       aria-labelledby="item-form-title"
+      sx={{
+        '& .MuiDialog-paper': {
+          m: { xs: 2, sm: 4 },
+          width: { xs: 'calc(100% - 32px)', sm: undefined },
+          maxHeight: { xs: 'calc(100% - 32px)' },
+        },
+      }}
     >
       <DialogTitle id="item-form-title">{title}</DialogTitle>
       <DialogContent sx={{ pt: 1 }}>

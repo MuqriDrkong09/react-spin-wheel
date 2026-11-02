@@ -31,7 +31,15 @@ export function ImportWheelDialog({
       onClose={onCancel}
       transitionDuration={0}
       closeAfterTransition={false}
+      fullWidth
+      maxWidth="xs"
       aria-labelledby="import-wheel-title"
+      sx={{
+        '& .MuiDialog-paper': {
+          m: { xs: 2, sm: 4 },
+          width: { xs: 'calc(100% - 32px)', sm: undefined },
+        },
+      }}
     >
       <form aria-label="Import wheel" onSubmit={submit}>
         <DialogTitle id="import-wheel-title">Import wheel</DialogTitle>
@@ -52,7 +60,15 @@ export function ImportWheelDialog({
             slotProps={{ htmlInput: { 'aria-label': 'Wheel name' } }}
           />
         </DialogContent>
-        <DialogActions>
+        <DialogActions
+          sx={{
+            flexDirection: { xs: 'column-reverse', sm: 'row' },
+            px: 3,
+            pb: 2,
+            gap: 1,
+            '& > :not(style)': { m: 0, width: { xs: '100%', sm: 'auto' } },
+          }}
+        >
           <Button onClick={onCancel}>Cancel</Button>
           <Button type="submit" variant="contained">
             Import wheel

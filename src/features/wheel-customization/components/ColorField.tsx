@@ -127,7 +127,7 @@ export function ColorField({ label, value, onChange, onCommit }: ColorFieldProps
             >
               <Box
                 sx={{
-                  '& .react-colorful': { width: 240, height: 200 },
+                  '& .react-colorful': { width: 'min(240px, calc(100vw - 80px))', height: 200 },
                   '& .react-colorful__saturation': { borderRadius: 1, marginBottom: 1 },
                   '& .react-colorful__hue': { borderRadius: 1, height: 12 },
                   '& .react-colorful__interactive': { outline: 'none' },
