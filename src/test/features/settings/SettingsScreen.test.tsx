@@ -1,4 +1,6 @@
-import { SOUND_MESSAGES } from '@/constants/sound';
+import { fireEvent } from '@testing-library/react';
+
+import { SOUND_MESSAGES, SOUND_VOLUME_MAX } from '@/constants/sound';
 import { CELEBRATION_MESSAGES } from '@/features/celebration/constants';
 import { SETTINGS_MESSAGES } from '@/features/settings/constants';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
@@ -34,5 +36,30 @@ describe('SettingsScreen', () => {
     await user.click(screen.getByRole('switch', { name: CELEBRATION_MESSAGES.enabled }));
     expect(useSettingsStore.getState().settings.confettiEnabled).toBe(false);
     expect(screen.getByRole('switch', { name: CELEBRATION_MESSAGES.enabled })).not.toBeChecked();
+  });
+
+  it('updates master volume from the slider', () => {
+    renderApp({ initialEntries: ['/settings'] });
+
+    fireEvent.change(screen.getByRole('slider', { name: SOUND_MESSAGES.masterVolume }), {
+      target: { value: '40' },
+    });
+
+    expect(useSettingsStore.getState().settings.masterVolume).toBe((40 / 100) * SOUND_VOLUME_MAX);
+    expect(screen.getByRole('slider', { name: SOUND_MESSAGES.masterVolume })).toHaveValue('40');
+  });
+
+  it('restores sound channels when sound is turned back on', async () => {
+    const user = userEvent.setup();
+    renderApp({ initialEntries: ['/settings'] });
+
+    await user.click(screen.getByRole('switch', { name: SOUND_MESSAGES.enabled }));
+    expect(screen.getByRole('switch', { name: SOUND_MESSAGES.spinSound })).toBeDisabled();
+
+    await user.click(screen.getByRole('switch', { name: SOUND_MESSAGES.enabled }));
+
+    expect(useSettingsStore.getState().settings.soundEnabled).toBe(true);
+    expect(screen.getByRole('switch', { name: SOUND_MESSAGES.spinSound })).toBeEnabled();
+    expect(screen.getByRole('button', { name: SOUND_MESSAGES.preview })).toBeEnabled();
   });
 });

@@ -330,6 +330,41 @@ describe('WheelEditorScreen', () => {
     ).toHaveLength(2);
   });
 
+  it('cancels adding a child without changing the tree', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Add child to Sushi' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
+    await user.type(within(dialog).getByLabelText(/child name/i), 'Salmon');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Add Child Data' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Salmon')).not.toBeInTheDocument();
+    expect(foodItem('sushi')?.children ?? []).toHaveLength(0);
+  });
+
+  it('adds a child with custom weight and disabled state', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Add child to Sushi' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
+    await user.type(within(dialog).getByLabelText(/child name/i), 'Salmon');
+    await user.clear(within(dialog).getByRole('spinbutton', { name: /weight/i }));
+    await user.type(within(dialog).getByRole('spinbutton', { name: /weight/i }), '3');
+    await user.click(within(dialog).getByRole('switch', { name: 'Enabled' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Add Child' }));
+
+    expect(await screen.findByText('Salmon')).toBeInTheDocument();
+    expect(screen.getByText('Disabled')).toBeInTheDocument();
+    expect(foodItem('sushi')?.children).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Salmon', weight: 3, enabled: false })]),
+    );
+  });
+
   it('edits a root item from the same form and preserves its children', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
@@ -363,6 +398,37 @@ describe('WheelEditorScreen', () => {
     expect(pizza?.updatedAt).not.toBe(before?.updatedAt);
     expect(pizza?.children?.map((item) => item.id)).toEqual(['chicken', 'beef']);
     expect(foodItem('burger')?.name).toBe('Burger');
+  });
+
+  it('cancels an edit without saving changes', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Edit Burger' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit Burger' });
+    await user.clear(within(dialog).getByLabelText(/^name/i));
+    await user.type(within(dialog).getByLabelText(/^name/i), 'Cheeseburger');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Edit Burger' })).not.toBeInTheDocument();
+    expect(screen.getByText('🍔 Burger')).toBeInTheDocument();
+    expect(screen.queryByText('Cheeseburger')).not.toBeInTheDocument();
+    expect(foodItem('burger')?.name).toBe('Burger');
+  });
+
+  it('blocks saving an edited item without a name', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Edit Sushi' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit Sushi' });
+    await user.clear(within(dialog).getByLabelText(/^name/i));
+    await user.click(within(dialog).getByRole('button', { name: 'Save item' }));
+
+    expect(await within(dialog).findByText(EDITOR_MESSAGES.nameRequired)).toBeInTheDocument();
+    expect(foodItem('sushi')?.name).toBe('Sushi');
   });
 
   it('edits a child item without changing its siblings', async () => {
@@ -620,6 +686,36 @@ describe('WheelEditorScreen', () => {
     expect(useWheelStore.getState().getWheel('food')?.items.map((item) => item.id)).toEqual(
       expect.arrayContaining([added?.id]),
     );
+  });
+
+  it('adds a disabled main item with a custom weight', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    renderEditor();
+
+    const form = screen.getByRole('form', { name: 'Add Main Data' });
+    await user.type(within(form).getByLabelText(/^name/i), 'Salad');
+    await user.clear(within(form).getByRole('spinbutton', { name: 'Weight' }));
+    await user.type(within(form).getByRole('spinbutton', { name: 'Weight' }), '4');
+    await user.click(within(form).getByRole('switch', { name: 'Enabled' }));
+    await user.click(within(form).getByRole('button', { name: 'Add item' }));
+
+    expect(await screen.findByText('Salad')).toBeInTheDocument();
+    expect(screen.getByText('Disabled')).toBeInTheDocument();
+    expect(
+      useWheelStore.getState().getWheel('food')?.items.find((item) => item.name === 'Salad'),
+    ).toMatchObject({ weight: 4, enabled: false });
+  });
+
+  it('shows an error when exporting fails to download', async () => {
+    const user = userEvent.setup();
+    downloadJsonFileMock.mockReturnValue(false);
+    seedFoodWheel();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Export Food Wheel' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(EXPORT_MESSAGES.downloadFailed);
   });
 
   it('dismisses the success snackbar', async () => {

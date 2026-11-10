@@ -188,6 +188,43 @@ describe('HistoryScreen', () => {
     expect(screen.queryByText('Pizza → Chicken Pepperoni → Large')).not.toBeInTheDocument();
   });
 
+  it('sorts results by oldest first and by wheel name', async () => {
+    const user = userEvent.setup();
+    seedTwoResults();
+    renderApp({ initialEntries: [ROUTES.history] });
+
+    const region = screen.getByRole('region', { name: HISTORY_MESSAGES.resultsAria });
+    const newestFirst = within(region)
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('aria-label'))
+      .filter((label): label is string => Boolean(label?.startsWith(`${HISTORY_MESSAGES.viewDetails}:`)));
+
+    expect(newestFirst[0]).toContain('Dishes');
+    expect(newestFirst[1]).toContain('Pizza → Chicken Pepperoni → Large');
+
+    await user.click(screen.getByRole('combobox', { name: HISTORY_MESSAGES.sort }));
+    await user.click(screen.getByRole('option', { name: 'Oldest first' }));
+
+    const oldestFirst = within(region)
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('aria-label'))
+      .filter((label): label is string => Boolean(label?.startsWith(`${HISTORY_MESSAGES.viewDetails}:`)));
+
+    expect(oldestFirst[0]).toContain('Pizza → Chicken Pepperoni → Large');
+    expect(oldestFirst[1]).toContain('Dishes');
+
+    await user.click(screen.getByRole('combobox', { name: HISTORY_MESSAGES.sort }));
+    await user.click(screen.getByRole('option', { name: 'Wheel name' }));
+
+    const byWheel = within(region)
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('aria-label'))
+      .filter((label): label is string => Boolean(label?.startsWith(`${HISTORY_MESSAGES.viewDetails}:`)));
+
+    expect(byWheel[0]).toContain('Dishes');
+    expect(byWheel[1]).toContain('Pizza → Chicken Pepperoni → Large');
+  });
+
   it('cancels delete and clear dialogs without changing history', async () => {
     const user = userEvent.setup();
     seedTwoResults();

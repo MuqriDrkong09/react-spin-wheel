@@ -69,4 +69,26 @@ describe('ImportWheelDialog', () => {
 
     expect(screen.getByText(IMPORT_MESSAGES.nameRequired)).toBeInTheDocument();
   });
+
+  it('closes with Escape without confirming', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+
+    renderWithProviders(
+      <ImportWheelDialog
+        document={document}
+        name="Food Picker"
+        nameError={null}
+        onNameChange={vi.fn()}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    await user.keyboard('{Escape}');
+
+    expect(onCancel).toHaveBeenCalled();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
 });

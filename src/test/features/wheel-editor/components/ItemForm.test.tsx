@@ -126,4 +126,17 @@ describe('ItemForm', () => {
     expect(screen.getByRole('spinbutton', { name: /weight/i })).toHaveValue(1);
     expect(screen.getByRole('switch', { name: 'Enabled' })).toBeChecked();
   });
+
+  it('rejects a weight below 1', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await user.type(screen.getByLabelText(/^name/i), 'Taco');
+    await user.clear(screen.getByRole('spinbutton', { name: /weight/i }));
+    await user.type(screen.getByRole('spinbutton', { name: /weight/i }), '0');
+    await user.click(screen.getByRole('button', { name: 'Save item' }));
+
+    expect(await screen.findByText(EDITOR_MESSAGES.weightMin)).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

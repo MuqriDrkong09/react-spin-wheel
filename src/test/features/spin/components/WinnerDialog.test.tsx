@@ -175,4 +175,48 @@ describe('WinnerDialog', () => {
     expect(dialog).toHaveAccessibleDescription(/Pizza.*Chicken Pepperoni/s);
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinAgain })).toBeInTheDocument();
   });
+
+  it('continues into child data from Ask mode', async () => {
+    const user = userEvent.setup();
+    const onSpinChild = vi.fn();
+    renderWithProviders(
+      <WinnerDialog
+        open
+        item={item('Pizza', { children: [item('Pepperoni')] })}
+        selectionMode={SELECTION_MODE.ask}
+        reducedMotion
+        onClose={vi.fn()}
+        onFinish={vi.fn()}
+        onSpinAgain={vi.fn()}
+        onSpinChild={onSpinChild}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.continueSelection }));
+
+    expect(onSpinChild).toHaveBeenCalledTimes(1);
+  });
+
+  it('finishes a leaf winner from Spin Again focus', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    const onSpinAgain = vi.fn();
+    renderWithProviders(
+      <WinnerDialog
+        open
+        item={item('Burger', { icon: '🍔' })}
+        reducedMotion
+        onClose={vi.fn()}
+        onFinish={onFinish}
+        onSpinAgain={onSpinAgain}
+        onSpinChild={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinAgain })).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
+
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    expect(onSpinAgain).not.toHaveBeenCalled();
+  });
 });

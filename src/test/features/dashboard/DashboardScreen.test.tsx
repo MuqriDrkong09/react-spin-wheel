@@ -407,5 +407,128 @@ describe('DashboardScreen', () => {
     expect(useWheelStore.getState().wheels.some((wheel) => wheel.name === 'Dropped Wheel')).toBe(true);
     expect(await screen.findByRole('alert')).toHaveTextContent(IMPORT_MESSAGES.success('Dropped Wheel'));
   });
+
+  it('sorts wheel cards by name', async () => {
+    const user = userEvent.setup();
+    seedDashboard();
+    renderApp();
+
+    await user.click(screen.getByRole('combobox', { name: 'Sort' }));
+    await user.click(screen.getByRole('option', { name: 'Name' }));
+
+    const headings = screen
+      .getAllByRole('heading', { level: 3 })
+      .map((node) => node.textContent)
+      .filter((name) => name === 'Chores' || name === 'Pizza Night');
+
+    expect(headings).toEqual(['Chores', 'Pizza Night']);
+  });
+
+  it('shows an error when the export download fails', async () => {
+    const user = userEvent.setup();
+    downloadJsonFileMock.mockReturnValue(false);
+    seedDashboard();
+    useWheelStore.getState().addItem('pizza', {
+      name: 'Pepperoni',
+      color: '#dc2626',
+      enabled: true,
+      weight: 1,
+    });
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
+
+    expect(downloadJsonFileMock).toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent(EXPORT_MESSAGES.downloadFailed);
+  });
+
+  it('cancels an import without creating a wheel', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const file = new File(
+      [
+        JSON.stringify({
+          format: WHEEL_EXPORT_FORMAT,
+          version: WHEEL_EXPORT_VERSION,
+          name: 'Food Picker',
+          items: [{ name: 'Pizza', color: '#ea580c', enabled: true, weight: 1 }],
+          settings: DEFAULT_WHEEL_SETTINGS,
+        }),
+      ],
+      'food-picker-wheel.json',
+      { type: 'application/json' },
+    );
+
+    await user.upload(screen.getByLabelText('Choose wheel JSON file'), file);
+    const dialog = await screen.findByRole('dialog', { name: 'Import wheel' });
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Import wheel' })).not.toBeInTheDocument();
+    expect(useWheelStore.getState().wheels).toHaveLength(0);
+  });
+
+  it('rejects a json file that is not a wheel export', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.upload(
+      screen.getByLabelText('Choose wheel JSON file'),
+      new File([JSON.stringify({ name: 'Not a wheel' })], 'not-a-wheel.json', {
+        type: 'application/json',
+      }),
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(IMPORT_MESSAGES.notWheel);
+    expect(screen.queryByRole('dialog', { name: 'Import wheel' })).not.toBeInTheDocument();
+    expect(useWheelStore.getState().wheels).toHaveLength(0);
+  });
+
+  it('round-trips an exported wheel through import', async () => {
+    const user = userEvent.setup();
+    downloadJsonFileMock.mockImplementation(() => true);
+    seedDashboard();
+    useWheelStore.getState().addItem('pizza', {
+      name: 'Pepperoni',
+      color: '#dc2626',
+      enabled: true,
+      weight: 2,
+    });
+    useWheelStore.getState().addChildItem(
+      useWheelStore.getState().getWheel('pizza')!.items[0]!.id,
+      {
+        name: 'Extra cheese',
+        color: '#ca8a04',
+        enabled: true,
+        weight: 1,
+      },
+    );
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
+    const exportedJson = downloadJsonFileMock.mock.calls[0]?.[1];
+    expect(exportedJson).toEqual(expect.any(String));
+
+    await user.upload(
+      screen.getByLabelText('Choose wheel JSON file'),
+      new File([exportedJson as string], 'pizza-night-wheel.json', { type: 'application/json' }),
+    );
+
+    const dialog = await screen.findByRole('dialog', { name: 'Import wheel' });
+    expect(within(dialog).getByRole('textbox', { name: 'Wheel name' })).toHaveValue(
+      'Pizza Night (imported)',
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Import wheel' }));
+
+    const imported = useWheelStore
+      .getState()
+      .wheels.find((wheel) => wheel.name === 'Pizza Night (imported)');
+    expect(imported).toBeDefined();
+    expect(imported?.items[0]?.name).toBe('Pepperoni');
+    expect(imported?.items[0]?.weight).toBe(2);
+    expect(imported?.items[0]?.children?.[0]?.name).toBe('Extra cheese');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      IMPORT_MESSAGES.success('Pizza Night (imported)'),
+    );
+  });
 });
 

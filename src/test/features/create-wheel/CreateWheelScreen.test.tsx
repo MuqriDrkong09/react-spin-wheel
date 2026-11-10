@@ -80,4 +80,17 @@ describe('CreateWheelScreen', () => {
       await screen.findByRole('heading', { name: 'Wheel editor', level: 1 }, { timeout: 5000 }),
     ).toBeInTheDocument();
   });
+
+  it('returns to the dashboard without creating a wheel when Cancel is chosen', async () => {
+    const user = userEvent.setup();
+    renderApp({ initialEntries: [ROUTES.createWheel] });
+
+    await user.type(screen.getByLabelText(/wheel name/i), 'Abandoned');
+    await user.type(screen.getByRole('textbox', { name: /option 1/i }), 'Maybe');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
+    expect(useWheelStore.getState().wheels).toHaveLength(0);
+    expect(loadPersistedState().wheels).toHaveLength(0);
+  });
 });

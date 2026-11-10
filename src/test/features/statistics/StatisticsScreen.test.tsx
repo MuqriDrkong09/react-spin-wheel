@@ -98,6 +98,9 @@ describe('StatisticsScreen', () => {
     expect(screen.getByText(STATISTICS_MESSAGES.mostSelectedChild).nextElementSibling).toHaveTextContent(
       'Beef Pepperoni',
     );
+    expect(screen.getByText(STATISTICS_MESSAGES.mostSelectedPath).nextElementSibling).toHaveTextContent(
+      'Burger',
+    );
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.spinFrequency })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.winnerDistribution })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.parentVsChild })).toBeInTheDocument();
@@ -105,5 +108,36 @@ describe('StatisticsScreen', () => {
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.selectionFrequency })).toBeInTheDocument();
     expect(screen.getByRole('table', { name: STATISTICS_MESSAGES.frequencyAria })).toBeInTheDocument();
     expect(screen.getByText('33.3%')).toBeInTheDocument();
+    expect(screen.getAllByText('Pizza Night').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Food Wheel').length).toBeGreaterThan(0);
+  });
+
+  it('highlights the most repeated selection path', () => {
+    useHistoryStore.getState().addSpinSession(
+      historySession('r1', {
+        selectedItemName: 'Large',
+        pathLabels: ['Pizza', 'Chicken Pepperoni', 'Large'],
+      }),
+    );
+    useHistoryStore.getState().addSpinSession(
+      historySession('r2', {
+        selectedItemName: 'Large',
+        pathLabels: ['Pizza', 'Chicken Pepperoni', 'Large'],
+        timestamp: '2026-01-05T12:00:00.000Z',
+      }),
+    );
+    useHistoryStore.getState().addSpinSession(
+      historySession('r3', {
+        selectedItemName: 'Burger',
+        pathLabels: ['Burger'],
+        timestamp: '2026-01-06T12:00:00.000Z',
+      }),
+    );
+
+    renderApp({ initialEntries: [ROUTES.statistics] });
+
+    expect(screen.getByText(STATISTICS_MESSAGES.mostSelectedPath).nextElementSibling).toHaveTextContent(
+      'Pizza → Chicken Pepperoni → Large',
+    );
   });
 });
