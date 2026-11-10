@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 
+import { APP_ERROR_MESSAGES } from '@/constants/errorMessages';
 import { IMPORT_MESSAGES } from '@/features/wheel-import/constants';
 import { importWheelNameSchema } from '@/features/wheel-import/schema';
 import type { WheelImportDocument, WheelImportStatus } from '@/features/wheel-import/types';
@@ -11,6 +12,7 @@ import {
 } from '@/features/wheel-import/utils/toCreateWheelInputFromImport';
 import { persistStores } from '@/services/storage/storePersistence';
 import { useWheelStore } from '@/stores/wheelStore';
+import { sanitizeWheelHierarchy } from '@/utils/sanitizeWheelHierarchy';
 
 export function useWheelImport() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,17 +36,22 @@ export function useWheelImport() {
         return;
       }
 
-      const result = await parseImportedWheelFile(file);
-      if (!result.ok) {
-        setPendingDocument(null);
-        setStatus({ severity: 'error', message: result.error });
-        return;
-      }
+      try {
+        const result = await parseImportedWheelFile(file);
+        if (!result.ok) {
+          setPendingDocument(null);
+          setStatus({ severity: 'error', message: result.error });
+          return;
+        }
 
-      setPendingDocument(result.document);
-      setName(uniqueImportedName(result.document.name, wheels.map((wheel) => wheel.name)));
-      setNameError(null);
-      setStatus(null);
+        setPendingDocument(result.document);
+        setName(uniqueImportedName(result.document.name, wheels.map((wheel) => wheel.name)));
+        setNameError(null);
+        setStatus(null);
+      } catch {
+        setPendingDocument(null);
+        setStatus({ severity: 'error', message: APP_ERROR_MESSAGES.importFailed });
+      }
     },
     [wheels],
   );
@@ -105,14 +112,28 @@ export function useWheelImport() {
       return false;
     }
 
-    const wheel = createWheel(
-      toCreateWheelInputFromImport(pendingDocument, parsedName.data, collectExistingIds(wheels)),
-    );
-    persistStores();
-    setPendingDocument(null);
-    setNameError(null);
-    setStatus({ severity: 'success', message: IMPORT_MESSAGES.success(wheel.name) });
-    return true;
+    try {
+      const input = toCreateWheelInputFromImport(
+        pendingDocument,
+        parsedName.data,
+        collectExistingIds(wheels),
+      );
+      const wheel = createWheel(input);
+      const repaired = sanitizeWheelHierarchy(wheel);
+      if (repaired.repaired) {
+        useWheelStore.setState((state) => ({
+          wheels: state.wheels.map((entry) => (entry.id === wheel.id ? repaired.value : entry)),
+        }));
+      }
+      persistStores();
+      setPendingDocument(null);
+      setNameError(null);
+      setStatus({ severity: 'success', message: IMPORT_MESSAGES.success(repaired.value.name) });
+      return true;
+    } catch {
+      setStatus({ severity: 'error', message: APP_ERROR_MESSAGES.importFailed });
+      return false;
+    }
   }, [createWheel, name, pendingDocument, wheels]);
 
   const clearStatus = useCallback(() => {

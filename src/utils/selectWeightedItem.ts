@@ -50,7 +50,8 @@ function enabledCandidates<T extends WeightedCandidate>(items: readonly T[]): T[
     }
 
     if (!Number.isFinite(item.weight) || item.weight < 0) {
-      throw new Error(WEIGHTED_SELECTION_ERRORS.invalidWeight);
+      // Skip corrupt weights so malformed wheels cannot crash the UI.
+      continue;
     }
 
     candidates.push(item);

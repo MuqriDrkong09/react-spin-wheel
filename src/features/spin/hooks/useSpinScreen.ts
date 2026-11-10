@@ -1,9 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { APP_ERROR_MESSAGES } from '@/constants/errorMessages';
 import { ROUTES, withWheelId } from '@/constants/routes';
 import { useWheelStore } from '@/stores/wheelStore';
 import type { SelectionMode, Wheel, WheelId } from '@/types/wheel';
+import { isUsableWheel } from '@/utils/isUsableWheel';
 
 export function useSpinScreen() {
   const navigate = useNavigate();
@@ -15,11 +17,16 @@ export function useSpinScreen() {
   const updateWheelSettings = useWheelStore((state) => state.updateWheelSettings);
 
   const wheelId = requestedId;
-  const wheel = useMemo(
+  const foundWheel = useMemo(
     () => (wheelId ? wheels.find((entry) => entry.id === wheelId) : undefined),
     [wheelId, wheels],
   );
-  const availableWheels = useMemo(() => sortWheelsForPicker(wheels), [wheels]);
+  const wheel = isUsableWheel(foundWheel) ? foundWheel : undefined;
+  const isInvalidWheel = Boolean(foundWheel && !wheel);
+  const availableWheels = useMemo(
+    () => sortWheelsForPicker(wheels.filter(isUsableWheel)),
+    [wheels],
+  );
   const needsWheelChoice = !requestedId && availableWheels.length > 0;
 
   useEffect(() => {
@@ -32,7 +39,9 @@ export function useSpinScreen() {
     wheel,
     availableWheels,
     needsWheelChoice,
-    isMissingWheel: Boolean(requestedId && !wheel),
+    isMissingWheel: Boolean(requestedId && !foundWheel),
+    isInvalidWheel,
+    invalidWheelMessage: APP_ERROR_MESSAGES.invalidWheel,
     selectWheel: (nextWheelId: WheelId) => {
       setActiveWheel(nextWheelId);
       void navigate(withWheelId(ROUTES.spin, nextWheelId));

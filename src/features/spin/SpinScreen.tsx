@@ -32,6 +32,8 @@ export function SpinScreen() {
     availableWheels,
     needsWheelChoice,
     isMissingWheel,
+    isInvalidWheel,
+    invalidWheelMessage,
     selectWheel,
     clearWheelSelection,
     goToCreate,
@@ -99,11 +101,19 @@ export function SpinScreen() {
         ) : (
           <EmptyState
             titleComponent="h2"
-            title={isMissingWheel ? SPIN_MESSAGES.missingWheelTitle : SPIN_MESSAGES.noWheelTitle}
+            title={
+              isInvalidWheel
+                ? SPIN_MESSAGES.missingWheelTitle
+                : isMissingWheel
+                  ? SPIN_MESSAGES.missingWheelTitle
+                  : SPIN_MESSAGES.noWheelTitle
+            }
             description={
-              isMissingWheel
-                ? SPIN_MESSAGES.missingWheelDescription
-                : SPIN_MESSAGES.noWheelDescription
+              isInvalidWheel
+                ? invalidWheelMessage
+                : isMissingWheel
+                  ? SPIN_MESSAGES.missingWheelDescription
+                  : SPIN_MESSAGES.noWheelDescription
             }
             action={
               <Stack

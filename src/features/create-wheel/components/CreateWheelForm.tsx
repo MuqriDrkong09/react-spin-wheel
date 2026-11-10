@@ -1,6 +1,7 @@
 import { Button, Card, CardContent, MenuItem, Stack } from '@mui/material';
 
 import { Form } from '@/components/common/Form';
+import { FormErrorSummary } from '@/components/common/FormErrorSummary';
 import { FormTextField } from '@/components/common/FormTextField';
 import { WHEEL_CATEGORIES } from '@/constants/wheel';
 import { InitialOptionsField } from '@/features/create-wheel/components/InitialOptionsField';
@@ -27,6 +28,7 @@ export function CreateWheelForm({ onSubmit, onCancel }: CreateWheelFormProps) {
       <CardContent>
         <Form form={form} aria-label="Create wheel" onSubmit={onSubmit}>
           <Stack spacing={2.5}>
+            <FormErrorSummary />
             <FormTextField<CreateWheelFormValues>
               name="name"
               label="Wheel name"

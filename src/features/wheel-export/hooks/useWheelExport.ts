@@ -17,7 +17,11 @@ export function useWheelExport() {
       return false;
     }
 
-    downloadJsonFile(result.filename, result.json);
+    if (downloadJsonFile(result.filename, result.json) === false) {
+      setStatus({ severity: 'error', message: EXPORT_MESSAGES.downloadFailed });
+      return false;
+    }
+
     setStatus({
       severity: 'success',
       message: EXPORT_MESSAGES.success(wheel.name, result.filename),

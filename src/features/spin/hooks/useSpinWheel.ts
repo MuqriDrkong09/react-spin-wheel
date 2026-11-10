@@ -59,13 +59,19 @@ export function useSpinWheel(items: readonly WheelItem[], options: UseSpinWheelO
     }
 
     const sample = options.randomValue ?? Math.random;
-    const next = createSpinResult(source, {
-      randomValue: sample,
-      minRotations,
-      maxRotations,
-      rotationRandom: options.rotationRandom ?? sample,
-      currentRotation: current.rotation,
-    });
+    let next;
+    try {
+      next = createSpinResult(source, {
+        randomValue: sample,
+        minRotations,
+        maxRotations,
+        rotationRandom: options.rotationRandom ?? sample,
+        currentRotation: current.rotation,
+      });
+    } catch {
+      return current;
+    }
+
     const started = startSpin(current, next);
     if (started === current) {
       return current;

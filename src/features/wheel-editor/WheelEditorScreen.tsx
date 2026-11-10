@@ -96,11 +96,17 @@ export function WheelEditorScreen() {
         ) : (
           <EmptyState
             titleComponent="h2"
-            title={editor.isMissingWheel ? 'Wheel not found' : EDITOR_MESSAGES.noWheelTitle}
+            title={
+              editor.isInvalidWheel || editor.isMissingWheel
+                ? 'Wheel not found'
+                : EDITOR_MESSAGES.noWheelTitle
+            }
             description={
-              editor.isMissingWheel
-                ? 'This wheel is missing or was deleted. Create a new wheel or open one from the dashboard.'
-                : EDITOR_MESSAGES.noWheelDescription
+              editor.isInvalidWheel
+                ? editor.invalidWheelMessage
+                : editor.isMissingWheel
+                  ? 'This wheel is missing or was deleted. Create a new wheel or open one from the dashboard.'
+                  : EDITOR_MESSAGES.noWheelDescription
             }
             action={
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ justifyContent: 'center' }}>

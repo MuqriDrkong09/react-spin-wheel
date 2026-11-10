@@ -25,6 +25,7 @@ import {
   type WheelSettings,
   type WheelSnapshot,
 } from '@/types/wheel';
+import { sanitizeItemTree, sanitizeWheels } from '@/utils/sanitizeWheelHierarchy';
 import { z } from 'zod';
 
 import { storageService } from './storageService';
@@ -114,7 +115,10 @@ const wheelItemSchema: z.ZodType<WheelItem> = z.lazy(() =>
     icon: z.string().optional(),
     color: hexColorSchema,
     enabled: z.boolean(),
-    weight: z.number(),
+    weight: z.preprocess(
+      (value) => (typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 1),
+      z.number(),
+    ),
     createdAt: z.string(),
     updatedAt: z.string(),
     children: z.array(wheelItemSchema).optional(),
@@ -309,18 +313,49 @@ export function applyMigrations(version: number, data: unknown): unknown {
   return currentData;
 }
 
-function sanitizePersistedState(state: PersistedState): PersistedState {
-  const wheelIds = new Set(state.wheels.map((wheel) => wheel.id));
+export type PersistedLoadStatus = 'ok' | 'empty' | 'recovered' | 'repaired';
+
+export interface PersistedLoadResult {
+  state: PersistedState;
+  status: PersistedLoadStatus;
+  hierarchyRepaired: boolean;
+}
+
+function sanitizePersistedState(state: PersistedState): {
+  state: PersistedState;
+  hierarchyRepaired: boolean;
+} {
+  const wheelsResult = sanitizeWheels(state.wheels);
+  const wheelIds = new Set(wheelsResult.value.map((wheel) => wheel.id));
   const activeWheelId =
     state.activeWheelId !== null && wheelIds.has(state.activeWheelId) ? state.activeWheelId : null;
 
+  let snapshotRepaired = false;
+  const snapshots = Object.fromEntries(
+    Object.entries(state.snapshots)
+      .filter(([wheelId]) => wheelIds.has(wheelId))
+      .map(([wheelId, snapshot]) => {
+        const items = sanitizeItemTree(snapshot.items);
+        snapshotRepaired = snapshotRepaired || items.repaired;
+        return [
+          wheelId,
+          {
+            ...snapshot,
+            items: items.value,
+          },
+        ];
+      }),
+  );
+
   return {
-    ...state,
-    activeWheelId,
-    favoriteWheelIds: state.favoriteWheelIds.filter((id) => wheelIds.has(id)),
-    snapshots: Object.fromEntries(
-      Object.entries(state.snapshots).filter(([wheelId]) => wheelIds.has(wheelId)),
-    ),
+    state: {
+      ...state,
+      wheels: wheelsResult.value,
+      activeWheelId,
+      favoriteWheelIds: state.favoriteWheelIds.filter((id) => wheelIds.has(id)),
+      snapshots,
+    },
+    hierarchyRepaired: wheelsResult.repaired || snapshotRepaired,
   };
 }
 
@@ -331,32 +366,62 @@ export function savePersistedState(state: PersistedState): boolean {
   });
 }
 
-export function loadPersistedState(): PersistedState {
-  const parsed = storageService.readJson<unknown>(STORAGE_KEY);
+export function loadPersistedStateResult(): PersistedLoadResult {
+  const emptyState: PersistedState = {
+    ...defaultPersistedState,
+    settings: { ...DEFAULT_APP_SETTINGS },
+  };
+
+  let parsed: unknown;
+  try {
+    parsed = storageService.readJson<unknown>(STORAGE_KEY);
+  } catch {
+    return { state: emptyState, status: 'recovered', hierarchyRepaired: false };
+  }
 
   if (parsed === null) {
-    return {
-      ...defaultPersistedState,
-      settings: { ...DEFAULT_APP_SETTINGS },
-    };
+    const raw = storageService.getRaw(STORAGE_KEY);
+    if (raw !== null) {
+      return { state: emptyState, status: 'recovered', hierarchyRepaired: false };
+    }
+
+    return { state: emptyState, status: 'empty', hierarchyRepaired: false };
   }
 
   const envelope = envelopeSchema.safeParse(parsed);
   if (!envelope.success) {
-    return defaultPersistedState;
+    return { state: emptyState, status: 'recovered', hierarchyRepaired: false };
   }
 
-  const migrated =
-    envelope.data.version === PERSISTED_STATE_VERSION
-      ? envelope.data.data
-      : applyMigrations(envelope.data.version, envelope.data.data);
+  let migrated: unknown;
+  try {
+    migrated =
+      envelope.data.version === PERSISTED_STATE_VERSION
+        ? envelope.data.data
+        : applyMigrations(envelope.data.version, envelope.data.data);
+  } catch {
+    return { state: emptyState, status: 'recovered', hierarchyRepaired: false };
+  }
+
+  if (migrated === undefined) {
+    return { state: emptyState, status: 'recovered', hierarchyRepaired: false };
+  }
 
   const validated = persistedStateSchema.safeParse(migrated);
   if (!validated.success) {
-    return defaultPersistedState;
+    return { state: emptyState, status: 'recovered', hierarchyRepaired: false };
   }
 
-  return sanitizePersistedState(validated.data);
+  const sanitized = sanitizePersistedState(validated.data);
+  return {
+    state: sanitized.state,
+    status: sanitized.hierarchyRepaired ? 'repaired' : 'ok',
+    hierarchyRepaired: sanitized.hierarchyRepaired,
+  };
+}
+
+export function loadPersistedState(): PersistedState {
+  return loadPersistedStateResult().state;
 }
 
 export function clearPersistedState(): void {

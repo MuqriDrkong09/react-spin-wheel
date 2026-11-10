@@ -10,6 +10,7 @@ import {
   clearPersistedState,
   defaultPersistedState,
   loadPersistedState,
+  loadPersistedStateResult,
   savePersistedState,
 } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
@@ -194,6 +195,7 @@ describe('persistedState', () => {
   it('returns defaults for corrupted JSON', () => {
     window.localStorage.setItem(STORAGE_KEY, '{bad');
     expect(loadPersistedState()).toEqual(defaultPersistedState);
+    expect(loadPersistedStateResult().status).toBe('recovered');
   });
 
   it('returns defaults for an invalid payload', () => {
@@ -202,6 +204,66 @@ describe('persistedState', () => {
       JSON.stringify({ version: PERSISTED_STATE_VERSION, data: { wheels: 'nope' } }),
     );
     expect(loadPersistedState()).toEqual(defaultPersistedState);
+    expect(loadPersistedStateResult().status).toBe('recovered');
+  });
+
+  it('repairs duplicate hierarchy ids while keeping the wheel', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          wheels: [
+            {
+              id: 'wheel-1',
+              name: 'Broken',
+              items: [
+                {
+                  id: 'same',
+                  name: 'One',
+                  color: '#ef4444',
+                  enabled: true,
+                  weight: 1,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+                {
+                  id: 'same',
+                  name: 'Two',
+                  color: '#22c55e',
+                  enabled: true,
+                  weight: 2,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+              ],
+              settings: {
+                durationMs: 4000,
+                minRotations: 4,
+                maxRotations: 8,
+                soundEnabled: true,
+                confettiEnabled: true,
+                eliminationMode: false,
+                selectionMode: 'manual',
+                removeWinner: false,
+                skipDisabledItems: true,
+                appearance: DEFAULT_WHEEL_APPEARANCE,
+              },
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          activeWheelId: 'wheel-1',
+        },
+      }),
+    );
+
+    const loaded = loadPersistedStateResult();
+    expect(loaded.status).toBe('repaired');
+    expect(loaded.hierarchyRepaired).toBe(true);
+    expect(loaded.state.wheels[0]?.items).toHaveLength(2);
+    expect(loaded.state.wheels[0]?.items[0]?.id).not.toBe(loaded.state.wheels[0]?.items[1]?.id);
   });
 
   it('migrates version 0 data into the current shape', () => {

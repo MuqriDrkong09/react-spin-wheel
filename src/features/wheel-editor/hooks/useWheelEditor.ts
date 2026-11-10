@@ -12,9 +12,11 @@ import {
   toEditorTree,
   TREE_NODE_KIND,
 } from '@/features/wheel-editor/utils/toEditorTree';
+import { APP_ERROR_MESSAGES } from '@/constants/errorMessages';
 import { persistStores } from '@/services/storage/storePersistence';
 import { useWheelStore } from '@/stores/wheelStore';
 import type { Wheel, WheelId, WheelItemId } from '@/types/wheel';
+import { isUsableWheel } from '@/utils/isUsableWheel';
 import { findItem, type ItemMove } from '@/utils/wheelTree';
 
 export type EditorDialog =
@@ -39,11 +41,16 @@ export function useWheelEditor() {
   const moveItemInStore = useWheelStore((state) => state.moveItem);
 
   const wheelId = requestedId;
-  const wheel = useMemo(
+  const foundWheel = useMemo(
     () => (wheelId ? wheels.find((entry) => entry.id === wheelId) : undefined),
     [wheelId, wheels],
   );
-  const availableWheels = useMemo(() => sortWheelsForPicker(wheels), [wheels]);
+  const wheel = isUsableWheel(foundWheel) ? foundWheel : undefined;
+  const isInvalidWheel = Boolean(foundWheel && !wheel);
+  const availableWheels = useMemo(
+    () => sortWheelsForPicker(wheels.filter(isUsableWheel)),
+    [wheels],
+  );
   const needsWheelChoice = !requestedId && availableWheels.length > 0;
 
   const tree = useMemo(() => (wheel ? toEditorTree(wheel) : undefined), [wheel]);
@@ -316,7 +323,9 @@ export function useWheelEditor() {
     tree,
     expandedIds: expandedIdSet,
     hasWheel: Boolean(wheel),
-    isMissingWheel: Boolean(requestedId) && !wheel,
+    isMissingWheel: Boolean(requestedId && !foundWheel),
+    isInvalidWheel,
+    invalidWheelMessage: APP_ERROR_MESSAGES.invalidWheel,
     dialog,
     dialogParent,
     dialogNode,

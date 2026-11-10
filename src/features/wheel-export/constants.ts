@@ -14,4 +14,5 @@ export const EXPORT_MESSAGES = {
   invalidWeight: 'Each item needs a weight of at least 1 before exporting.',
   invalidSettings: 'Wheel settings are incomplete or invalid.',
   invalid: 'This wheel cannot be exported until its data is valid.',
+  downloadFailed: 'The export file could not be downloaded. Try again.',
 } as const;

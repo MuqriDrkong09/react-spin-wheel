@@ -7,6 +7,7 @@ import { HistoryPage } from '@/pages/HistoryPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { PresetsPage } from '@/pages/PresetsPage';
 import { RandomGeneratorPage } from '@/pages/RandomGeneratorPage';
+import { RouteErrorPage } from '@/pages/RouteErrorPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { SharedWheelPage } from '@/pages/SharedWheelPage';
 import { SpinPage } from '@/pages/SpinPage';
@@ -18,6 +19,7 @@ export const appRoutes: RouteObject[] = [
   {
     path: '/',
     element: <AppLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'wheels', element: <WheelsPage /> },

@@ -1,3 +1,5 @@
+import { storageService } from '@/services/storage/storageService';
+import { reportRuntimeNotice } from '@/stores/runtimeNoticeStore';
 import { useAppStore } from '@/stores/appStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
@@ -6,7 +8,11 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { useTournamentStore } from '@/stores/tournamentStore';
 import { useWheelStore } from '@/stores/wheelStore';
 
-import { loadPersistedState, savePersistedState, type PersistedState } from './persistedState';
+import {
+  loadPersistedStateResult,
+  savePersistedState,
+  type PersistedState,
+} from './persistedState';
 
 export function collectPersistedState(): PersistedState {
   const { colorMode } = useAppStore.getState();
@@ -32,7 +38,8 @@ export function collectPersistedState(): PersistedState {
 }
 
 export function hydrateStoresFromStorage(): PersistedState {
-  const state = loadPersistedState();
+  const loaded = loadPersistedStateResult();
+  const state = loaded.state;
 
   useAppStore.setState({ colorMode: state.colorMode });
   useWheelStore.setState({
@@ -49,12 +56,23 @@ export function hydrateStoresFromStorage(): PersistedState {
   useSettingsStore.setState({ settings: state.settings });
   useFavoritesStore.setState({ favoriteWheelIds: state.favoriteWheelIds });
 
+  if (!storageService.isAvailable()) {
+    reportRuntimeNotice('storageUnavailable');
+  } else if (loaded.status === 'recovered') {
+    reportRuntimeNotice('storageRecovered');
+  } else if (loaded.hierarchyRepaired) {
+    reportRuntimeNotice('hierarchyRepaired');
+  }
+
   return state;
 }
 
 export function subscribeStoresToStorage(): () => void {
   const persistNow = () => {
-    savePersistedState(collectPersistedState());
+    const saved = savePersistedState(collectPersistedState());
+    if (!saved && storageService.isAvailable()) {
+      reportRuntimeNotice('storageSaveFailed');
+    }
   };
 
   const unsubscribers = [
@@ -75,7 +93,11 @@ export function subscribeStoresToStorage(): () => void {
 }
 
 export function persistStores(): boolean {
-  return savePersistedState(collectPersistedState());
+  const saved = savePersistedState(collectPersistedState());
+  if (!saved && storageService.isAvailable()) {
+    reportRuntimeNotice('storageSaveFailed');
+  }
+  return saved;
 }
 
 export function startStorePersistence(): () => void {

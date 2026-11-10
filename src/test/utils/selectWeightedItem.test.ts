@@ -1,8 +1,5 @@
 import type { WheelItem } from '@/types/wheel';
-import {
-  selectWeightedItem,
-  WEIGHTED_SELECTION_ERRORS,
-} from '@/utils/selectWeightedItem';
+import { selectWeightedItem, WEIGHTED_SELECTION_ERRORS } from '@/utils/selectWeightedItem';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -91,19 +88,15 @@ describe('selectWeightedItem', () => {
     ).toBeUndefined();
   });
 
-  it('rejects negative enabled weights', () => {
-    expect(() => selectWeightedItem([pizza, item('Burger', { weight: -1 })], 0.5)).toThrow(
-      WEIGHTED_SELECTION_ERRORS.invalidWeight,
-    );
+  it('skips negative enabled weights instead of throwing', () => {
+    expect(selectWeightedItem([pizza, item('Burger', { weight: -1 })], 0.5)).toBe(pizza);
   });
 
-  it('rejects non-finite enabled weights', () => {
-    expect(() => selectWeightedItem([item('Pizza', { weight: Number.NaN })], 0)).toThrow(
-      WEIGHTED_SELECTION_ERRORS.invalidWeight,
-    );
-    expect(() => selectWeightedItem([item('Pizza', { weight: Number.POSITIVE_INFINITY })], 0)).toThrow(
-      WEIGHTED_SELECTION_ERRORS.invalidWeight,
-    );
+  it('skips non-finite enabled weights instead of throwing', () => {
+    expect(selectWeightedItem([item('Pizza', { weight: Number.NaN }), sushi], 0)).toBe(sushi);
+    expect(
+      selectWeightedItem([item('Pizza', { weight: Number.POSITIVE_INFINITY }), sushi], 0),
+    ).toBe(sushi);
   });
 
   it('does not validate disabled items with invalid weights', () => {
