@@ -54,6 +54,16 @@ describe('randomInt and randomFloat', () => {
     expect(() => randomFloat(Number.NaN, 4, 0.5)).toThrow(RANDOM_ERRORS.invalidBound);
     expect(() => randomDecimal(0, 1, 1.5, 0.2)).toThrow(RANDOM_ERRORS.invalidDecimals);
   });
+
+  it('rejects decimal places outside 0 to 10', () => {
+    expect(() => randomDecimal(0, 1, -1, 0.2)).toThrow(RANDOM_ERRORS.invalidDecimals);
+    expect(() => randomDecimal(0, 1, 11, 0.2)).toThrow(RANDOM_ERRORS.invalidDecimals);
+  });
+
+  it('clamps randomInt when the unit sample is 1', () => {
+    expect(randomInt(0, 2, 1)).toBe(2);
+    expect(randomInt(-1.8, 1.2, 1)).toBe(1);
+  });
 });
 
 describe('pickItem', () => {
@@ -69,6 +79,12 @@ describe('pickItem', () => {
 
   it('returns undefined for an empty list', () => {
     expect(pickItem([], 0.5)).toBeUndefined();
+  });
+
+  it('rejects invalid pickIndex lengths', () => {
+    expect(() => pickIndex(0, 0.5)).toThrow(RANDOM_ERRORS.emptyList);
+    expect(() => pickIndex(-1, 0.5)).toThrow(RANDOM_ERRORS.emptyList);
+    expect(() => pickIndex(1.5, 0.5)).toThrow(RANDOM_ERRORS.emptyList);
   });
 });
 

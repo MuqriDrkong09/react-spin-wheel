@@ -79,6 +79,26 @@ describe('selectWeightedItem', () => {
     expect(selectWeightedItem(items, 1)).toBe(burger);
   });
 
+  it('uses a strict less-than cumulative boundary between equal weights', () => {
+    const left = item('Left');
+    const right = item('Right');
+
+    expect(selectWeightedItem([left, right], 0.5)).toBe(right);
+    expect(selectWeightedItem([left, right], 0.499999)).toBe(left);
+  });
+
+  it('skips interleaved zero weights when picking among positive ones', () => {
+    const zeroA = item('Zero A', { weight: 0 });
+    const heavy = item('Heavy', { weight: 2 });
+    const zeroB = item('Zero B', { weight: 0 });
+    const light = item('Light', { weight: 2 });
+    const items = [zeroA, heavy, zeroB, light];
+
+    expect(selectWeightedItem(items, 0.49)).toBe(heavy);
+    expect(selectWeightedItem(items, 0.5)).toBe(light);
+    expect(selectWeightedItem(items, 0.99)).toBe(light);
+  });
+
   it('returns undefined when every enabled weight is zero', () => {
     expect(
       selectWeightedItem(

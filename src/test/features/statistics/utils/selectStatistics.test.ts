@@ -183,6 +183,17 @@ describe('selectStatistics', () => {
     expect(stats.spinsPerWheel.map((wheel) => wheel.wheelName)).toEqual(['Alpha', 'Zeta']);
   });
 
+  it('sorts equal-count winners and parents alphabetically', () => {
+    const stats = selectStatistics([
+      result({ id: 'z', selectedItemName: 'Zucchini', pathLabels: ['Zucchini'] }),
+      result({ id: 'a', selectedItemName: 'Apple', pathLabels: ['Apple'] }),
+    ]);
+
+    expect(stats.winnerDistribution.map((entry) => entry.name)).toEqual(['Apple', 'Zucchini']);
+    expect(stats.mostSelectedParent?.name).toBe('Apple');
+    expect(stats.selectionFrequency.map((entry) => entry.name)).toEqual(['Apple', 'Zucchini']);
+  });
+
   it('keeps an unparseable timestamp as a day key', () => {
     const stats = selectStatistics([result({ id: 'bad', timestamp: 'not-a-date', pathLabels: ['Pizza'] })]);
 

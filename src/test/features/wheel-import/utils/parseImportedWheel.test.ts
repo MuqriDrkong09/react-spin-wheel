@@ -150,6 +150,41 @@ describe('parseImportedWheelJson', () => {
     ).toEqual({ ok: false, error: IMPORT_MESSAGES.invalidSettings });
   });
 
+  it('rejects settings where maxRotations is below minRotations', () => {
+    expect(
+      parseImportedWheelJson(
+        JSON.stringify(
+          validDocument({
+            settings: { ...DEFAULT_WHEEL_SETTINGS, minRotations: 5, maxRotations: 3 },
+          }),
+        ),
+      ),
+    ).toEqual({ ok: false, error: IMPORT_MESSAGES.invalidSettings });
+  });
+
+  it('rejects unexpected field types with a generic invalid message', () => {
+    expect(
+      parseImportedWheelJson(
+        JSON.stringify(
+          validDocument({
+            items: [{ name: 'Pizza', color: '#ea580c', enabled: 'yes', weight: 1 }],
+          }),
+        ),
+      ),
+    ).toEqual({ ok: false, error: IMPORT_MESSAGES.invalid });
+  });
+
+  it('strips a leading UTF-8 BOM before parsing', () => {
+    const parsed = parseImportedWheelJson(`\uFEFF${JSON.stringify(validDocument())}`);
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+
+    expect(parsed.document.name).toBe('Food Picker');
+  });
+
   it('rejects an unnamed nested item', () => {
     expect(
       parseImportedWheelJson(
@@ -180,6 +215,88 @@ describe('parseImportedWheelJson', () => {
         ),
       ),
     ).toEqual({ ok: false, error: IMPORT_MESSAGES.invalidChildren });
+  });
+
+  it('round-trips an exported document through import validation', () => {
+    const exported = createWheelExport({
+      id: 'food',
+      name: 'Food Picker',
+      description: 'Weekend dinner',
+      category: 'Food',
+      icon: '🍕',
+      items: [
+        createItem({
+          id: 'pizza',
+          name: 'Pizza',
+          children: [createItem({ id: 'pepperoni', name: 'Pepperoni', color: '#dc2626', weight: 2 })],
+        }),
+        createItem({ id: 'sushi', name: 'Sushi', children: [] }),
+      ],
+      settings: DEFAULT_WHEEL_SETTINGS,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    } satisfies Wheel);
+
+    expect(exported.ok).toBe(true);
+    if (!exported.ok) {
+      return;
+    }
+
+    const parsed = parseImportedWheelJson(exported.json);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+
+    expect(parsed.document).toEqual(exported.document);
+    expect(parsed.document.items[1]).not.toHaveProperty('children');
+    expect(parsed.document.settings.appearance.segmentColors).toEqual(
+      DEFAULT_WHEEL_SETTINGS.appearance.segmentColors,
+    );
+  });
+
+  it('round-trips an exported document through import validation', () => {
+    const exported = createWheelExport({
+      id: 'food',
+      name: 'Food Picker',
+      description: 'Weekend dinner',
+      category: 'Food',
+      icon: '🍕',
+      items: [
+        createItem({
+          id: 'pizza',
+          name: 'Pizza',
+          children: [
+            createItem({ id: 'pepperoni', name: 'Pepperoni', color: '#dc2626', weight: 2 }),
+          ],
+        }),
+        createItem({ id: 'sushi', name: 'Sushi', color: '#0f766e', children: [] }),
+      ],
+      settings: DEFAULT_WHEEL_SETTINGS,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    } satisfies Wheel);
+
+    expect(exported.ok).toBe(true);
+    if (!exported.ok) {
+      return;
+    }
+
+    const parsed = parseImportedWheelJson(exported.json);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+
+    expect(parsed.document.name).toBe('Food Picker');
+    expect(parsed.document.settings).toEqual(DEFAULT_WHEEL_SETTINGS);
+    expect(parsed.document.items.map((item) => item.name)).toEqual(['Pizza', 'Sushi']);
+    expect(parsed.document.items[0]?.children?.[0]).toMatchObject({
+      name: 'Pepperoni',
+      weight: 2,
+      color: '#dc2626',
+    });
+    expect(parsed.document.items[1]).not.toHaveProperty('children');
   });
 
   it('strips untrusted application state from a valid document', () => {
@@ -226,6 +343,18 @@ describe('parseImportedWheelFile', () => {
     expect(await parseImportedWheelFile(oversized)).toEqual({
       ok: false,
       error: IMPORT_MESSAGES.tooLarge,
+    });
+  });
+
+  it('treats unreadable files as malformed', async () => {
+    const file = new File([JSON.stringify(validDocument())], 'food.json', {
+      type: 'application/json',
+    });
+    vi.spyOn(file, 'text').mockRejectedValue(new Error('read failed'));
+
+    expect(await parseImportedWheelFile(file)).toEqual({
+      ok: false,
+      error: IMPORT_MESSAGES.malformed,
     });
   });
 });

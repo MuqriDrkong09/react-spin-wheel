@@ -37,6 +37,20 @@ describe('pointerSegmentIndex', () => {
     expect(pointerSegmentIndex(rotation, segments)).toBe(1);
   });
 
+  it('matches engine landings at the start and end of a weighted slice', () => {
+    const segments = calculateSegmentAngles([
+      item('Pizza', { weight: 1 }),
+      item('Burger', { weight: 2 }),
+      item('Sushi', { weight: 1 }),
+    ]);
+    const burger = segments[1]!;
+    const atStart = calculateTargetRotation(burger, { fullRotations: 3, landing: 0 });
+    const atEnd = calculateTargetRotation(burger, { fullRotations: 3, landing: 1 });
+
+    expect(pointerSegmentIndex(atStart, segments)).toBe(1);
+    expect(pointerSegmentIndex(atEnd, segments)).toBe(1);
+  });
+
   it('converts degrees to radians', () => {
     expect(degreesToRadians(0)).toBe(0);
     expect(degreesToRadians(180)).toBeCloseTo(Math.PI);
@@ -58,5 +72,23 @@ describe('pointerSegmentIndex', () => {
     expect(pointerSegmentIndex(0, wrap)).toBe(0);
     expect(pointerSegmentIndex(-Math.PI / 2, wrap)).toBe(0);
     expect(pointerSegmentIndex(FULL_TURN, wrap)).toBe(0);
+  });
+
+  it('keeps near-edge landings inside the winning slice', () => {
+    const segments = calculateSegmentAngles([
+      item('Pizza', { weight: 1 }),
+      item('Burger', { weight: 1 }),
+      item('Sushi', { weight: 1 }),
+    ]);
+    const pizza = segments[0]!;
+    const burger = segments[1]!;
+
+    const nearPizzaEnd = calculateTargetRotation(pizza, { fullRotations: 2, landing: 0.999 });
+    const nearBurgerStart = calculateTargetRotation(burger, { fullRotations: 2, landing: 0.001 });
+    const nearBurgerEnd = calculateTargetRotation(burger, { fullRotations: 2, landing: 0.999 });
+
+    expect(pointerSegmentIndex(nearPizzaEnd, segments)).toBe(0);
+    expect(pointerSegmentIndex(nearBurgerStart, segments)).toBe(1);
+    expect(pointerSegmentIndex(nearBurgerEnd, segments)).toBe(1);
   });
 });

@@ -82,6 +82,13 @@ describe('uniqueImportedName', () => {
     expect(uniqueImportedName('Food Picker', ['Food Picker', 'Food Picker (imported)'])).toBe(
       'Food Picker (imported 2)',
     );
+    expect(
+      uniqueImportedName('Food Picker', [
+        'Food Picker',
+        'Food Picker (imported)',
+        'Food Picker (imported 2)',
+      ]),
+    ).toBe('Food Picker (imported 3)');
   });
 });
 

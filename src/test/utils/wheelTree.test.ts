@@ -154,6 +154,14 @@ describe('moveItemInTree', () => {
     expect(next[1]?.children?.[0]?.children).toEqual([extra]);
   });
 
+  it('appends when moving under a parent past the end of its children', () => {
+    const next = moveItemInTree(items, burger.id, 'pizza', 99);
+
+    expect(next.map((entry) => entry.id)).toEqual(['pizza']);
+    expect(next[0]?.children?.map((entry) => entry.id)).toEqual(['chicken', 'beef', 'burger']);
+    expect(findItem(next, burger.id)?.children).toBeUndefined();
+  });
+
   it('rejects moving an item into itself', () => {
     expect(canMoveItem(items, 'pizza', 'pizza')).toBe(false);
     expect(moveItemInTree(items, 'pizza', 'pizza', 0)).toBe(items);

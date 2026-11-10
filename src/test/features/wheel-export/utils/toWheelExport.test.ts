@@ -94,4 +94,19 @@ describe('toWheelExportDocument', () => {
     expect(document.category).toBeUndefined();
     expect(document.icon).toBeUndefined();
   });
+
+  it('omits empty children arrays and copies appearance segment colors', () => {
+    const wheel = createWheel({
+      items: [createItem({ id: 'sushi', name: 'Sushi', children: [] })],
+    });
+    const document = toWheelExportDocument(wheel);
+
+    expect(document.items[0]).not.toHaveProperty('children');
+    expect(document.settings.appearance.segmentColors).toEqual(
+      wheel.settings.appearance.segmentColors,
+    );
+    expect(document.settings.appearance.segmentColors).not.toBe(
+      wheel.settings.appearance.segmentColors,
+    );
+  });
 });

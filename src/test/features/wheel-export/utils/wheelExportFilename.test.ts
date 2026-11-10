@@ -19,4 +19,14 @@ describe('toWheelExportFilename', () => {
     expect(toWheelExportFilename('   ')).toBe('wheel.json');
     expect(toWheelExportFilename('***')).toBe('wheel.json');
   });
+
+  it('truncates long names without leaving a trailing hyphen', () => {
+    const longName = `${'Alpha '.repeat(20)}Wheel`;
+    const filename = toWheelExportFilename(longName);
+
+    expect(filename.endsWith('.json')).toBe(true);
+    expect(filename.length).toBeLessThanOrEqual(60 + '-wheel.json'.length);
+    expect(filename).not.toMatch(/-\.json$/);
+    expect(filename.includes('--')).toBe(false);
+  });
 });

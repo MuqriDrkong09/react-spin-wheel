@@ -207,6 +207,196 @@ describe('persistedState', () => {
     expect(loadPersistedStateResult().status).toBe('recovered');
   });
 
+  it('coerces invalid item weights to 1 when loading', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          wheels: [
+            {
+              id: 'wheel-1',
+              name: 'Pizza',
+              items: [
+                {
+                  id: 'bad-weight',
+                  name: 'Broken',
+                  color: '#ef4444',
+                  enabled: true,
+                  weight: -3,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                  children: [
+                    {
+                      id: 'nan-weight',
+                      name: 'Nested',
+                      color: '#22c55e',
+                      enabled: true,
+                      weight: Number.NaN,
+                      createdAt: '2026-01-01T00:00:00.000Z',
+                      updatedAt: '2026-01-01T00:00:00.000Z',
+                    },
+                  ],
+                },
+              ],
+              settings: {
+                durationMs: 4000,
+                minRotations: 4,
+                maxRotations: 8,
+                soundEnabled: true,
+                confettiEnabled: true,
+                eliminationMode: false,
+                selectionMode: 'manual',
+                removeWinner: false,
+                skipDisabledItems: true,
+                appearance: DEFAULT_WHEEL_APPEARANCE,
+              },
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          activeWheelId: 'wheel-1',
+        },
+      }),
+    );
+
+    const loaded = loadPersistedState();
+    expect(loaded.wheels[0]?.items[0]?.weight).toBe(1);
+    expect(loaded.wheels[0]?.items[0]?.children?.[0]?.weight).toBe(1);
+  });
+
+  it('coerces invalid item weights to 1 on load', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          wheels: [
+            {
+              id: 'wheel-1',
+              name: 'Pizza',
+              items: [
+                {
+                  id: 'bad-negative',
+                  name: 'Negative',
+                  color: '#ef4444',
+                  enabled: true,
+                  weight: -3,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+                {
+                  id: 'bad-nan',
+                  name: 'NaN',
+                  color: '#22c55e',
+                  enabled: true,
+                  weight: Number.NaN,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                  children: [
+                    {
+                      id: 'bad-string',
+                      name: 'String weight',
+                      color: '#0ea5e9',
+                      enabled: true,
+                      weight: 'heavy',
+                      createdAt: '2026-01-01T00:00:00.000Z',
+                      updatedAt: '2026-01-01T00:00:00.000Z',
+                    },
+                  ],
+                },
+              ],
+              settings: {
+                durationMs: 4000,
+                minRotations: 4,
+                maxRotations: 8,
+                soundEnabled: true,
+                confettiEnabled: true,
+                eliminationMode: false,
+                selectionMode: 'manual',
+                removeWinner: false,
+                skipDisabledItems: true,
+                appearance: DEFAULT_WHEEL_APPEARANCE,
+              },
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        },
+      }),
+    );
+
+    const loaded = loadPersistedState();
+    expect(loaded.wheels[0]?.items[0]?.weight).toBe(1);
+    expect(loaded.wheels[0]?.items[1]?.weight).toBe(1);
+    expect(loaded.wheels[0]?.items[1]?.children?.[0]?.weight).toBe(1);
+  });
+
+  it('repairs invalid weights inside snapshots for existing wheels', () => {
+    const settings = {
+      durationMs: 4000,
+      minRotations: 4,
+      maxRotations: 8,
+      soundEnabled: true,
+      confettiEnabled: true,
+      eliminationMode: false,
+      selectionMode: SELECTION_MODE.manual,
+      removeWinner: false,
+      skipDisabledItems: true,
+      appearance: DEFAULT_WHEEL_APPEARANCE,
+    };
+
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          wheels: [
+            {
+              id: 'wheel-1',
+              name: 'Pizza',
+              items: [
+                {
+                  id: 'pizza',
+                  name: 'Pizza',
+                  color: '#ea580c',
+                  enabled: true,
+                  weight: 1,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+              ],
+              settings,
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          snapshots: {
+            'wheel-1': {
+              items: [
+                {
+                  id: 'pizza',
+                  name: 'Pizza',
+                  color: '#ea580c',
+                  enabled: true,
+                  weight: Number.POSITIVE_INFINITY,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+              ],
+              settings,
+            },
+          },
+        },
+      }),
+    );
+
+    expect(loadPersistedState().snapshots['wheel-1']?.items[0]?.weight).toBe(1);
+  });
+
   it('repairs duplicate hierarchy ids while keeping the wheel', () => {
     window.localStorage.setItem(
       STORAGE_KEY,

@@ -60,6 +60,28 @@ describe('excludeRemovedWinners', () => {
     expect(nextChicken?.children).toEqual([]);
     expect(large.children).toEqual([thinCrust, thickCrust]);
   });
+
+  it('returns the same reference when no removed ids match', () => {
+    expect(excludeRemovedWinners(items, new Set(['ghost', 'missing']))).toBe(items);
+  });
+
+  it('removes multiple winners in one pass without promoting children', () => {
+    const next = excludeRemovedWinners(items, new Set(['chicken-pepperoni', 'burger']));
+
+    expect(next.map((entry) => entry.name)).toEqual(['Pizza']);
+    expect(next[0]?.children?.map((entry) => entry.name)).toEqual(['Beef Pepperoni']);
+    expect(next[0]?.children?.[0]).toBe(beef);
+    expect(pizza.children).toEqual([chicken, beef]);
+  });
+
+  it('keeps a parent with an empty children list when every child is removed', () => {
+    const next = excludeRemovedWinners(items, new Set(['thin-crust', 'thick-crust']));
+    const nextLarge = next[0]?.children?.[0]?.children?.[0];
+
+    expect(nextLarge?.name).toBe('Large');
+    expect(nextLarge?.children).toEqual([]);
+    expect(large.children).toEqual([thinCrust, thickCrust]);
+  });
 });
 
 describe('withRemovedWinner', () => {
