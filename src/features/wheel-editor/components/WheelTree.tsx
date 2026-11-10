@@ -96,8 +96,18 @@ export function WheelTree({
               : (findTreeNode(root, String(over.id))?.name ?? 'item');
             return EDITOR_MESSAGES.dndMovedOver(activeName, overName);
           },
-          onDragEnd: ({ active }) =>
-            EDITOR_MESSAGES.dndDropped(findTreeNode(root, String(active.id))?.name ?? 'item'),
+          onDragEnd: ({ active, over }) => {
+            const activeName = findTreeNode(root, String(active.id))?.name ?? 'item';
+            if (!over) {
+              return EDITOR_MESSAGES.dndDropped(activeName);
+            }
+
+            const dropParentId = parseDroppableId(String(over.id));
+            const overName = dropParentId
+              ? `children of ${findTreeNode(root, dropParentId)?.name ?? 'item'}`
+              : (findTreeNode(root, String(over.id))?.name ?? 'item');
+            return EDITOR_MESSAGES.dndDropped(activeName, overName);
+          },
           onDragCancel: ({ active }) =>
             EDITOR_MESSAGES.dndCancelled(findTreeNode(root, String(active.id))?.name ?? 'item'),
         },

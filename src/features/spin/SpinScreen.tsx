@@ -2,6 +2,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { Alert, Box, Button, Snackbar, Stack, Typography } from '@mui/material';
 import { useLayoutEffect, useState } from 'react';
 
+import { LiveAnnouncer } from '@/components/common/LiveAnnouncer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -224,8 +225,14 @@ function ActiveWheelSpin({
     session.restoreItems();
   }
 
+  const winnerAnnouncement =
+    session.winner && (session.winnerOpen || autoSpin.controlsLocked)
+      ? SPIN_MESSAGES.winner(session.winner.name)
+      : '';
+
   return (
     <>
+      <LiveAnnouncer message={winnerAnnouncement} />
       {session.canRestoreItems ? (
         <Stack direction="row" sx={{ justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
           <Button variant="outlined" onClick={restoreItems} disabled={autoSpin.controlsLocked}>
@@ -308,7 +315,11 @@ function ActiveWheelSpin({
             onSpinComplete={session.completeSpin}
           />
           {session.spin.status === SPIN_STATUS.spinning ? (
-            <Typography sx={{ color: appearance.textColor, opacity: 0.8 }}>
+            <Typography
+              role="status"
+              aria-live="polite"
+              sx={{ color: appearance.textColor, opacity: 0.8 }}
+            >
               {SPIN_MESSAGES.spinning}
             </Typography>
           ) : null}

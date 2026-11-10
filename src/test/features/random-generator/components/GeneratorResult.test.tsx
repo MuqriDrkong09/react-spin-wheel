@@ -12,6 +12,6 @@ describe('GeneratorResultCard', () => {
     expect(screen.getByLabelText(GENERATOR_MESSAGES.resultLabel)).toHaveTextContent('Jordan Chen');
 
     rerender(<GeneratorResultCard error={GENERATOR_MESSAGES.itemsRequired} />);
-    expect(screen.getByRole('status')).toHaveTextContent(GENERATOR_MESSAGES.itemsRequired);
+    expect(screen.getByRole('alert')).toHaveTextContent(GENERATOR_MESSAGES.itemsRequired);
   });
 });

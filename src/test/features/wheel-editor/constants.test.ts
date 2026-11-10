@@ -42,6 +42,7 @@ describe('EDITOR_MESSAGES', () => {
     expect(EDITOR_MESSAGES.dndPickedUp('Pizza')).toBe('Picked up Pizza.');
     expect(EDITOR_MESSAGES.dndMovedOver('Pizza', 'Burger')).toBe('Pizza is over Burger.');
     expect(EDITOR_MESSAGES.dndDropped('Pizza')).toBe('Dropped Pizza.');
+    expect(EDITOR_MESSAGES.dndDropped('Burger', 'Pizza')).toBe('Dropped Burger on Pizza.');
     expect(EDITOR_MESSAGES.dndCancelled('Pizza')).toBe('Moving Pizza cancelled.');
   });
 });

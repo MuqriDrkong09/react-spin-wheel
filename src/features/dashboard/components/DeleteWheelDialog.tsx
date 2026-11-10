@@ -18,10 +18,11 @@ export function DeleteWheelDialog({ wheel, onCancel, onConfirm }: DeleteWheelDia
       fullWidth
       maxWidth="xs"
       aria-labelledby="delete-wheel-title"
+      aria-describedby="delete-wheel-description"
     >
       <DialogTitle id="delete-wheel-title">Delete wheel</DialogTitle>
       <DialogContent>
-        <DialogContentText>
+        <DialogContentText id="delete-wheel-description">
           {wheel
             ? `Delete ${wheel.name}? This cannot be undone.`
             : 'Delete this wheel? This cannot be undone.'}

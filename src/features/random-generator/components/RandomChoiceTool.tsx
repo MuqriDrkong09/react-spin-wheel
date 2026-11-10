@@ -1,6 +1,16 @@
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
-import { Button, Card, CardContent, FormHelperText, IconButton, MenuItem, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  FormHelperText,
+  IconButton,
+  MenuItem,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useState } from 'react';
 import { useFieldArray, type FieldPath } from 'react-hook-form';
 
@@ -69,9 +79,13 @@ export function RandomChoiceTool() {
               <MenuItem value={CHOICE_PRESET.custom}>{GENERATOR_MESSAGES.customListLabel}</MenuItem>
             </FormTextField>
             {preset === CHOICE_PRESET.custom ? (
-              <>
+              <Box
+                role="group"
+                aria-label={GENERATOR_MESSAGES.customListLabel}
+                aria-describedby={optionsError ? 'random-choice-options-error' : undefined}
+              >
                 {optionsError ? (
-                  <FormHelperText error sx={{ mx: 0 }}>
+                  <FormHelperText id="random-choice-options-error" error role="alert" sx={{ mx: 0 }}>
                     {optionsError}
                   </FormHelperText>
                 ) : null}
@@ -86,6 +100,9 @@ export function RandomChoiceTool() {
                         slotProps={{
                           htmlInput: {
                             'aria-label': GENERATOR_MESSAGES.choiceOptionLabel(index + 1),
+                            'aria-describedby': optionsError
+                              ? 'random-choice-options-error'
+                              : undefined,
                           },
                         }}
                       />
@@ -103,7 +120,7 @@ export function RandomChoiceTool() {
                 <Button startIcon={<AddIcon />} onClick={() => append({ name: '' })}>
                   {GENERATOR_MESSAGES.addChoice}
                 </Button>
-              </>
+              </Box>
             ) : (
               <Typography color="text.secondary">
                 {resolveChoiceOptions(preset, []).join(' · ')}

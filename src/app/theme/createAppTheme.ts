@@ -61,6 +61,19 @@ export function createAppTheme(mode: PaletteMode): Theme {
           body: {
             minHeight: '100vh',
           },
+          '@media (prefers-reduced-motion: reduce)': {
+            '*, *::before, *::after': {
+              animationDuration: '0.01ms !important',
+              animationIterationCount: '1 !important',
+              transitionDuration: '0.01ms !important',
+              scrollBehavior: 'auto !important',
+            },
+          },
+          'a:focus-visible, button:focus-visible, [role="button"]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible':
+            {
+              outline: `2px solid ${light ? '#4338ca' : '#818cf8'}`,
+              outlineOffset: 2,
+            },
         },
       },
       MuiAppBar: {
@@ -72,6 +85,34 @@ export function createAppTheme(mode: PaletteMode): Theme {
       MuiButton: {
         defaultProps: {
           disableElevation: true,
+        },
+        styleOverrides: {
+          root: {
+            '&.Mui-focusVisible': {
+              outline: `2px solid ${light ? '#4338ca' : '#818cf8'}`,
+              outlineOffset: 2,
+            },
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            '&.Mui-focusVisible': {
+              outline: `2px solid ${light ? '#4338ca' : '#818cf8'}`,
+              outlineOffset: 2,
+            },
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            '&.Mui-focusVisible': {
+              outline: `2px solid ${light ? '#4338ca' : '#818cf8'}`,
+              outlineOffset: -2,
+            },
+          },
         },
       },
       MuiPaper: {

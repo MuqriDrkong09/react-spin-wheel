@@ -141,11 +141,7 @@ export function SpinWheel({
         flexShrink: 0,
       }}
     >
-      <Box
-        sx={{ position: 'relative', width: '100%', aspectRatio: '1' }}
-        aria-busy={spinning}
-        aria-live="polite"
-      >
+      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '1' }} aria-busy={spinning}>
         <motion.div
           initial={false}
           animate={{ rotate: rotationDegrees }}
@@ -274,6 +270,11 @@ function centerButtonSx(
       color,
       opacity: 0.7,
       borderColor: appearance.centerButtonColor,
+    },
+    '&:focus-visible': {
+      outline: '3px solid',
+      outlineColor: appearance.pointerColor,
+      outlineOffset: 3,
     },
   };
 }

@@ -20,6 +20,7 @@ export const EDITOR_MESSAGES = {
       : `All descendants will also be deleted (${count} items).`,
   dndPickedUp: (name: string) => `Picked up ${name}.`,
   dndMovedOver: (name: string, overName: string) => `${name} is over ${overName}.`,
-  dndDropped: (name: string) => `Dropped ${name}.`,
+  dndDropped: (name: string, overName?: string) =>
+    overName ? `Dropped ${name} on ${overName}.` : `Dropped ${name}.`,
   dndCancelled: (name: string) => `Moving ${name} cancelled.`,
 } as const;

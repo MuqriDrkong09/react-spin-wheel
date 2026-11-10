@@ -34,10 +34,11 @@ describe('createAppTheme', () => {
     expect(theme.components?.MuiPaper?.styleOverrides).toEqual({
       root: { backgroundImage: 'none' },
     });
-    expect(theme.components?.MuiCssBaseline?.styleOverrides).toEqual({
+    expect(theme.components?.MuiCssBaseline?.styleOverrides).toMatchObject({
       html: { colorScheme: 'light' },
       body: { minHeight: '100vh' },
     });
+    expect(theme.components?.MuiButton?.styleOverrides).toBeDefined();
     expect(theme.components?.MuiButtonBase?.defaultProps).toEqual({ disableRipple: true });
   });
 
@@ -52,7 +53,7 @@ describe('createAppTheme', () => {
     expect(theme.palette.text.primary).toBe('#f8fafc');
     expect(theme.palette.text.secondary).toBe('#cbd5e1');
     expect(theme.palette.divider).toBe('#475569');
-    expect(theme.components?.MuiCssBaseline?.styleOverrides).toEqual({
+    expect(theme.components?.MuiCssBaseline?.styleOverrides).toMatchObject({
       html: { colorScheme: 'dark' },
       body: { minHeight: '100vh' },
     });

@@ -64,7 +64,7 @@ export function TournamentTool() {
                 }}
               />
               {error ? (
-                <Typography color="error" role="status">
+                <Typography color="error" role="alert">
                   {error}
                 </Typography>
               ) : null}

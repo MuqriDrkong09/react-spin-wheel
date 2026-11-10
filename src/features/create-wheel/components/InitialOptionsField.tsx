@@ -13,18 +13,25 @@ export function InitialOptionsField() {
   } = useFormContext<CreateWheelFormValues>();
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const itemsError = errors.items?.message ?? errors.items?.root?.message;
+  const headingId = 'initial-options-heading';
+  const hintId = 'initial-options-hint';
+  const errorId = 'initial-options-error';
 
   return (
-    <Box>
-      <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
+    <Box
+      role="group"
+      aria-labelledby={headingId}
+      aria-describedby={itemsError ? errorId : hintId}
+    >
+      <Typography id={headingId} variant="subtitle1" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
         Initial options
       </Typography>
       {itemsError ? (
-        <FormHelperText error sx={{ mx: 0, mb: 1 }}>
+        <FormHelperText id={errorId} error role="alert" sx={{ mx: 0, mb: 1 }}>
           {itemsError}
         </FormHelperText>
       ) : (
-        <Typography color="text.secondary" variant="body2" sx={{ mb: 1.5 }}>
+        <Typography id={hintId} color="text.secondary" variant="body2" sx={{ mb: 1.5 }}>
           Add at least one option for the wheel to land on.
         </Typography>
       )}
@@ -36,6 +43,11 @@ export function InitialOptionsField() {
               label={`Option ${index + 1}`}
               required
               fullWidth
+              slotProps={{
+                htmlInput: {
+                  'aria-describedby': itemsError ? errorId : undefined,
+                },
+              }}
             />
             <IconButton
               aria-label={`Remove option ${index + 1}`}

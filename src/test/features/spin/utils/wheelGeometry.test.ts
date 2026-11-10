@@ -83,7 +83,7 @@ describe('buildWheelGeometry', () => {
       item('Light', { color: '#f8fafc' }),
     ]);
 
-    expect(geometry.segments[0]?.labelFill).toBe('#ffffff');
+    expect(geometry.segments[0]?.labelFill).toBe('#0f172a');
     expect(geometry.segments[1]?.labelFill).toBe('#0f172a');
     expect(Number.isFinite(geometry.segments[0]?.labelX)).toBe(true);
     expect(Number.isFinite(geometry.segments[0]?.labelY)).toBe(true);
@@ -134,6 +134,7 @@ describe('buildWheelGeometry', () => {
     expect(geometry.segments[0]?.color).toBe('#111111');
     expect(geometry.segments[1]?.color).toBe('#22c55e');
     expect(geometry.segments[0]?.labelFill).toBe('#f8fafc');
+    expect(geometry.segments[1]?.labelFill).toBe('#0f172a');
     expect(geometry.labelFontSize).toBeGreaterThan(9);
   });
 

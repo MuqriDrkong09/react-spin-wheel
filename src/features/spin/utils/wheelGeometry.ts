@@ -106,7 +106,7 @@ export function buildWheelGeometry(
       ? fitWheelLabel(labelText, maxWidth, maxHeight, baseFontSize, minFontSize)
       : { lines: [] as string[], fontSize: baseFontSize };
     const color = segmentFill(item.color, segments.length, options.appearance?.segmentColors);
-    const labelFill = options.appearance?.textColor ?? labelFillForColor(color);
+    const labelFill = contrastSafeLabelFill(color, options.appearance?.textColor);
 
     segments.push({
       id: item.id,
@@ -417,14 +417,43 @@ function segmentFill(
   return palette[index % palette.length] ?? fallback;
 }
 
+function contrastSafeLabelFill(background: string, requested?: string): HexColor {
+  if (requested && contrastRatio(requested, background) >= 4.5) {
+    return requested as HexColor;
+  }
+
+  return labelFillForColor(background);
+}
+
 function labelFillForColor(color: string): HexColor {
-  const rgb = parseHex(color);
-  if (!rgb) {
+  if (!parseHex(color)) {
     return '#ffffff';
   }
 
-  const yiq = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-  return yiq >= 148 ? '#0f172a' : '#ffffff';
+  const dark: HexColor = '#0f172a';
+  const light: HexColor = '#ffffff';
+  return contrastRatio(dark, color) >= contrastRatio(light, color) ? dark : light;
+}
+
+function relativeLuminance(rgb: { r: number; g: number; b: number }): number {
+  const channel = (value: number) => {
+    const srgb = value / 255;
+    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  };
+
+  return 0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b);
+}
+
+function contrastRatio(foreground: string, background: string): number {
+  const fg = parseHex(foreground);
+  const bg = parseHex(background);
+  if (!fg || !bg) {
+    return 0;
+  }
+
+  const lighter = Math.max(relativeLuminance(fg), relativeLuminance(bg));
+  const darker = Math.min(relativeLuminance(fg), relativeLuminance(bg));
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 function parseHex(color: string): { r: number; g: number; b: number } | undefined {

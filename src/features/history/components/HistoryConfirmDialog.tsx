@@ -28,10 +28,11 @@ export function HistoryConfirmDialog({
       fullWidth
       maxWidth="xs"
       aria-labelledby="history-confirm-title"
+      aria-describedby="history-confirm-description"
     >
       <DialogTitle id="history-confirm-title">{title}</DialogTitle>
       <DialogContent>
-        <DialogContentText>{description}</DialogContentText>
+        <DialogContentText id="history-confirm-description">{description}</DialogContentText>
       </DialogContent>
       <DialogActions
         sx={{

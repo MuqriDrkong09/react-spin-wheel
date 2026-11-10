@@ -5,6 +5,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import { useEffect, useRef } from 'react';
 
+import { LiveAnnouncer } from '@/components/common/LiveAnnouncer';
 import { WinnerCelebration } from '@/features/celebration/components/WinnerCelebration';
 import { SelectionPath } from '@/features/spin/components/SelectionPath';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
@@ -42,6 +43,8 @@ export function FinalResult({
 }: FinalResultProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const formattedTime = formatResultTimestamp(timestamp);
+  const winnerName = steps[steps.length - 1]?.name;
+  const winnerAnnouncement = winnerName ? SPIN_MESSAGES.winner(winnerName) : '';
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -85,10 +88,20 @@ export function FinalResult({
             tabIndex={-1}
             variant="h5"
             component="h2"
-            sx={{ fontWeight: 800, letterSpacing: 0.4, outline: 'none' }}
+            sx={{
+              fontWeight: 800,
+              letterSpacing: 0.4,
+              outline: 'none',
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.main',
+                outlineOffset: 3,
+              },
+            }}
           >
             {SPIN_MESSAGES.finalResultTitle}
           </Typography>
+          <LiveAnnouncer message={winnerAnnouncement} />
           <Typography id="final-result-wheel" color="text.secondary" sx={{ mt: 0.75 }}>
             {wheelName}
           </Typography>
@@ -133,23 +146,7 @@ export function FinalResult({
               {saved ? SPIN_MESSAGES.resultSaved : SPIN_MESSAGES.saveResult}
             </Button>
           </Stack>
-          <Typography
-            component="p"
-            aria-live="polite"
-            sx={{
-              position: 'absolute',
-              width: 1,
-              height: 1,
-              p: 0,
-              m: -1,
-              overflow: 'hidden',
-              clip: 'rect(0, 0, 0, 0)',
-              whiteSpace: 'nowrap',
-              border: 0,
-            }}
-          >
-            {statusMessage}
-          </Typography>
+          <LiveAnnouncer message={statusMessage ?? ''} />
         </Paper>
       </WinnerCelebration>
     </Box>

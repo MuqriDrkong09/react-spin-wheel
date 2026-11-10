@@ -227,6 +227,7 @@ describe('SpinScreen', () => {
 
     const dialog = screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle });
     expect(within(dialog).getByText('Burger')).toBeInTheDocument();
+    expect(screen.getByText(SPIN_MESSAGES.winner('Burger'))).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.spinAgain })).toHaveFocus();
     expect(within(dialog).getByRole('button', { name: SPIN_MESSAGES.finish })).toBeInTheDocument();
     expect(within(dialog).queryByText(SPIN_MESSAGES.additionalData)).not.toBeInTheDocument();

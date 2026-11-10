@@ -32,11 +32,13 @@ export function AppDrawer() {
       <List sx={{ px: 1 }}>
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
+          const selected = location.pathname === item.path;
 
           return (
             <ListItemButton
               key={item.path}
-              selected={location.pathname === item.path}
+              selected={selected}
+              aria-current={selected ? 'page' : undefined}
               onClick={() => {
                 void navigate(item.path);
                 if (isMobile) {
@@ -56,7 +58,11 @@ export function AppDrawer() {
   );
 
   return (
-    <Box component="nav" sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}>
+    <Box
+      component="nav"
+      aria-label="Main navigation"
+      sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+    >
       <Drawer
         variant={isMobile ? 'temporary' : 'permanent'}
         open={isMobile ? sidebarOpen : true}

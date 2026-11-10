@@ -1,5 +1,5 @@
 import { Box, Button, ClickAwayListener, Paper, Popper, Stack, TextField, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
 
 import { isHexColor, normalizeHexColor } from '@/constants/wheelAppearance';
@@ -14,6 +14,8 @@ interface ColorFieldProps {
 }
 
 export function ColorField({ label, value, onChange, onCommit }: ColorFieldProps) {
+  const labelId = useId();
+  const dialogId = useId();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [draft, setDraft] = useState(value);
   const [editingHex, setEditingHex] = useState(false);
@@ -61,15 +63,18 @@ export function ColorField({ label, value, onChange, onCommit }: ColorFieldProps
   return (
     <ClickAwayListener onClickAway={closePicker}>
       <Stack spacing={0.75}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography id={labelId} variant="body2" color="text.secondary">
           {label}
         </Typography>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <Button
             variant="outlined"
             aria-label={label}
+            aria-describedby={labelId}
             aria-expanded={open}
             aria-haspopup="dialog"
+            aria-controls={open ? dialogId : undefined}
+            title={`${label}: ${displayed}`}
             onClick={(event) => {
               setDraft(normalizeHexColor(value, value));
               setAnchorEl(event.currentTarget);
@@ -86,6 +91,11 @@ export function ColorField({ label, value, onChange, onCommit }: ColorFieldProps
                   theme.palette.mode === 'dark' ? 'rgba(248,250,252,0.22)' : 'rgba(15,23,42,0.16)'
                 }`,
               '&:hover': { bgcolor: displayed },
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.main',
+                outlineOffset: 2,
+              },
             }}
           />
           <TextField
@@ -107,7 +117,7 @@ export function ColorField({ label, value, onChange, onCommit }: ColorFieldProps
                 applyColor(hexDraft, true);
               }
             }}
-            slotProps={{ htmlInput: { 'aria-label': `${label} hex` } }}
+            slotProps={{ htmlInput: { 'aria-label': `${label} hex`, 'aria-describedby': labelId } }}
             size="small"
             fullWidth
           />
@@ -121,6 +131,10 @@ export function ColorField({ label, value, onChange, onCommit }: ColorFieldProps
             sx={{ zIndex: (theme) => theme.zIndex.modal }}
           >
             <Paper
+              id={dialogId}
+              role="dialog"
+              aria-modal="false"
+              aria-label={`${label} dialog`}
               elevation={8}
               sx={{ p: 1.5, mt: 1 }}
               onMouseDown={(event) => event.stopPropagation()}
@@ -130,7 +144,10 @@ export function ColorField({ label, value, onChange, onCommit }: ColorFieldProps
                   '& .react-colorful': { width: 'min(240px, calc(100vw - 80px))', height: 200 },
                   '& .react-colorful__saturation': { borderRadius: 1, marginBottom: 1 },
                   '& .react-colorful__hue': { borderRadius: 1, height: 12 },
-                  '& .react-colorful__interactive': { outline: 'none' },
+                  '& .react-colorful__interactive:focus-visible': {
+                    outline: '2px solid',
+                    outlineOffset: 2,
+                  },
                   '& .react-colorful__pointer': { width: 18, height: 18 },
                 }}
               >

@@ -25,7 +25,7 @@ export function CreateWheelForm({ onSubmit, onCancel }: CreateWheelFormProps) {
   return (
     <Card variant="outlined" sx={{ maxWidth: 640 }}>
       <CardContent>
-        <Form form={form} onSubmit={onSubmit}>
+        <Form form={form} aria-label="Create wheel" onSubmit={onSubmit}>
           <Stack spacing={2.5}>
             <FormTextField<CreateWheelFormValues>
               name="name"

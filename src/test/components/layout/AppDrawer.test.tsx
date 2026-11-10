@@ -53,14 +53,18 @@ describe('AppDrawer', () => {
     }
 
     expect(screen.getByRole('button', { name: 'Dashboard' })).toHaveClass('Mui-selected');
+    expect(screen.getByRole('button', { name: 'Dashboard' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('button', { name: 'Settings' })).not.toHaveClass('Mui-selected');
+    expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
   });
 
   it('marks the current route as selected', () => {
     renderDrawer(ROUTES.settings);
 
     expect(screen.getByRole('button', { name: 'Settings' })).toHaveClass('Mui-selected');
+    expect(screen.getByRole('button', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('button', { name: 'Dashboard' })).not.toHaveClass('Mui-selected');
+    expect(screen.getByRole('button', { name: 'Dashboard' })).not.toHaveAttribute('aria-current');
   });
 
   it('navigates without closing the sidebar on desktop', async () => {

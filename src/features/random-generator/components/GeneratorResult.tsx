@@ -10,8 +10,9 @@ interface GeneratorResultProps {
 export function GeneratorResultCard({ values, error }: GeneratorResultProps) {
   return (
     <Box
-      role="status"
-      aria-live="polite"
+      role={error ? 'alert' : 'status'}
+      aria-live={error ? 'assertive' : 'polite'}
+      aria-atomic
       sx={{
         border: 1,
         borderColor: error ? 'error.main' : 'divider',

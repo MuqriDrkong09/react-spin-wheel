@@ -45,6 +45,7 @@ describe('FinalResult', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.copyResult })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.saveResult })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: SPIN_MESSAGES.finalResultTitle })).toHaveFocus();
+    expect(screen.getByText(SPIN_MESSAGES.winner('Large'))).toBeInTheDocument();
     expect(screen.queryByTestId('celebration-confetti')).not.toBeInTheDocument();
   });
 

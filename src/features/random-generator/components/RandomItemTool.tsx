@@ -1,6 +1,15 @@
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
-import { Button, Card, CardContent, FormHelperText, IconButton, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  FormHelperText,
+  IconButton,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useState } from 'react';
 import { useFieldArray, type FieldPath } from 'react-hook-form';
 
@@ -45,48 +54,58 @@ export function RandomItemTool() {
         >
           <Stack spacing={2.5}>
             <Typography color="text.secondary">{GENERATOR_MESSAGES.itemHint}</Typography>
-            {itemsError ? (
-              <FormHelperText error sx={{ mx: 0 }}>
-                {itemsError}
-              </FormHelperText>
-            ) : null}
-            <Stack spacing={1.5}>
-              {fields.map((field, index) => (
-                <Stack key={field.id} direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                  <FormTextField<RandomItemFormValues>
-                    name={`items.${index}.name` as FieldPath<RandomItemFormValues>}
-                    label={GENERATOR_MESSAGES.itemNameLabel(index + 1)}
-                    required
-                    fullWidth
-                    slotProps={{
-                      htmlInput: { 'aria-label': GENERATOR_MESSAGES.itemNameLabel(index + 1) },
-                    }}
-                  />
-                  <FormTextField<RandomItemFormValues>
-                    name={`items.${index}.weight` as FieldPath<RandomItemFormValues>}
-                    label={GENERATOR_MESSAGES.weightLabel(index + 1)}
-                    type="number"
-                    required
-                    sx={{ minWidth: { sm: 140 } }}
-                    slotProps={{
-                      htmlInput: {
-                        min: 1,
-                        step: 'any',
-                        'aria-label': GENERATOR_MESSAGES.weightLabel(index + 1),
-                      },
-                    }}
-                  />
-                  <IconButton
-                    aria-label={GENERATOR_MESSAGES.removeItem(index + 1)}
-                    onClick={() => remove(index)}
-                    disabled={fields.length <= 1}
-                    sx={{ mt: { sm: 0.5 } }}
-                  >
-                    <DeleteOutlinedIcon />
-                  </IconButton>
-                </Stack>
-              ))}
-            </Stack>
+            <Box
+              role="group"
+              aria-label={GENERATOR_MESSAGES.itemTab}
+              aria-describedby={itemsError ? 'random-item-items-error' : undefined}
+            >
+              {itemsError ? (
+                <FormHelperText id="random-item-items-error" error role="alert" sx={{ mx: 0 }}>
+                  {itemsError}
+                </FormHelperText>
+              ) : null}
+              <Stack spacing={1.5}>
+                {fields.map((field, index) => (
+                  <Stack key={field.id} direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                    <FormTextField<RandomItemFormValues>
+                      name={`items.${index}.name` as FieldPath<RandomItemFormValues>}
+                      label={GENERATOR_MESSAGES.itemNameLabel(index + 1)}
+                      required
+                      fullWidth
+                      slotProps={{
+                        htmlInput: {
+                          'aria-label': GENERATOR_MESSAGES.itemNameLabel(index + 1),
+                          'aria-describedby': itemsError ? 'random-item-items-error' : undefined,
+                        },
+                      }}
+                    />
+                    <FormTextField<RandomItemFormValues>
+                      name={`items.${index}.weight` as FieldPath<RandomItemFormValues>}
+                      label={GENERATOR_MESSAGES.weightLabel(index + 1)}
+                      type="number"
+                      required
+                      sx={{ minWidth: { sm: 140 } }}
+                      slotProps={{
+                        htmlInput: {
+                          min: 1,
+                          step: 'any',
+                          'aria-label': GENERATOR_MESSAGES.weightLabel(index + 1),
+                          'aria-describedby': itemsError ? 'random-item-items-error' : undefined,
+                        },
+                      }}
+                    />
+                    <IconButton
+                      aria-label={GENERATOR_MESSAGES.removeItem(index + 1)}
+                      onClick={() => remove(index)}
+                      disabled={fields.length <= 1}
+                      sx={{ mt: { sm: 0.5 } }}
+                    >
+                      <DeleteOutlinedIcon />
+                    </IconButton>
+                  </Stack>
+                ))}
+              </Stack>
+            </Box>
             <Button startIcon={<AddIcon />} onClick={() => append({ name: '', weight: 1 })}>
               {GENERATOR_MESSAGES.addItem}
             </Button>
