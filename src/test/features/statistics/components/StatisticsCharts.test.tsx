@@ -60,11 +60,17 @@ function snapshot(overrides: Partial<StatisticsSnapshot> = {}): StatisticsSnapsh
   return {
     totalSpins: 2,
     totalCompletedSelections: 2,
+    uniqueWinners: 1,
     selectionFrequency: [{ name: 'Pizza', count: 2, percent: 100 }],
+    parentFrequency: [{ name: 'Pizza', count: 2, percent: 100 }],
+    childFrequency: [],
+    pathFrequency: [{ name: 'Pizza', count: 2, percent: 100 }],
     winnerDistribution: [{ name: 'Pizza', count: 2, percent: 100 }],
     winnerDistributionChart: [{ name: 'Pizza', count: 2, percent: 100 }],
     spinsPerWheel: [{ wheelId: 'pizza', wheelName: 'Pizza Night', selections: 2, spins: 2 }],
     dailySpinCount: [{ date: '2026-01-04', label: 'Jan 4', spins: 2, selections: 2 }],
+    weeklySpinCount: [{ key: '2025-12-29', label: 'Week of Dec 29', spins: 2, selections: 2 }],
+    monthlySpinCount: [{ key: '2026-01', label: 'Jan 2026', spins: 2, selections: 2 }],
     parentVsChild: [
       { name: STATISTICS_MESSAGES.parent, count: 1, percent: 50 },
       { name: STATISTICS_MESSAGES.child, count: 1, percent: 50 },
@@ -82,10 +88,18 @@ describe('StatisticsCharts', () => {
     renderWithProviders(<StatisticsCharts snapshot={snapshot()} />);
 
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.spinFrequency })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.weeklyActivity })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.monthlyActivity })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.winnerDistribution })).toBeInTheDocument();
+    expect(
+      screen.getByRole('list', { name: `${STATISTICS_MESSAGES.winnerDistribution} legend` }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.parentVsChild })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.spinsPerWheel })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.selectionFrequency })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.parentFrequency })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.childFrequency })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.pathFrequency })).toBeInTheDocument();
     expect(screen.getByRole('table', { name: STATISTICS_MESSAGES.frequencyAria })).toBeInTheDocument();
     expect(screen.queryByText(STATISTICS_MESSAGES.noChildSelections)).not.toBeInTheDocument();
     expect(screen.getByTestId('wheel-tick-labels')).toHaveTextContent(

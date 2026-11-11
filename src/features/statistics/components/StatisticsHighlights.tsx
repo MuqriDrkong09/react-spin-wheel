@@ -1,8 +1,11 @@
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import DoneAllOutlinedIcon from '@mui/icons-material/DoneAllOutlined';
+import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import ReplayOutlinedIcon from '@mui/icons-material/ReplayOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 import SubdirectoryArrowRightOutlinedIcon from '@mui/icons-material/SubdirectoryArrowRightOutlined';
+import TrendingDownOutlinedIcon from '@mui/icons-material/TrendingDownOutlined';
+import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import { Box } from '@mui/material';
 
 import { StatisticsMetricCard } from '@/features/statistics/components/StatisticsMetricCard';
@@ -20,13 +23,30 @@ export function StatisticsHighlights({ snapshot }: StatisticsHighlightsProps) {
       sx={{
         display: 'grid',
         gap: 2,
-        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, minmax(0, 1fr))' },
+        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, minmax(0, 1fr))' },
       }}
     >
       <StatisticsMetricCard
         label={STATISTICS_MESSAGES.totalSpins}
         value={snapshot.totalSpins}
         icon={<ReplayOutlinedIcon color="primary" />}
+      />
+      <StatisticsMetricCard
+        label={STATISTICS_MESSAGES.uniqueWinners}
+        value={snapshot.uniqueWinners}
+        icon={<EmojiEventsOutlinedIcon color="primary" />}
+      />
+      <StatisticsMetricCard
+        label={STATISTICS_MESSAGES.mostSelectedItem}
+        value={snapshot.mostSelectedItem?.name ?? STATISTICS_MESSAGES.none}
+        hint={namedHint(snapshot.mostSelectedItem)}
+        icon={<TrendingUpOutlinedIcon color="primary" />}
+      />
+      <StatisticsMetricCard
+        label={STATISTICS_MESSAGES.leastSelectedItem}
+        value={snapshot.leastSelectedItem?.name ?? STATISTICS_MESSAGES.none}
+        hint={namedHint(snapshot.leastSelectedItem)}
+        icon={<TrendingDownOutlinedIcon color="primary" />}
       />
       <StatisticsMetricCard
         label={STATISTICS_MESSAGES.totalCompletedSelections}

@@ -25,9 +25,14 @@ test.describe('Statistics', () => {
     await goToNav(page, 'Statistics');
 
     await expect(page.getByText('Total spins')).toBeVisible();
+    await expect(page.getByText('Unique winners')).toBeVisible();
     await expect(page.getByText('Total completed selections')).toBeVisible();
     await expect(page.getByText('Most selected parent')).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Date range' })).toBeVisible();
     await expect(page.getByText('Pizza', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Daily activity')).toBeVisible();
+    await expect(page.getByText('Weekly activity')).toBeVisible();
+    await expect(page.getByText('Monthly activity')).toBeVisible();
     await expect(page.getByText('Winner distribution')).toBeVisible();
     await expect(page.getByText('Spins per wheel')).toBeVisible();
   });

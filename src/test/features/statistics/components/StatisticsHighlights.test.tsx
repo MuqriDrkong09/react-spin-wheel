@@ -8,11 +8,17 @@ function snapshot(overrides: Partial<StatisticsSnapshot> = {}): StatisticsSnapsh
   return {
     totalSpins: 0,
     totalCompletedSelections: 0,
+    uniqueWinners: 0,
     selectionFrequency: [],
+    parentFrequency: [],
+    childFrequency: [],
+    pathFrequency: [],
     winnerDistribution: [],
     winnerDistributionChart: [],
     spinsPerWheel: [],
     dailySpinCount: [],
+    weeklySpinCount: [],
+    monthlySpinCount: [],
     parentVsChild: [
       { name: STATISTICS_MESSAGES.parent, count: 0, percent: 0 },
       { name: STATISTICS_MESSAGES.child, count: 0, percent: 0 },
@@ -26,9 +32,16 @@ describe('StatisticsHighlights', () => {
     renderWithProviders(<StatisticsHighlights snapshot={snapshot()} />);
 
     expect(screen.getByText(STATISTICS_MESSAGES.totalSpins).nextElementSibling).toHaveTextContent('0');
+    expect(screen.getByText(STATISTICS_MESSAGES.uniqueWinners).nextElementSibling).toHaveTextContent('0');
     expect(
       screen.getByText(STATISTICS_MESSAGES.totalCompletedSelections).nextElementSibling,
     ).toHaveTextContent('0');
+    expect(screen.getByText(STATISTICS_MESSAGES.mostSelectedItem).nextElementSibling).toHaveTextContent(
+      STATISTICS_MESSAGES.none,
+    );
+    expect(screen.getByText(STATISTICS_MESSAGES.leastSelectedItem).nextElementSibling).toHaveTextContent(
+      STATISTICS_MESSAGES.none,
+    );
     expect(screen.getByText(STATISTICS_MESSAGES.mostSelectedParent).nextElementSibling).toHaveTextContent(
       STATISTICS_MESSAGES.none,
     );
@@ -47,6 +60,9 @@ describe('StatisticsHighlights', () => {
         snapshot={snapshot({
           totalSpins: 4,
           totalCompletedSelections: 2,
+          uniqueWinners: 2,
+          mostSelectedItem: { name: 'Pizza', count: 2, percent: 50 },
+          leastSelectedItem: { name: 'Burger', count: 1, percent: 25 },
           mostSelectedParent: { name: 'Pizza', count: 1, percent: 50 },
           mostSelectedChild: { name: 'Pepperoni', count: 2, percent: 33.333 },
           mostSelectedPath: { name: 'Pizza → Pepperoni', count: 2, percent: 100 },
@@ -55,9 +71,16 @@ describe('StatisticsHighlights', () => {
     );
 
     expect(screen.getByText(STATISTICS_MESSAGES.totalSpins).nextElementSibling).toHaveTextContent('4');
+    expect(screen.getByText(STATISTICS_MESSAGES.uniqueWinners).nextElementSibling).toHaveTextContent('2');
     expect(
       screen.getByText(STATISTICS_MESSAGES.totalCompletedSelections).nextElementSibling,
     ).toHaveTextContent('2');
+    expect(screen.getByText(STATISTICS_MESSAGES.mostSelectedItem).nextElementSibling).toHaveTextContent(
+      'Pizza',
+    );
+    expect(screen.getByText(STATISTICS_MESSAGES.leastSelectedItem).nextElementSibling).toHaveTextContent(
+      'Burger',
+    );
     expect(screen.getByText(STATISTICS_MESSAGES.mostSelectedParent).nextElementSibling).toHaveTextContent(
       'Pizza',
     );

@@ -1,6 +1,8 @@
 import { SELECTION_MODE, type SelectionMode } from '@/types/wheel';
 import type { HistoryResult } from '@/features/history/utils/selectHistory';
+import { STATISTICS_DATE_RANGE } from '@/features/statistics/constants';
 import {
+  filterHistoryResultsByRange,
   percentOf,
   selectStatistics,
   toChartSlices,
@@ -54,13 +56,21 @@ describe('selectStatistics', () => {
 
     expect(stats.totalSpins).toBe(0);
     expect(stats.totalCompletedSelections).toBe(0);
+    expect(stats.uniqueWinners).toBe(0);
+    expect(stats.mostSelectedItem).toBeUndefined();
+    expect(stats.leastSelectedItem).toBeUndefined();
     expect(stats.mostSelectedParent).toBeUndefined();
     expect(stats.mostSelectedChild).toBeUndefined();
     expect(stats.mostSelectedPath).toBeUndefined();
     expect(stats.selectionFrequency).toEqual([]);
+    expect(stats.parentFrequency).toEqual([]);
+    expect(stats.childFrequency).toEqual([]);
+    expect(stats.pathFrequency).toEqual([]);
     expect(stats.winnerDistribution).toEqual([]);
     expect(stats.spinsPerWheel).toEqual([]);
     expect(stats.dailySpinCount).toEqual([]);
+    expect(stats.weeklySpinCount).toEqual([]);
+    expect(stats.monthlySpinCount).toEqual([]);
     expect(stats.parentVsChild.map((entry) => entry.count)).toEqual([0, 0]);
   });
 
@@ -69,6 +79,14 @@ describe('selectStatistics', () => {
 
     expect(stats.totalCompletedSelections).toBe(3);
     expect(stats.totalSpins).toBe(6);
+    expect(stats.uniqueWinners).toBe(3);
+    expect(stats.mostSelectedItem).toEqual({
+      name: 'Pizza',
+      count: 2,
+      percent: percentOf(2, 6),
+    });
+    // Tied at count 1; alphabetical last among lowest counts.
+    expect(stats.leastSelectedItem?.name).toBe('Large');
     expect(stats.mostSelectedParent).toEqual({ name: 'Pizza', count: 2, percent: percentOf(2, 3) });
     expect(stats.mostSelectedChild).toEqual({
       name: 'Beef Pepperoni',
@@ -81,6 +99,13 @@ describe('selectStatistics', () => {
       count: 2,
       percent: percentOf(2, 6),
     });
+    expect(stats.parentFrequency[0]?.name).toBe('Pizza');
+    expect(stats.childFrequency.map((entry) => entry.name)).toEqual([
+      'Beef Pepperoni',
+      'Chicken Pepperoni',
+      'Large',
+    ]);
+    expect(stats.pathFrequency.map((entry) => entry.name)).toContain('Burger');
     expect(stats.winnerDistribution.map((entry) => entry.name)).toEqual([
       'Beef Pepperoni',
       'Burger',
@@ -92,6 +117,53 @@ describe('selectStatistics', () => {
     ]);
     expect(stats.parentVsChild[0]).toEqual({ name: 'Parent', count: 3, percent: percentOf(3, 6) });
     expect(stats.parentVsChild[1]).toEqual({ name: 'Child', count: 3, percent: percentOf(3, 6) });
+    expect(stats.weeklySpinCount.length).toBeGreaterThan(0);
+    expect(stats.monthlySpinCount.map((entry) => entry.key)).toEqual(['2026-01']);
+  });
+
+  it('filters by date range without mutating the source history results', () => {
+    const now = new Date(2026, 0, 6, 20, 0, 0);
+    const todayBurger = result({
+      id: 'r3',
+      wheelId: 'food',
+      wheelName: 'Food Wheel',
+      selectedItemName: 'Burger',
+      pathLabels: ['Burger'],
+      timestamp: new Date(2026, 0, 6, 12, 0, 0).toISOString(),
+    });
+    const olderPizza = result({
+      id: 'r1',
+      timestamp: new Date(2026, 0, 1, 12, 0, 0).toISOString(),
+    });
+    const frozen = [olderPizza, todayBurger].map((entry) => ({
+      ...entry,
+      pathLabels: [...entry.pathLabels],
+    }));
+
+    const filteredToday = filterHistoryResultsByRange(frozen, STATISTICS_DATE_RANGE.today, now);
+    expect(filteredToday).toHaveLength(1);
+    expect(filteredToday[0]?.selectedItemName).toBe('Burger');
+    expect(frozen[0]?.pathLabels).toEqual(['Pizza', 'Chicken Pepperoni', 'Large']);
+
+    const todayOnly = selectStatistics(frozen, {
+      range: STATISTICS_DATE_RANGE.today,
+      now,
+    });
+    expect(todayOnly.totalCompletedSelections).toBe(1);
+    expect(todayOnly.mostSelectedItem?.name).toBe('Burger');
+
+    const last30 = selectStatistics(frozen, {
+      range: STATISTICS_DATE_RANGE.days30,
+      now,
+    });
+    expect(last30.totalCompletedSelections).toBe(2);
+
+    const allTime = selectStatistics(frozen, {
+      range: STATISTICS_DATE_RANGE.all,
+      now,
+    });
+    expect(allTime.totalCompletedSelections).toBe(2);
+    expect(frozen).toHaveLength(2);
   });
 
   it('treats a root-only result as a parent selection with no children', () => {

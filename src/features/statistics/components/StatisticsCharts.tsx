@@ -1,13 +1,12 @@
 import { Box, Typography, useTheme } from '@mui/material';
 import type { ReactNode } from 'react';
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -20,7 +19,8 @@ import { ITEM_COLORS } from '@/constants/wheel';
 import { SelectionFrequencyTable } from '@/features/statistics/components/SelectionFrequencyTable';
 import { StatisticsSectionCard } from '@/features/statistics/components/StatisticsSectionCard';
 import { STATISTICS_CHART_HEIGHT, STATISTICS_MESSAGES } from '@/features/statistics/constants';
-import type { StatisticsSnapshot } from '@/features/statistics/utils/selectStatistics';
+import { formatPercent } from '@/features/statistics/utils/formatPercent';
+import type { NamedCount, StatisticsSnapshot } from '@/features/statistics/utils/selectStatistics';
 
 interface StatisticsChartsProps {
   snapshot: StatisticsSnapshot;
@@ -48,7 +48,7 @@ export function StatisticsCharts({ snapshot }: StatisticsChartsProps) {
       <Box sx={{ gridColumn: { md: '1 / -1' } }}>
         <StatisticsSectionCard title={STATISTICS_MESSAGES.spinFrequency}>
           <ChartFrame label={STATISTICS_MESSAGES.spinFrequency}>
-            <AreaChart
+            <LineChart
               data={snapshot.dailySpinCount}
               margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
             >
@@ -56,43 +56,70 @@ export function StatisticsCharts({ snapshot }: StatisticsChartsProps) {
               <XAxis dataKey="label" tick={tick} />
               <YAxis allowDecimals={false} tick={tick} width={36} />
               <ChartTooltip contentStyle={tooltipStyle} />
-              <Area
+              <Line
                 type="monotone"
                 dataKey="spins"
                 name={STATISTICS_MESSAGES.spins}
                 stroke={theme.palette.primary.main}
-                fill={theme.palette.primary.main}
-                fillOpacity={0.18}
+                strokeWidth={2}
+                dot={{ r: 3 }}
                 isAnimationActive={false}
               />
-            </AreaChart>
+            </LineChart>
           </ChartFrame>
         </StatisticsSectionCard>
       </Box>
 
-      <StatisticsSectionCard title={STATISTICS_MESSAGES.winnerDistribution}>
-        <ChartFrame label={STATISTICS_MESSAGES.winnerDistribution}>
-          <PieChart>
-            <Pie
-              data={snapshot.winnerDistributionChart}
-              dataKey="count"
-              nameKey="name"
-              innerRadius={58}
-              outerRadius={90}
-              paddingAngle={2}
-              isAnimationActive={false}
-            >
-              {snapshot.winnerDistributionChart.map((entry, index) => (
-                <Cell
-                  key={entry.name}
-                  fill={ITEM_COLORS[index % ITEM_COLORS.length] ?? theme.palette.primary.main}
-                />
-              ))}
-            </Pie>
+      <StatisticsSectionCard title={STATISTICS_MESSAGES.weeklyActivity}>
+        <ChartFrame label={STATISTICS_MESSAGES.weeklyActivity}>
+          <BarChart
+            data={snapshot.weeklySpinCount}
+            margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid stroke={grid} strokeDasharray="3 3" />
+            <XAxis dataKey="label" tick={tick} interval="preserveStartEnd" />
+            <YAxis allowDecimals={false} tick={tick} width={36} />
             <ChartTooltip contentStyle={tooltipStyle} />
-            <Legend />
-          </PieChart>
+            <Bar
+              dataKey="spins"
+              name={STATISTICS_MESSAGES.spins}
+              fill={theme.palette.primary.main}
+              radius={[6, 6, 0, 0]}
+              isAnimationActive={false}
+            />
+          </BarChart>
         </ChartFrame>
+      </StatisticsSectionCard>
+
+      <StatisticsSectionCard title={STATISTICS_MESSAGES.monthlyActivity}>
+        <ChartFrame label={STATISTICS_MESSAGES.monthlyActivity}>
+          <LineChart
+            data={snapshot.monthlySpinCount}
+            margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid stroke={grid} strokeDasharray="3 3" />
+            <XAxis dataKey="label" tick={tick} />
+            <YAxis allowDecimals={false} tick={tick} width={36} />
+            <ChartTooltip contentStyle={tooltipStyle} />
+            <Line
+              type="monotone"
+              dataKey="spins"
+              name={STATISTICS_MESSAGES.spins}
+              stroke={theme.palette.secondary.main}
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ChartFrame>
+      </StatisticsSectionCard>
+
+      <StatisticsSectionCard title={STATISTICS_MESSAGES.winnerDistribution}>
+        <WinnerDistributionChart
+          rows={snapshot.winnerDistributionChart}
+          tooltipStyle={tooltipStyle}
+          primaryFallback={theme.palette.primary.main}
+        />
       </StatisticsSectionCard>
 
       <StatisticsSectionCard title={STATISTICS_MESSAGES.parentVsChild}>
@@ -154,13 +181,131 @@ export function StatisticsCharts({ snapshot }: StatisticsChartsProps) {
       <StatisticsSectionCard title={STATISTICS_MESSAGES.selectionFrequency}>
         <SelectionFrequencyTable rows={snapshot.selectionFrequency} />
       </StatisticsSectionCard>
+
+      <StatisticsSectionCard title={STATISTICS_MESSAGES.parentFrequency}>
+        <SelectionFrequencyTable
+          rows={snapshot.parentFrequency}
+          ariaLabel={STATISTICS_MESSAGES.parentFrequencyAria}
+          emptyMessage={STATISTICS_MESSAGES.none}
+        />
+      </StatisticsSectionCard>
+
+      <StatisticsSectionCard title={STATISTICS_MESSAGES.childFrequency}>
+        <SelectionFrequencyTable
+          rows={snapshot.childFrequency}
+          ariaLabel={STATISTICS_MESSAGES.childFrequencyAria}
+          emptyMessage={STATISTICS_MESSAGES.none}
+        />
+      </StatisticsSectionCard>
+
+      <StatisticsSectionCard title={STATISTICS_MESSAGES.pathFrequency}>
+        <SelectionFrequencyTable
+          rows={snapshot.pathFrequency}
+          ariaLabel={STATISTICS_MESSAGES.pathFrequencyAria}
+          nameColumnLabel={STATISTICS_MESSAGES.path}
+          emptyMessage={STATISTICS_MESSAGES.none}
+        />
+      </StatisticsSectionCard>
     </Box>
   );
 }
 
-function ChartFrame({ label, children }: { label: string; children: ReactNode }) {
+const WINNER_PIE_HEIGHT = 200;
+
+function WinnerDistributionChart({
+  rows,
+  tooltipStyle,
+  primaryFallback,
+}: {
+  rows: NamedCount[];
+  tooltipStyle: Record<string, string | number>;
+  primaryFallback: string;
+}) {
   return (
-    <Box aria-label={label} sx={{ width: '100%', minWidth: 0, height: STATISTICS_CHART_HEIGHT }}>
+    <Box>
+      <ChartFrame label={STATISTICS_MESSAGES.winnerDistribution} height={WINNER_PIE_HEIGHT}>
+        <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+          <Pie
+            data={rows}
+            dataKey="count"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius={48}
+            outerRadius={72}
+            paddingAngle={2}
+            isAnimationActive={false}
+          >
+            {rows.map((entry, index) => (
+              <Cell
+                key={entry.name}
+                fill={ITEM_COLORS[index % ITEM_COLORS.length] ?? primaryFallback}
+              />
+            ))}
+          </Pie>
+          <ChartTooltip contentStyle={tooltipStyle} />
+        </PieChart>
+      </ChartFrame>
+      <Box
+        component="ul"
+        aria-label={`${STATISTICS_MESSAGES.winnerDistribution} legend`}
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+          gap: 1,
+          m: 0,
+          mt: 1.5,
+          p: 0,
+          listStyle: 'none',
+          maxHeight: { xs: 220, sm: 'none' },
+          overflowY: { xs: 'auto', sm: 'visible' },
+        }}
+      >
+        {rows.map((entry, index) => (
+          <Box
+            key={entry.name}
+            component="li"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              minWidth: 0,
+            }}
+          >
+            <Box
+              aria-hidden
+              sx={{
+                width: 10,
+                height: 10,
+                borderRadius: 0.5,
+                flexShrink: 0,
+                bgcolor: ITEM_COLORS[index % ITEM_COLORS.length] ?? primaryFallback,
+              }}
+            />
+            <Typography variant="body2" noWrap title={entry.name} sx={{ flex: 1, minWidth: 0 }}>
+              {entry.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+              {formatPercent(entry.percent)}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+function ChartFrame({
+  label,
+  children,
+  height = STATISTICS_CHART_HEIGHT,
+}: {
+  label: string;
+  children: ReactNode;
+  height?: number;
+}) {
+  return (
+    <Box aria-label={label} sx={{ width: '100%', minWidth: 0, height }}>
       <ResponsiveContainer width="100%" height="100%">
         {children}
       </ResponsiveContainer>

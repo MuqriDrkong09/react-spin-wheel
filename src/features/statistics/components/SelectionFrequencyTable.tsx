@@ -17,23 +17,29 @@ import type { NamedCount } from '@/features/statistics/utils/selectStatistics';
 
 interface SelectionFrequencyTableProps {
   rows: NamedCount[];
+  ariaLabel?: string;
+  nameColumnLabel?: string;
+  emptyMessage?: string;
 }
 
-export function SelectionFrequencyTable({ rows }: SelectionFrequencyTableProps) {
+export function SelectionFrequencyTable({
+  rows,
+  ariaLabel = STATISTICS_MESSAGES.frequencyAria,
+  nameColumnLabel = STATISTICS_MESSAGES.item,
+  emptyMessage = STATISTICS_MESSAGES.emptyDescription,
+}: SelectionFrequencyTableProps) {
   const theme = useTheme();
   const compact = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
 
   if (rows.length === 0) {
-    return (
-      <Typography color="text.secondary">{STATISTICS_MESSAGES.emptyDescription}</Typography>
-    );
+    return <Typography color="text.secondary">{emptyMessage}</Typography>;
   }
 
   if (compact) {
     return (
       <Box
         component="ul"
-        aria-label={STATISTICS_MESSAGES.frequencyAria}
+        aria-label={ariaLabel}
         sx={{ display: 'grid', m: 0, p: 0, gap: 1, listStyle: 'none' }}
       >
         {rows.map((row) => (
@@ -61,10 +67,10 @@ export function SelectionFrequencyTable({ rows }: SelectionFrequencyTableProps) 
 
   return (
     <TableContainer sx={{ maxHeight: STATISTICS_CHART_HEIGHT }}>
-      <Table size="small" stickyHeader aria-label={STATISTICS_MESSAGES.frequencyAria}>
+      <Table size="small" stickyHeader aria-label={ariaLabel}>
         <TableHead>
           <TableRow>
-            <TableCell>{STATISTICS_MESSAGES.item}</TableCell>
+            <TableCell>{nameColumnLabel}</TableCell>
             <TableCell align="right">{STATISTICS_MESSAGES.count}</TableCell>
             <TableCell align="right">{STATISTICS_MESSAGES.percentage}</TableCell>
           </TableRow>
