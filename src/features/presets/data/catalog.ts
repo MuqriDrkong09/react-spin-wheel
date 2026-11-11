@@ -2,9 +2,10 @@ import { PRESET_ID } from '@/features/presets/constants';
 import type { WheelPresetDefinition } from '@/features/presets/types';
 import { clonePresetDefinition } from '@/features/presets/utils/clonePreset';
 import { deepFreeze } from '@/features/presets/utils/freezePreset';
+import { parseWheelPresetCatalog } from '@/schemas/parse';
 import type { WheelPresetId } from '@/types/wheel';
 
-const PRESET_CATALOG: readonly WheelPresetDefinition[] = deepFreeze([
+const PRESET_CATALOG_SOURCE = [
   {
     id: PRESET_ID.food,
     name: 'Food',
@@ -61,7 +62,12 @@ const PRESET_CATALOG: readonly WheelPresetDefinition[] = deepFreeze([
       { name: 'Taylor Chen' },
     ],
   },
-]);
+] as const;
+
+/** Invalid catalog entries are dropped; an invalid catalog falls back to []. */
+const PRESET_CATALOG: readonly WheelPresetDefinition[] = deepFreeze(
+  parseWheelPresetCatalog(PRESET_CATALOG_SOURCE),
+);
 
 export function listPresets(): WheelPresetDefinition[] {
   return PRESET_CATALOG.map(clonePresetDefinition);
