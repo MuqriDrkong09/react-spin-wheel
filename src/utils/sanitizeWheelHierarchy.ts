@@ -86,27 +86,67 @@ function sanitizeConditions(
   itemIds: ReadonlySet<WheelItemId>,
 ): SanitizeHierarchyResult<ItemCondition[] | undefined> {
   if (!conditions || conditions.length === 0) {
-    return { value: conditions, repaired: false };
+    return {
+      value: conditions === undefined ? undefined : [...conditions],
+      repaired: false,
+    };
   }
 
-  const value = conditions.filter((condition) => {
+  let repaired = false;
+  const value: ItemCondition[] = [];
+
+  for (const condition of conditions) {
     if (!itemIds.has(condition.itemId)) {
-      return false;
+      repaired = true;
+      continue;
     }
 
-    if (
-      condition.kind === ITEM_CONDITION_KIND.requiresSelectedItem &&
-      !itemIds.has(condition.requiredItemId)
-    ) {
-      return false;
+    if (condition.kind === ITEM_CONDITION_KIND.requiresSelectedItem) {
+      if (!itemIds.has(condition.requiredItemId)) {
+        repaired = true;
+        continue;
+      }
+      value.push(condition);
+      continue;
     }
 
-    return true;
-  });
+    if (condition.kind === ITEM_CONDITION_KIND.requiresAnySelectedItem) {
+      const requiredItemIds = condition.requiredItemIds.filter((id) => itemIds.has(id));
+      if (requiredItemIds.length === 0) {
+        repaired = true;
+        continue;
+      }
+      if (requiredItemIds.length !== condition.requiredItemIds.length) {
+        repaired = true;
+      }
+      value.push({ ...condition, requiredItemIds });
+      continue;
+    }
+
+    if (condition.kind === ITEM_CONDITION_KIND.maxWins) {
+      if (!Number.isFinite(condition.limit) || condition.limit < 0) {
+        repaired = true;
+        continue;
+      }
+      value.push(condition);
+      continue;
+    }
+
+    if (condition.kind === ITEM_CONDITION_KIND.minWeight) {
+      if (!Number.isFinite(condition.minWeight) || condition.minWeight < 0) {
+        repaired = true;
+        continue;
+      }
+      value.push(condition);
+      continue;
+    }
+
+    value.push(condition);
+  }
 
   return {
     value: value.length > 0 ? value : undefined,
-    repaired: value.length !== conditions.length,
+    repaired: repaired || value.length !== conditions.length,
   };
 }
 

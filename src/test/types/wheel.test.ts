@@ -125,6 +125,7 @@ describe('wheel domain model', () => {
     expect(ITEM_CONDITION_KIND).toEqual({
       always: 'always',
       requiresSelectedItem: 'requires_selected_item',
+      requiresAnySelectedItem: 'requires_any_selected_item',
       maxWins: 'max_wins',
       minWeight: 'min_weight',
     });

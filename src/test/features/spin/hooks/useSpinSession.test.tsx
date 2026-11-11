@@ -6,6 +6,7 @@ import { useSpinSession } from '@/features/spin/hooks/useSpinSession';
 import { AUTO_SELECTION_MAX_STEPS } from '@/features/spin/utils/selectionFlow';
 import * as selectionFlow from '@/features/spin/utils/selectionFlow';
 import { SELECTION_MODE, type Wheel, type WheelItem } from '@/types/wheel';
+import { createRequiresSelectedItemCondition } from '@/utils/itemConditions';
 
 const sessionHarness = vi.hoisted(() => ({
   callDefaultPendingSpin: false,
@@ -116,6 +117,57 @@ describe('useSpinSession', () => {
     sessionHarness.callDefaultPendingSpin = false;
     window.matchMedia = originalMatchMedia;
     vi.restoreAllMocks();
+  });
+
+  it('only exposes child options that match conditions for the selected parent', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    const cardNumber = item('Card Number');
+    const bank = item('Bank');
+    const wallet = item('Wallet Provider');
+    const sharedChildren = [cardNumber, bank, wallet];
+    const wheel: Wheel = {
+      id: 'payment',
+      name: 'Payment',
+      items: [
+        item('Payment', {
+          children: [
+            item('Credit Card', { children: sharedChildren }),
+            item('FPX', { children: sharedChildren }),
+            item('E-Wallet', { children: sharedChildren }),
+          ],
+        }),
+      ],
+      conditions: [
+        createRequiresSelectedItemCondition('card-number', 'credit-card', 'c-card'),
+        createRequiresSelectedItemCondition('bank', 'fpx', 'c-bank'),
+        createRequiresSelectedItemCondition('wallet-provider', 'e-wallet', 'c-wallet'),
+      ],
+      settings: { ...DEFAULT_WHEEL_SETTINGS, durationMs: 1, minRotations: 1, maxRotations: 1 },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+
+    const { result } = renderHook(() => useSpinSession(wheel));
+
+    act(() => {
+      result.current.startSpin();
+    });
+    expect(result.current.winner?.name).toBe('Payment');
+    act(() => {
+      result.current.spinChild();
+    });
+
+    // Math.random mocked to 0 → first child (Credit Card)
+    act(() => {
+      result.current.startSpin();
+    });
+    expect(result.current.winner?.name).toBe('Credit Card');
+    act(() => {
+      result.current.spinChild();
+    });
+
+    expect(result.current.items.map((entry) => entry.name)).toEqual(['Card Number']);
   });
 
   it('tracks the name path through a child spin without mutating the parent items', async () => {

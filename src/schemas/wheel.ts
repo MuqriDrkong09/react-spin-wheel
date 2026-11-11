@@ -27,14 +27,20 @@ export const itemConditionSchema = z.discriminatedUnion('kind', [
   z.object({
     id: entityIdSchema,
     itemId: entityIdSchema,
+    kind: z.literal(ITEM_CONDITION_KIND.requiresAnySelectedItem),
+    requiredItemIds: z.array(entityIdSchema).min(1),
+  }),
+  z.object({
+    id: entityIdSchema,
+    itemId: entityIdSchema,
     kind: z.literal(ITEM_CONDITION_KIND.maxWins),
-    limit: z.number(),
+    limit: z.number().finite().nonnegative(),
   }),
   z.object({
     id: entityIdSchema,
     itemId: entityIdSchema,
     kind: z.literal(ITEM_CONDITION_KIND.minWeight),
-    minWeight: z.number(),
+    minWeight: z.number().finite().nonnegative(),
   }),
 ]) satisfies z.ZodType<ItemCondition>;
 

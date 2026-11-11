@@ -8,9 +8,14 @@ import {
 } from '@/features/spin/utils/selectionPath';
 import { nowIso } from '@/utils/id';
 import {
+  filterItemsByConditions,
+  type ItemConditionContext,
+} from '@/utils/itemConditions';
+import {
   isWheelItemBranch,
   SELECTION_MODE,
   type IsoDateTime,
+  type ItemCondition,
   type SelectionMode,
   type SpinSessionId,
   type WheelId,
@@ -41,12 +46,58 @@ export interface SelectionLevel {
   items: WheelItem[];
 }
 
-export function selectionDecision(item: WheelItem): SelectionDecision {
+/** Options for filtering child options by serializable wheel conditions. */
+export interface SelectionConditionOptions {
+  conditions?: readonly ItemCondition[];
+  winCounts?: ItemConditionContext['winCounts'];
+}
+
+export function selectionPathWithItem(
+  ancestors: readonly SelectionStep[],
+  itemId: WheelItemId,
+): WheelItemId[] {
+  return [...ancestors.map((step) => step.id), itemId];
+}
+
+export function eligibleChildItems(
+  parent: WheelItem,
+  options: SelectionConditionOptions & {
+    /** Selection path before including `parent` (ancestors only). */
+    ancestorIds?: readonly WheelItemId[];
+  } = {},
+): WheelItem[] | undefined {
+  const children = childItemsOf(parent);
+  if (!children?.length) {
+    return undefined;
+  }
+
+  const selectedItemIds = [...(options.ancestorIds ?? []), parent.id];
+  const eligible = filterItemsByConditions(children, options.conditions, {
+    selectedItemIds,
+    winCounts: options.winCounts,
+  });
+
+  return eligible.length > 0 ? eligible : undefined;
+}
+
+export function selectionDecision(
+  item: WheelItem,
+  options?: SelectionConditionOptions & { ancestorIds?: readonly WheelItemId[] },
+): SelectionDecision {
+  if (options?.conditions?.length || options?.winCounts) {
+    return eligibleChildItems(item, options)
+      ? SELECTION_DECISION.continue
+      : SELECTION_DECISION.finish;
+  }
+
   return isWheelItemBranch(item) ? SELECTION_DECISION.continue : SELECTION_DECISION.finish;
 }
 
-export function canContinueSelection(item: WheelItem): boolean {
-  return selectionDecision(item) === SELECTION_DECISION.continue;
+export function canContinueSelection(
+  item: WheelItem,
+  options?: SelectionConditionOptions & { ancestorIds?: readonly WheelItemId[] },
+): boolean {
+  return selectionDecision(item, options) === SELECTION_DECISION.continue;
 }
 
 export const AUTO_SELECTION_MAX_STEPS = 64;
@@ -61,8 +112,14 @@ export function hasSelectionCycle(
 export function canAutoAdvanceSelection(
   ancestors: readonly SelectionStep[],
   winner: WheelItem,
+  options?: SelectionConditionOptions,
 ): boolean {
-  if (!canContinueSelection(winner)) {
+  if (
+    !canContinueSelection(winner, {
+      ...options,
+      ancestorIds: ancestors.map((step) => step.id),
+    })
+  ) {
     return false;
   }
 
@@ -77,15 +134,20 @@ export function shouldAutoAdvanceSelection(
   mode: SelectionMode,
   ancestors: readonly SelectionStep[],
   winner: WheelItem,
+  options?: SelectionConditionOptions,
 ): boolean {
-  return mode === SELECTION_MODE.automatic && canAutoAdvanceSelection(ancestors, winner);
+  return mode === SELECTION_MODE.automatic && canAutoAdvanceSelection(ancestors, winner, options);
 }
 
 export function advanceSelectionLevel(
   ancestors: readonly SelectionStep[],
   winner: WheelItem,
+  options?: SelectionConditionOptions,
 ): SelectionLevel | undefined {
-  const items = childItemsOf(winner);
+  const items = eligibleChildItems(winner, {
+    ...options,
+    ancestorIds: ancestors.map((step) => step.id),
+  });
   if (!items?.length) {
     return undefined;
   }
@@ -94,6 +156,17 @@ export function advanceSelectionLevel(
     ancestors: [...ancestors, toSelectionStep(winner)],
     items,
   };
+}
+
+/** Root-level options visible before any parent is selected. */
+export function eligibleRootItems(
+  items: readonly WheelItem[],
+  options?: SelectionConditionOptions,
+): WheelItem[] {
+  return filterItemsByConditions(items, options?.conditions, {
+    selectedItemIds: [],
+    winCounts: options?.winCounts,
+  });
 }
 
 export function createHierarchicalSelectionResult(input: {

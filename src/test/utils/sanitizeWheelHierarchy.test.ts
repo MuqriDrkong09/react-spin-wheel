@@ -71,4 +71,69 @@ describe('sanitizeWheelHierarchy', () => {
       },
     ]);
   });
+
+  it('repairs requires-any lists and drops invalid numeric conditions', () => {
+    const wheel: Wheel = {
+      id: 'wheel',
+      name: 'Wheel',
+      items: [item('pizza'), item('burger')],
+      settings: {
+        durationMs: 4000,
+        minRotations: 4,
+        maxRotations: 8,
+        soundEnabled: true,
+        confettiEnabled: true,
+        eliminationMode: false,
+        selectionMode: SELECTION_MODE.manual,
+        removeWinner: false,
+        skipDisabledItems: true,
+        appearance: DEFAULT_WHEEL_APPEARANCE,
+      },
+      conditions: [
+        {
+          id: 'any-ok',
+          itemId: 'pizza',
+          kind: ITEM_CONDITION_KIND.requiresAnySelectedItem,
+          requiredItemIds: ['burger', 'ghost'],
+        },
+        {
+          id: 'any-bad',
+          itemId: 'pizza',
+          kind: ITEM_CONDITION_KIND.requiresAnySelectedItem,
+          requiredItemIds: ['ghost'],
+        },
+        {
+          id: 'max-bad',
+          itemId: 'burger',
+          kind: ITEM_CONDITION_KIND.maxWins,
+          limit: Number.NaN,
+        },
+        {
+          id: 'min-ok',
+          itemId: 'burger',
+          kind: ITEM_CONDITION_KIND.minWeight,
+          minWeight: 2,
+        },
+      ],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+
+    const result = sanitizeWheelHierarchy(wheel);
+    expect(result.repaired).toBe(true);
+    expect(result.value.conditions).toEqual([
+      {
+        id: 'any-ok',
+        itemId: 'pizza',
+        kind: ITEM_CONDITION_KIND.requiresAnySelectedItem,
+        requiredItemIds: ['burger'],
+      },
+      {
+        id: 'min-ok',
+        itemId: 'burger',
+        kind: ITEM_CONDITION_KIND.minWeight,
+        minWeight: 2,
+      },
+    ]);
+  });
 });

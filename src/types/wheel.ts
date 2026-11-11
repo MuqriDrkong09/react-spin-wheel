@@ -33,16 +33,28 @@ export const SPIN_SESSION_STATUS = {
 
 export type SpinSessionStatus = (typeof SPIN_SESSION_STATUS)[keyof typeof SPIN_SESSION_STATUS];
 
+/**
+ * Serializable rules that gate whether a wheel item is eligible to appear.
+ * Conditions are domain-agnostic: they reference item ids and numeric thresholds only.
+ * Stored on `Wheel.conditions` (not hardcoded to any business vertical).
+ */
 export const ITEM_CONDITION_KIND = {
+  /** Item is always eligible (explicit no-op / documentation marker). */
   always: 'always',
+  /** Eligible only when `requiredItemId` is already in the selection path (parent or earlier). */
   requiresSelectedItem: 'requires_selected_item',
+  /** Eligible when any id in `requiredItemIds` is already in the selection path. */
+  requiresAnySelectedItem: 'requires_any_selected_item',
+  /** Eligible while the item's win count is strictly below `limit`. */
   maxWins: 'max_wins',
+  /** Eligible when the item's weight is at least `minWeight`. */
   minWeight: 'min_weight',
 } as const;
 
 export type ItemConditionKind = (typeof ITEM_CONDITION_KIND)[keyof typeof ITEM_CONDITION_KIND];
 
 interface ItemConditionBase extends Identifiable<ItemConditionId> {
+  /** The item this condition applies to. */
   itemId: WheelItemId;
 }
 
@@ -53,6 +65,10 @@ export type ItemCondition =
   | (ItemConditionBase & {
       kind: typeof ITEM_CONDITION_KIND.requiresSelectedItem;
       requiredItemId: WheelItemId;
+    })
+  | (ItemConditionBase & {
+      kind: typeof ITEM_CONDITION_KIND.requiresAnySelectedItem;
+      requiredItemIds: WheelItemId[];
     })
   | (ItemConditionBase & {
       kind: typeof ITEM_CONDITION_KIND.maxWins;

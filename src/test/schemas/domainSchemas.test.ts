@@ -3,6 +3,7 @@ import { getFrozenPresetCatalog } from '@/features/presets/data/catalog';
 import { WHEEL_EXPORT_FORMAT, WHEEL_EXPORT_VERSION } from '@/features/wheel-export/constants';
 import { WHEEL_SHARE_FORMAT, WHEEL_SHARE_VERSION } from '@/features/wheel-share/constants';
 import {
+  itemConditionSchema,
   parseShareWheel,
   parseSpinResult,
   parseWheel,
@@ -18,7 +19,7 @@ import {
   wheelSettingsSchema,
   wheelShareEnvelopeSchema,
 } from '@/schemas';
-import { SELECTION_MODE } from '@/types/wheel';
+import { ITEM_CONDITION_KIND, SELECTION_MODE } from '@/types/wheel';
 
 const baseItem = {
   id: 'item-1',
@@ -98,6 +99,50 @@ describe('domain Zod schemas', () => {
     expect(wheelSchema.safeParse(wheel).success).toBe(true);
     expect(parseWheel(wheel).ok).toBe(true);
     expect(parseWheels([wheel, { id: 'broken' }, null])).toHaveLength(1);
+  });
+
+  it('persists serializable item conditions and soft-drops invalid ones', () => {
+    const conditions = [
+      { id: 'c1', itemId: 'item-1', kind: ITEM_CONDITION_KIND.always },
+      {
+        id: 'c2',
+        itemId: 'item-1',
+        kind: ITEM_CONDITION_KIND.requiresSelectedItem,
+        requiredItemId: 'parent-1',
+      },
+      {
+        id: 'c3',
+        itemId: 'item-1',
+        kind: ITEM_CONDITION_KIND.requiresAnySelectedItem,
+        requiredItemIds: ['a', 'b'],
+      },
+      { id: 'c4', itemId: 'item-1', kind: ITEM_CONDITION_KIND.maxWins, limit: 2 },
+      { id: 'c5', itemId: 'item-1', kind: ITEM_CONDITION_KIND.minWeight, minWeight: 1 },
+      { id: 'bad', itemId: 'item-1', kind: 'unknown_kind' },
+      { id: 'bad-max', itemId: 'item-1', kind: ITEM_CONDITION_KIND.maxWins, limit: -1 },
+    ];
+
+    for (const condition of conditions.slice(0, 5)) {
+      expect(itemConditionSchema.safeParse(condition).success).toBe(true);
+    }
+    expect(itemConditionSchema.safeParse(conditions[5]).success).toBe(false);
+    expect(itemConditionSchema.safeParse(conditions[6]).success).toBe(false);
+
+    const wheel = {
+      id: 'wheel-1',
+      name: 'Food',
+      items: [baseItem],
+      settings: baseSettings,
+      conditions,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+
+    const parsed = wheelSchema.safeParse(wheel);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.conditions).toHaveLength(5);
+    }
   });
 
   it('normalizes legacy SpinResult fields', () => {

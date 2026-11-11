@@ -7,9 +7,11 @@ import {
   advanceSelectionLevel,
   canContinueSelection,
   createHierarchicalSelectionResult,
+  eligibleRootItems,
   selectionAfterWinner,
   shouldAutoAdvanceSelection,
   type HierarchicalSelectionResult,
+  type SelectionConditionOptions,
 } from '@/features/spin/utils/selectionFlow';
 import { selectionPathNames, type SelectionStep } from '@/features/spin/utils/selectionPath';
 import type { SpinLifecycleState } from '@/features/spin/utils/spinLifecycle';
@@ -47,7 +49,12 @@ export function useSpinSession(wheel: Wheel) {
   const pendingResumeSpinRef = useRef(false);
   const startPendingAutomaticSpinRef = useRef<() => void>(() => undefined);
   const selectionStartedAtRef = useRef<number | null>(null);
-  const sourceItems = spinItems ?? wheel.items;
+  const conditionOptions = useMemo<SelectionConditionOptions>(
+    () => ({ conditions: wheel.conditions }),
+    [wheel.conditions],
+  );
+  const sourceItems =
+    spinItems ?? eligibleRootItems(wheel.items, conditionOptions);
   const items = excludeRemovedWinners(sourceItems, new Set(removedWinnerIds));
   const removeWinnerEnabled = wheel.settings.removeWinner ?? false;
   const spin = useSpinWheel(items, {
@@ -56,14 +63,21 @@ export function useSpinSession(wheel: Wheel) {
   const winner = spin.status === SPIN_STATUS.completed ? spin.result?.item : undefined;
   const selection = selectionAfterWinner(ancestors, winner);
   const selectionMode = wheel.settings.selectionMode ?? SELECTION_MODE.manual;
-  const canContinue = winner ? canContinueSelection(winner) : false;
+  const continueOptions = useMemo(
+    () => ({
+      ...conditionOptions,
+      ancestorIds: ancestors.map((step) => step.id),
+    }),
+    [ancestors, conditionOptions],
+  );
+  const canContinue = winner ? canContinueSelection(winner, continueOptions) : false;
   const willAutoAdvance = Boolean(
-    winner && shouldAutoAdvanceSelection(selectionMode, ancestors, winner),
+    winner && shouldAutoAdvanceSelection(selectionMode, ancestors, winner, conditionOptions),
   );
   const winnerOpen =
     Boolean(winner) && !winnerDismissed && !willAutoAdvance && !autoHandoff && !finalOpen;
   const leafResult = useMemo(() => {
-    if (!winner || canContinueSelection(winner)) {
+    if (!winner || canContinueSelection(winner, continueOptions)) {
       return undefined;
     }
 
@@ -72,7 +86,7 @@ export function useSpinSession(wheel: Wheel) {
       wheelId: wheel.id,
       selection: selectionAfterWinner(ancestors, winner),
     });
-  }, [ancestors, sessionId, wheel.id, winner]);
+  }, [ancestors, continueOptions, sessionId, wheel.id, winner]);
   const result = finishedResult ?? leafResult;
 
   useEffect(() => {
@@ -93,13 +107,16 @@ export function useSpinSession(wheel: Wheel) {
     if (item && removeWinnerEnabled) {
       setRemovedWinnerIds((current) => withRemovedWinner(current, item.id));
     }
-    if (!item || !shouldAutoAdvanceSelection(selectionMode, currentAncestors, item)) {
+    if (
+      !item ||
+      !shouldAutoAdvanceSelection(selectionMode, currentAncestors, item, conditionOptions)
+    ) {
       setAutoHandoff(false);
       setWinnerDismissed(false);
       return;
     }
 
-    const next = advanceSelectionLevel(currentAncestors, item);
+    const next = advanceSelectionLevel(currentAncestors, item, conditionOptions);
     if (!next) {
       setAutoHandoff(false);
       setWinnerDismissed(false);
@@ -201,7 +218,7 @@ export function useSpinSession(wheel: Wheel) {
       return;
     }
 
-    const next = advanceSelectionLevel(ancestors, winner);
+    const next = advanceSelectionLevel(ancestors, winner, conditionOptions);
     if (!next) {
       return;
     }

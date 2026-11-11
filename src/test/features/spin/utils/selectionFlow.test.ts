@@ -4,6 +4,7 @@ import {
   canAutoAdvanceSelection,
   canContinueSelection,
   createHierarchicalSelectionResult,
+  eligibleRootItems,
   SELECTION_DECISION,
   selectionDecision,
   shouldAutoAdvanceSelection,
@@ -11,6 +12,10 @@ import {
 import { SELECTION_MODE } from '@/types/wheel';
 import { toSelectionStep, type SelectionStep } from '@/features/spin/utils/selectionPath';
 import type { WheelItem } from '@/types/wheel';
+import {
+  createMaxWinsCondition,
+  createRequiresSelectedItemCondition,
+} from '@/utils/itemConditions';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -134,5 +139,63 @@ describe('selectionFlow', () => {
         selection: [],
       }),
     ).toBeUndefined();
+  });
+
+  it('filters child options by conditions for the selected parent path', () => {
+    const cardNumber = nested('Card Number');
+    const bank = nested('Bank');
+    const wallet = nested('Wallet Provider');
+    const payment = nested('Payment', [
+      nested('Credit Card', [cardNumber, bank, wallet]),
+      nested('FPX', [cardNumber, bank, wallet]),
+      nested('E-Wallet', [cardNumber, bank, wallet]),
+    ]);
+
+    const conditions = [
+      createRequiresSelectedItemCondition('card-number', 'credit-card', 'c1'),
+      createRequiresSelectedItemCondition('bank', 'fpx', 'c2'),
+      createRequiresSelectedItemCondition('wallet-provider', 'e-wallet', 'c3'),
+    ];
+
+    const afterCreditCard = advanceSelectionLevel(
+      [toSelectionStep(payment)],
+      nested('Credit Card', [cardNumber, bank, wallet]),
+      { conditions },
+    );
+    expect(afterCreditCard?.items.map((entry) => entry.name)).toEqual(['Card Number']);
+
+    const afterFpx = advanceSelectionLevel(
+      [toSelectionStep(payment)],
+      nested('FPX', [cardNumber, bank, wallet]),
+      { conditions },
+    );
+    expect(afterFpx?.items.map((entry) => entry.name)).toEqual(['Bank']);
+  });
+
+  it('finishes when all children are ruled out by conditions', () => {
+    const parent = nested('Parent', [nested('Gated Child')]);
+    const conditions = [createRequiresSelectedItemCondition('gated-child', 'missing', 'c1')];
+
+    expect(canContinueSelection(parent, { conditions, ancestorIds: [] })).toBe(false);
+    expect(advanceSelectionLevel([], parent, { conditions })).toBeUndefined();
+    expect(shouldAutoAdvanceSelection(SELECTION_MODE.automatic, [], parent, { conditions })).toBe(
+      false,
+    );
+  });
+
+  it('filters root items and respects max-wins win counts', () => {
+    const roots = [item('Open'), item('Limited', { weight: 2 })];
+    const conditions = [createMaxWinsCondition('limited', 1, 'max-1')];
+
+    expect(eligibleRootItems(roots, { conditions }).map((entry) => entry.name)).toEqual([
+      'Open',
+      'Limited',
+    ]);
+    expect(
+      eligibleRootItems(roots, {
+        conditions,
+        winCounts: { limited: 1 },
+      }).map((entry) => entry.name),
+    ).toEqual(['Open']);
   });
 });
