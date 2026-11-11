@@ -11,7 +11,10 @@ test.describe('Wheels page', () => {
 
   test('shows the wheels page heading and description', async ({ page }) => {
     await goToNav(page, 'Wheels');
-    await expect(page.getByText('View and organize your wheels.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Wheels', level: 1 })).toBeVisible();
+    await expect(
+      page.getByText('Browse, organize, and open the wheels in your workspace.'),
+    ).toBeVisible();
   });
 
   test('keeps created wheels available from the dashboard after visiting wheels', async ({ page }) => {

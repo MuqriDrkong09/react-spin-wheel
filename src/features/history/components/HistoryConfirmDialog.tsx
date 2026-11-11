@@ -1,5 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
-
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 import { HISTORY_MESSAGES } from '@/features/history/constants';
 
 interface HistoryConfirmDialogProps {
@@ -20,34 +19,16 @@ export function HistoryConfirmDialog({
   onConfirm,
 }: HistoryConfirmDialogProps) {
   return (
-    <Dialog
+    <ConfirmDialog
       open={open}
-      onClose={onCancel}
-      transitionDuration={0}
-      closeAfterTransition={false}
-      fullWidth
-      maxWidth="xs"
-      aria-labelledby="history-confirm-title"
-      aria-describedby="history-confirm-description"
-    >
-      <DialogTitle id="history-confirm-title">{title}</DialogTitle>
-      <DialogContent>
-        <DialogContentText id="history-confirm-description">{description}</DialogContentText>
-      </DialogContent>
-      <DialogActions
-        sx={{
-          flexDirection: { xs: 'column-reverse', sm: 'row' },
-          px: 3,
-          pb: 2,
-          gap: 1,
-          '& > :not(style)': { m: 0, width: { xs: '100%', sm: 'auto' } },
-        }}
-      >
-        <Button onClick={onCancel}>{HISTORY_MESSAGES.cancel}</Button>
-        <Button color="error" variant="contained" onClick={onConfirm}>
-          {confirmLabel}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      title={title}
+      description={description}
+      confirmLabel={confirmLabel}
+      cancelLabel={HISTORY_MESSAGES.cancel}
+      titleId="history-confirm-title"
+      descriptionId="history-confirm-description"
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+    />
   );
 }

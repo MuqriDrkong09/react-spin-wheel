@@ -1,10 +1,12 @@
 import AddIcon from '@mui/icons-material/Add';
-import { Alert, Box, Button, Snackbar, Stack, Typography } from '@mui/material';
+import DonutLargeOutlinedIcon from '@mui/icons-material/DonutLargeOutlined';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { useLayoutEffect, useMemo, useState } from 'react';
 
 import { LiveAnnouncer } from '@/components/common/LiveAnnouncer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { PageHeader } from '@/components/common/PageHeader';
+import { AppToast } from '@/components/feedback/AppToast';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { AutoSpinPanel } from '@/features/spin/components/AutoSpinPanel';
 import { FinalResult } from '@/features/spin/components/FinalResult';
@@ -101,6 +103,7 @@ export function SpinScreen() {
         ) : (
           <EmptyState
             titleComponent="h2"
+            icon={<DonutLargeOutlinedIcon />}
             title={
               isInvalidWheel
                 ? SPIN_MESSAGES.missingWheelTitle
@@ -280,14 +283,16 @@ function ActiveWheelSpin({
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            minHeight: 0,
-            gap: 2,
+            minHeight: { xs: 420, md: 520 },
+            gap: 2.5,
             overflow: 'hidden',
             scrollbarGutter: 'stable',
             bgcolor: appearance.background,
-            borderRadius: 3,
-            px: 2,
-            py: 3,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+            px: { xs: 2, md: 3 },
+            py: { xs: 3, md: 4 },
           }}
         >
           <Box
@@ -387,20 +392,12 @@ function ActiveWheelSpin({
         onSpinAgain={spinAgain}
         onSpinChild={session.spinChild}
       />
-      <Snackbar
+      <AppToast
         open={Boolean(statusMessage)}
-        autoHideDuration={4000}
+        message={statusMessage}
+        severity={statusMessage === SPIN_MESSAGES.resultCopyFailed ? 'error' : 'success'}
         onClose={() => setStatusMessage('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          severity={statusMessage === SPIN_MESSAGES.resultCopyFailed ? 'error' : 'success'}
-          variant="filled"
-          onClose={() => setStatusMessage('')}
-        >
-          {statusMessage}
-        </Alert>
-      </Snackbar>
+      />
     </>
   );
 }

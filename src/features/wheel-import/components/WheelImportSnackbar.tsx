@@ -1,5 +1,4 @@
-import { Alert, Snackbar } from '@mui/material';
-
+import { AppToast } from '@/components/feedback/AppToast';
 import type { WheelImportStatus } from '@/features/wheel-import/types';
 
 interface WheelImportSnackbarProps {
@@ -9,15 +8,11 @@ interface WheelImportSnackbarProps {
 
 export function WheelImportSnackbar({ status, onClose }: WheelImportSnackbarProps) {
   return (
-    <Snackbar
+    <AppToast
       open={Boolean(status)}
-      autoHideDuration={4000}
+      message={status?.message}
+      severity={status?.severity ?? 'success'}
       onClose={onClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-    >
-      <Alert severity={status?.severity ?? 'success'} variant="filled" onClose={onClose}>
-        {status?.message}
-      </Alert>
-    </Snackbar>
+    />
   );
 }

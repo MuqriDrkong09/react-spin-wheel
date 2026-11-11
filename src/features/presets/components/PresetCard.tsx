@@ -29,14 +29,39 @@ export function PresetCard({ preset, onPreview, onCreate, onModify }: PresetCard
   const nestedCount = countPresetChildren(preset.items);
 
   return (
-    <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card
+      variant="outlined"
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: (theme) =>
+          theme.transitions.create('border-color', { duration: theme.transitions.duration.shorter }),
+        '&:hover': { borderColor: 'primary.main' },
+      }}
+    >
       <CardContent sx={{ flexGrow: 1 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
+          <Box
+            aria-hidden
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 1.5,
+              display: 'grid',
+              placeItems: 'center',
+              bgcolor: 'action.hover',
+              fontSize: 22,
+              flexShrink: 0,
+            }}
+          >
+            {preset.icon}
+          </Box>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h6" component="h2" noWrap>
-              {preset.icon} {preset.name}
+              {preset.name}
             </Typography>
-            <Chip label={preset.category} size="small" sx={{ mt: 1 }} />
+            <Chip label={preset.category} size="small" variant="outlined" sx={{ mt: 1 }} />
           </Box>
         </Stack>
         <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="body2">
@@ -49,14 +74,6 @@ export function PresetCard({ preset, onPreview, onCreate, onModify }: PresetCard
       </CardContent>
       <CardActions sx={{ px: 2, pb: 2, flexWrap: 'wrap', gap: 1, '& .MuiButton-root': { minHeight: 40 } }}>
         <Button
-          size="small"
-          startIcon={<VisibilityOutlinedIcon />}
-          aria-label={`Preview ${preset.name}`}
-          onClick={() => onPreview(preset.id)}
-        >
-          {PRESET_MESSAGES.preview}
-        </Button>
-        <Button
           variant="contained"
           size="small"
           startIcon={<PlayArrowIcon />}
@@ -64,6 +81,14 @@ export function PresetCard({ preset, onPreview, onCreate, onModify }: PresetCard
           onClick={() => onCreate(preset.id)}
         >
           {PRESET_MESSAGES.create}
+        </Button>
+        <Button
+          size="small"
+          startIcon={<VisibilityOutlinedIcon />}
+          aria-label={`Preview ${preset.name}`}
+          onClick={() => onPreview(preset.id)}
+        >
+          {PRESET_MESSAGES.preview}
         </Button>
         <Button
           size="small"

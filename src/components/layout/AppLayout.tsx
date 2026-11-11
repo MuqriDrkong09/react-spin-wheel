@@ -58,7 +58,7 @@ export function AppLayout() {
         }}
       >
         <Toolbar />
-        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 } }}>
+        <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2.5, md: 3.5 }, maxWidth: '100%' }}>
           <RuntimeNoticeBanner />
           <AppErrorBoundary>
             <Suspense fallback={<RouteFallback />}>

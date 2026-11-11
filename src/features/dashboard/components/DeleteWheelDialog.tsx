@@ -1,5 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
-
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 import type { Wheel } from '@/types/wheel';
 
 interface DeleteWheelDialogProps {
@@ -10,38 +9,19 @@ interface DeleteWheelDialogProps {
 
 export function DeleteWheelDialog({ wheel, onCancel, onConfirm }: DeleteWheelDialogProps) {
   return (
-    <Dialog
+    <ConfirmDialog
       open={Boolean(wheel)}
-      onClose={onCancel}
-      transitionDuration={0}
-      closeAfterTransition={false}
-      fullWidth
-      maxWidth="xs"
-      aria-labelledby="delete-wheel-title"
-      aria-describedby="delete-wheel-description"
-    >
-      <DialogTitle id="delete-wheel-title">Delete wheel</DialogTitle>
-      <DialogContent>
-        <DialogContentText id="delete-wheel-description">
-          {wheel
-            ? `Delete ${wheel.name}? This cannot be undone.`
-            : 'Delete this wheel? This cannot be undone.'}
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions
-        sx={{
-          flexDirection: { xs: 'column-reverse', sm: 'row' },
-          px: 3,
-          pb: 2,
-          gap: 1,
-          '& > :not(style)': { m: 0, width: { xs: '100%', sm: 'auto' } },
-        }}
-      >
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button color="error" variant="contained" onClick={onConfirm}>
-          Delete
-        </Button>
-      </DialogActions>
-    </Dialog>
+      title="Delete wheel"
+      titleId="delete-wheel-title"
+      descriptionId="delete-wheel-description"
+      description={
+        wheel
+          ? `Delete ${wheel.name}? This cannot be undone.`
+          : 'Delete this wheel? This cannot be undone.'
+      }
+      confirmLabel="Delete"
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+    />
   );
 }

@@ -21,19 +21,31 @@ export function PageHeader({
       sx={{
         alignItems: { [actionsBesideFrom]: 'flex-start' },
         justifyContent: 'space-between',
+        pb: 0.5,
       }}
     >
-      <Box>
-        <Typography variant="h4" component="h1" gutterBottom>
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: description ? 1 : 0 }}>
           {title}
         </Typography>
         {description ? (
-          <Typography color="text.secondary" sx={{ maxWidth: 640 }}>
+          <Typography color="text.secondary" sx={{ maxWidth: 640, lineHeight: 1.6 }}>
             {description}
           </Typography>
         ) : null}
       </Box>
-      {action}
+      {action ? (
+        <Box
+          sx={{
+            flexShrink: 0,
+            width: { xs: '100%', [actionsBesideFrom]: 'auto' },
+            '& .MuiStack-root': { width: { xs: '100%', [actionsBesideFrom]: 'auto' } },
+            '& .MuiButton-root': { width: { xs: '100%', sm: 'auto' } },
+          }}
+        >
+          {action}
+        </Box>
+      ) : null}
     </Stack>
   );
 }

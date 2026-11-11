@@ -1,5 +1,5 @@
 import MenuIcon from '@mui/icons-material/Menu';
-import { AppBar, Box, IconButton, Toolbar, Typography } from '@mui/material';
+import { AppBar, IconButton, Toolbar, Typography } from '@mui/material';
 
 import { ColorModeMenu } from '@/components/layout/ColorModeMenu';
 import { APP_NAME, DRAWER_WIDTH } from '@/constants/app';
@@ -22,7 +22,7 @@ export function AppHeader() {
         ml: { md: `${DRAWER_WIDTH}px` },
       }}
     >
-      <Toolbar sx={{ gap: 1 }}>
+      <Toolbar sx={{ gap: 1, minHeight: { xs: 56, sm: 64 } }}>
         {isMobile ? (
           <IconButton
             color="inherit"
@@ -33,12 +33,20 @@ export function AppHeader() {
             <MenuIcon />
           </IconButton>
         ) : null}
-        <Typography variant="h6" component="p" sx={{ fontWeight: 700, flexGrow: 1 }}>
+        <Typography
+          variant="h6"
+          component="p"
+          sx={{
+            fontWeight: 700,
+            flexGrow: 1,
+            letterSpacing: '-0.02em',
+            color: isMobile ? 'text.primary' : 'text.secondary',
+            fontSize: isMobile ? undefined : '0.95rem',
+          }}
+        >
           {APP_NAME}
         </Typography>
-        <Box>
-          <ColorModeMenu />
-        </Box>
+        <ColorModeMenu />
       </Toolbar>
     </AppBar>
   );

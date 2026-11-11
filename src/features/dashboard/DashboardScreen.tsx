@@ -1,5 +1,7 @@
 import AddIcon from '@mui/icons-material/Add';
+import DonutLargeOutlinedIcon from '@mui/icons-material/DonutLargeOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
+import SearchOffOutlinedIcon from '@mui/icons-material/SearchOffOutlined';
 import { Box, Button, Stack } from '@mui/material';
 
 import { PageContainer } from '@/components/common/PageContainer';
@@ -54,13 +56,14 @@ export function DashboardScreen() {
             </Stack>
           }
         />
-        <DashboardStatsCards stats={dashboard.stats} />
+
         <WheelImportDropZone
           inputRef={importer.inputRef}
           dragging={importer.dragging}
           onInputChange={importer.onInputChange}
           onPickFile={importer.openFilePicker}
         />
+
         {dashboard.hasWheels ? (
           <>
             <DashboardToolbar
@@ -94,14 +97,17 @@ export function DashboardScreen() {
                 title="No matching wheels"
                 description="Try a different search, category, favorites, recently used filter, or sort order."
                 titleComponent="h2"
+                icon={<SearchOffOutlinedIcon />}
               />
             )}
+            <DashboardStatsCards stats={dashboard.stats} />
           </>
         ) : (
           <EmptyState
             title="No wheels yet"
             description="Create a wheel to start spinning names, meals, and decisions."
             titleComponent="h2"
+            icon={<DonutLargeOutlinedIcon />}
             action={
               <Button variant="contained" startIcon={<AddIcon />} onClick={dashboard.openCreate}>
                 Create your first wheel
@@ -109,6 +115,7 @@ export function DashboardScreen() {
             }
           />
         )}
+
         <Box
           sx={{
             display: 'grid',

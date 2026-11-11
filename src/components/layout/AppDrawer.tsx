@@ -1,3 +1,4 @@
+import DonutLargeRoundedIcon from '@mui/icons-material/DonutLargeRounded';
 import {
   Box,
   Drawer,
@@ -5,6 +6,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Stack,
   Toolbar,
   Typography,
 } from '@mui/material';
@@ -24,12 +26,34 @@ export function AppDrawer() {
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Toolbar>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          {APP_NAME}
-        </Typography>
+      <Toolbar sx={{ px: 2.5 }}>
+        <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', minWidth: 0 }}>
+          <Box
+            aria-hidden
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              display: 'grid',
+              placeItems: 'center',
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              flexShrink: 0,
+            }}
+          >
+            <DonutLargeRoundedIcon sx={{ fontSize: 20 }} />
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} noWrap>
+              {APP_NAME}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              Spin workspace
+            </Typography>
+          </Box>
+        </Stack>
       </Toolbar>
-      <List sx={{ px: 1 }}>
+      <List sx={{ px: 1.5, py: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const selected = location.pathname === item.path;
@@ -45,11 +69,22 @@ export function AppDrawer() {
                   setSidebarOpen(false);
                 }
               }}
+              sx={{ py: 1 }}
             >
-              <ListItemIcon>
-                <Icon />
+              <ListItemIcon sx={{ minWidth: 40, color: selected ? 'primary.main' : 'text.secondary' }}>
+                <Icon fontSize="small" />
               </ListItemIcon>
-              <ListItemText primary={item.label} />
+              <ListItemText
+                primary={item.label}
+                slotProps={{
+                  primary: {
+                    sx: {
+                      fontWeight: selected ? 650 : 500,
+                      fontSize: '0.9375rem',
+                    },
+                  },
+                }}
+              />
             </ListItemButton>
           );
         })}
@@ -74,6 +109,7 @@ export function AppDrawer() {
             boxSizing: 'border-box',
             borderRight: 1,
             borderColor: 'divider',
+            bgcolor: 'background.paper',
           },
         }}
       >

@@ -23,13 +23,13 @@ test.describe('Theme and mobile layout', () => {
 
     await expect
       .poll(async () => page.evaluate(() => getComputedStyle(document.body).backgroundColor))
-      .toBe('rgb(11, 18, 32)');
+      .toBe('rgb(10, 18, 20)');
 
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible();
     await expect
       .poll(async () => page.evaluate(() => getComputedStyle(document.body).backgroundColor))
-      .toBe('rgb(11, 18, 32)');
+      .toBe('rgb(10, 18, 20)');
   });
 
   test('uses a mobile navigation drawer', async ({ page }) => {
