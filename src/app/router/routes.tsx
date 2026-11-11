@@ -1,19 +1,25 @@
 import type { RouteObject } from 'react-router-dom';
 
 import { AppLayout } from '@/components/layout/AppLayout';
-import { CreateWheelPage } from '@/pages/CreateWheelPage';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { HistoryPage } from '@/pages/HistoryPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { PresetsPage } from '@/pages/PresetsPage';
-import { RandomGeneratorPage } from '@/pages/RandomGeneratorPage';
 import { RouteErrorPage } from '@/pages/RouteErrorPage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import { SharedWheelPage } from '@/pages/SharedWheelPage';
-import { SpinPage } from '@/pages/SpinPage';
-import { StatisticsPage } from '@/pages/StatisticsPage';
-import { WheelEditorPage } from '@/pages/WheelEditorPage';
-import { WheelsPage } from '@/pages/WheelsPage';
+
+import { lazyPage } from './lazyPage';
+
+const DashboardPage = lazyPage(() => import('@/pages/DashboardPage'), 'DashboardPage');
+const WheelsPage = lazyPage(() => import('@/pages/WheelsPage'), 'WheelsPage');
+const CreateWheelPage = lazyPage(() => import('@/pages/CreateWheelPage'), 'CreateWheelPage');
+const WheelEditorPage = lazyPage(() => import('@/pages/WheelEditorPage'), 'WheelEditorPage');
+const SpinPage = lazyPage(() => import('@/pages/SpinPage'), 'SpinPage');
+const HistoryPage = lazyPage(() => import('@/pages/HistoryPage'), 'HistoryPage');
+const StatisticsPage = lazyPage(() => import('@/pages/StatisticsPage'), 'StatisticsPage');
+const PresetsPage = lazyPage(() => import('@/pages/PresetsPage'), 'PresetsPage');
+const SettingsPage = lazyPage(() => import('@/pages/SettingsPage'), 'SettingsPage');
+const RandomGeneratorPage = lazyPage(
+  () => import('@/pages/RandomGeneratorPage'),
+  'RandomGeneratorPage',
+);
+const SharedWheelPage = lazyPage(() => import('@/pages/SharedWheelPage'), 'SharedWheelPage');
 
 export const appRoutes: RouteObject[] = [
   {

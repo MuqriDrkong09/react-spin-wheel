@@ -30,7 +30,7 @@ describe('useLocalStorage', () => {
     storageService.clearMemory();
   });
 
-  it('uses the default value when nothing is stored', () => {
+  it('uses the default value when nothing is stored', async () => {
     render(<ThemeProbe />);
     expect(screen.getByText('Theme light')).toBeInTheDocument();
   });
@@ -45,7 +45,7 @@ describe('useLocalStorage', () => {
     expect(storageService.readJson('probe-theme')).toBe('dark');
   });
 
-  it('reads an existing stored value', () => {
+  it('reads an existing stored value', async () => {
     storageService.writeJson('probe-theme', 'dark');
     render(<ThemeProbe />);
     expect(screen.getByText('Theme dark')).toBeInTheDocument();

@@ -3,7 +3,7 @@ import { ShareWheelSnackbar } from '@/features/wheel-share/components/ShareWheel
 import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
 
 describe('ShareWheelSnackbar', () => {
-  it('does not render an alert when there is no status', () => {
+  it('does not render an alert when there is no status', async () => {
     renderWithProviders(<ShareWheelSnackbar status={null} onClose={vi.fn()} />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });

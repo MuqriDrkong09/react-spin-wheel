@@ -34,14 +34,14 @@ function previewParts(
 }
 
 describe('WheelPreview', () => {
-  it('uses a solid background when there are no active items', () => {
+  it('uses a solid background when there are no active items', async () => {
     const { disc } = previewParts([item('Pizza', { enabled: false }), item('Burger', { weight: 0 })]);
 
     expect(window.getComputedStyle(disc).backgroundImage).toBe('none');
     expect(window.getComputedStyle(disc).backgroundColor).toBe('rgb(248, 250, 252)');
   });
 
-  it('paints a conic gradient from palette colors and a filled hub', () => {
+  it('paints a conic gradient from palette colors and a filled hub', async () => {
     const { disc, pointer, hub } = previewParts(
       [item('Pizza', { color: '#ea580c' }), item('Burger', { color: '#ca8a04' })],
       {
@@ -62,7 +62,7 @@ describe('WheelPreview', () => {
     expect(window.getComputedStyle(hub).borderTopStyle).toBe('none');
   });
 
-  it('outlines the hub and uses the wheel background for unfilled styles', () => {
+  it('outlines the hub and uses the wheel background for unfilled styles', async () => {
     const outlined = previewParts([item('Pizza')], {
       centerButtonStyle: CENTER_BUTTON_STYLE.outlined,
       centerButtonColor: '#4f46e5',
@@ -82,7 +82,7 @@ describe('WheelPreview', () => {
     expect(window.getComputedStyle(ghost.hub).borderTopStyle).toBe('none');
   });
 
-  it('falls back to item colors when the palette is empty', () => {
+  it('falls back to item colors when the palette is empty', async () => {
     const { disc } = previewParts(
       [item('Pizza', { color: '#ea580c' }), item('Burger', { color: '#0f766e' })],
       { segmentColors: [] },

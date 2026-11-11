@@ -61,7 +61,7 @@ describe('useAutoSpin', () => {
     vi.useRealTimers();
   });
 
-  it('runs the configured number of spins, saves each result, and lists winners', () => {
+  it('runs the configured number of spins, saves each result, and lists winners', async () => {
     const { result } = renderHook(() => useHarness());
 
     act(() => {
@@ -94,7 +94,7 @@ describe('useAutoSpin', () => {
     expect(result.current.auto.controlsLocked).toBe(false);
   });
 
-  it('does not save history when Save results is off', () => {
+  it('does not save history when Save results is off', async () => {
     const { result } = renderHook(() => useHarness());
 
     act(() => {
@@ -110,7 +110,7 @@ describe('useAutoSpin', () => {
     expect(result.current.saved.current).toHaveLength(0);
   });
 
-  it('stops during the delay and leaves already saved spins in place', () => {
+  it('stops during the delay and leaves already saved spins in place', async () => {
     const { result } = renderHook(() => useHarness());
 
     act(() => {
@@ -134,7 +134,7 @@ describe('useAutoSpin', () => {
     expect(result.current.saved.current).toHaveLength(1);
   });
 
-  it('cancels the delay timer on unmount', () => {
+  it('cancels the delay timer on unmount', async () => {
     const { result, unmount } = renderHook(() => useHarness());
 
     act(() => {
@@ -150,7 +150,7 @@ describe('useAutoSpin', () => {
     });
   });
 
-  it('errors when no items remain to spin', () => {
+  it('errors when no items remain to spin', async () => {
     const { result } = renderHook(() => useHarness(0));
 
     act(() => {
@@ -161,7 +161,7 @@ describe('useAutoSpin', () => {
     expect(result.current.auto.error).toBe(SPIN_MESSAGES.autoSpinNoItems);
   });
 
-  it('rejects an invalid spin count', () => {
+  it('rejects an invalid spin count', async () => {
     const { result } = renderHook(() => useHarness());
 
     act(() => {

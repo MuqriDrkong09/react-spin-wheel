@@ -4,14 +4,14 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { renderWithProviders, screen } from '@/test/test-utils';
 
 describe('PageHeader', () => {
-  it('renders the title as the page heading', () => {
+  it('renders the title as the page heading', async () => {
     renderWithProviders(<PageHeader title="Dashboard" />);
 
     expect(screen.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
     expect(screen.queryByText('Manage workspace preferences.')).not.toBeInTheDocument();
   });
 
-  it('renders an optional description', () => {
+  it('renders an optional description', async () => {
     renderWithProviders(
       <PageHeader title="Settings" description="Manage workspace preferences." />,
     );
@@ -20,7 +20,7 @@ describe('PageHeader', () => {
     expect(screen.getByText('Manage workspace preferences.')).toBeInTheDocument();
   });
 
-  it('renders an optional action beside the title from the sm breakpoint by default', () => {
+  it('renders an optional action beside the title from the sm breakpoint by default', async () => {
     renderWithProviders(
       <PageHeader title="Dashboard" action={<Button>Create Wheel</Button>} />,
     );
@@ -29,7 +29,7 @@ describe('PageHeader', () => {
     expect(screen.getByRole('button', { name: 'Create Wheel' })).toBeInTheDocument();
   });
 
-  it('can keep the action stacked until the md breakpoint', () => {
+  it('can keep the action stacked until the md breakpoint', async () => {
     renderWithProviders(
       <PageHeader
         title="Spin"

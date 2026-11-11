@@ -1,6 +1,6 @@
 import AddIcon from '@mui/icons-material/Add';
 import { Alert, Box, Button, Snackbar, Stack, Typography } from '@mui/material';
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 
 import { LiveAnnouncer } from '@/components/common/LiveAnnouncer';
 import { PageContainer } from '@/components/common/PageContainer';
@@ -151,6 +151,10 @@ function ActiveWheelSpin({
   const [statusMessage, setStatusMessage] = useState('');
   const appearance = resolveAppearance(wheel.settings.appearance);
   const title = displayWheelTitle(appearance, wheel.name);
+  const spinWheelKey = useMemo(
+    () => session.items.map((item) => item.id).join('|'),
+    [session.items],
+  );
   const autoSpin = useAutoSpin({
     itemCount: session.items.length,
     spinStatus: session.spin.status,
@@ -311,7 +315,7 @@ function ActiveWheelSpin({
             ) : null}
           </Box>
           <SpinWheel
-            key={session.items.map((item) => item.id).join('|')}
+            key={spinWheelKey}
             items={session.items}
             appearance={appearance}
             onSpin={session.startSpin}

@@ -17,7 +17,7 @@ function item(name: string, extra?: Partial<WheelItem>): WheelItem {
 }
 
 describe('WinnerDialog', () => {
-  it('shows Finish and Spin Again when the winner has no children', () => {
+  it('shows Finish and Spin Again when the winner has no children', async () => {
     renderWithProviders(
       <WinnerDialog
         open
@@ -40,7 +40,7 @@ describe('WinnerDialog', () => {
     expect(screen.queryByRole('button', { name: SPIN_MESSAGES.close })).not.toBeInTheDocument();
   });
 
-  it('shows additional data actions when the winner has children', () => {
+  it('shows additional data actions when the winner has children', async () => {
     renderWithProviders(
       <WinnerDialog
         open
@@ -65,7 +65,7 @@ describe('WinnerDialog', () => {
     expect(screen.queryByRole('button', { name: SPIN_MESSAGES.spinAgain })).not.toBeInTheDocument();
   });
 
-  it('asks whether to continue when selection mode is ask', () => {
+  it('asks whether to continue when selection mode is ask', async () => {
     renderWithProviders(
       <WinnerDialog
         open
@@ -112,7 +112,7 @@ describe('WinnerDialog', () => {
     expect(onSpinAgain).not.toHaveBeenCalled();
   });
 
-  it('does not render a dialog when closed', () => {
+  it('does not render a dialog when closed', async () => {
     renderWithProviders(
       <WinnerDialog
         open={false}
@@ -127,7 +127,7 @@ describe('WinnerDialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('lets the user continue from a grandchild that still has children', () => {
+  it('lets the user continue from a grandchild that still has children', async () => {
     const pizza = item('Pizza');
     const chicken = item('Chicken Pepperoni');
     const large = item('Large', { children: [item('Thin Crust')] });
@@ -153,7 +153,7 @@ describe('WinnerDialog', () => {
     expect(screen.queryByRole('button', { name: SPIN_MESSAGES.spinAgain })).not.toBeInTheDocument();
   });
 
-  it('renders the selection hierarchy for a child winner', () => {
+  it('renders the selection hierarchy for a child winner', async () => {
     const pizza = item('Pizza');
     const chicken = item('Chicken Pepperoni');
     renderWithProviders(

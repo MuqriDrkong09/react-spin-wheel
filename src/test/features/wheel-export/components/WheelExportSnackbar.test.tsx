@@ -3,7 +3,7 @@ import { WheelExportSnackbar } from '@/features/wheel-export/components/WheelExp
 import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
 
 describe('WheelExportSnackbar', () => {
-  it('does not render an alert when there is no status', () => {
+  it('does not render an alert when there is no status', async () => {
     renderWithProviders(<WheelExportSnackbar status={null} onClose={vi.fn()} />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -29,7 +29,7 @@ describe('WheelExportSnackbar', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('shows an error message', () => {
+  it('shows an error message', async () => {
     renderWithProviders(
       <WheelExportSnackbar
         status={{ severity: 'error', message: EXPORT_MESSAGES.itemsRequired }}

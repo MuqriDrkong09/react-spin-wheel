@@ -78,7 +78,7 @@ describe('StatisticsCharts', () => {
     colorHarness.colors = ['#4f46e5', '#0f766e'];
   });
 
-  it('renders chart sections and the selection frequency table', () => {
+  it('renders chart sections and the selection frequency table', async () => {
     renderWithProviders(<StatisticsCharts snapshot={snapshot()} />);
 
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.spinFrequency })).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe('StatisticsCharts', () => {
     );
   });
 
-  it('notes when there are no child selections', () => {
+  it('notes when there are no child selections', async () => {
     renderWithProviders(
       <StatisticsCharts
         snapshot={snapshot({
@@ -108,7 +108,7 @@ describe('StatisticsCharts', () => {
     expect(screen.getByText(STATISTICS_MESSAGES.noChildSelections)).toBeInTheDocument();
   });
 
-  it('does not treat a missing child row as a zero count', () => {
+  it('does not treat a missing child row as a zero count', async () => {
     renderWithProviders(
       <StatisticsCharts
         snapshot={snapshot({
@@ -120,7 +120,7 @@ describe('StatisticsCharts', () => {
     expect(screen.queryByText(STATISTICS_MESSAGES.noChildSelections)).not.toBeInTheDocument();
   });
 
-  it('falls back when a pie slice color is missing', () => {
+  it('falls back when a pie slice color is missing', async () => {
     colorHarness.colors = [undefined, undefined];
     renderWithProviders(
       <StatisticsCharts

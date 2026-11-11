@@ -60,7 +60,7 @@ describe('SoundSettingsPanel', () => {
     resetSettingsStore();
   });
 
-  it('renders sound copy and enabled controls', () => {
+  it('renders sound copy and enabled controls', async () => {
     renderPanel();
 
     expect(screen.getByRole('heading', { name: SOUND_MESSAGES.title, level: 2 })).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe('SoundSettingsPanel', () => {
     });
   });
 
-  it('updates master volume from the slider', () => {
+  it('updates master volume from the slider', async () => {
     renderPanel();
 
     fireEvent.change(screen.getByRole('slider', { name: SOUND_MESSAGES.masterVolume }), {

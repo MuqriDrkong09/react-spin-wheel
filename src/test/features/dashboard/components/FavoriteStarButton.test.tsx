@@ -2,7 +2,7 @@ import { FavoriteStarButton } from '@/features/dashboard/components/FavoriteStar
 import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
 
 describe('FavoriteStarButton', () => {
-  it('exposes an unpressed star control for wheels that are not favorited', () => {
+  it('exposes an unpressed star control for wheels that are not favorited', async () => {
     renderWithProviders(
       <FavoriteStarButton name="Pizza Night" isFavorite={false} onToggle={vi.fn()} />,
     );

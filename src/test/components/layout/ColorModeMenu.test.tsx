@@ -17,7 +17,7 @@ describe('ColorModeMenu', () => {
     resetAppStore();
   });
 
-  it('shows the system icon and a closed menu by default', () => {
+  it('shows the system icon and a closed menu by default', async () => {
     renderWithProviders(<ColorModeMenu />);
 
     const trigger = triggerButton();
@@ -29,14 +29,14 @@ describe('ColorModeMenu', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
-  it('shows the dark icon when an explicit dark mode is selected', () => {
+  it('shows the dark icon when an explicit dark mode is selected', async () => {
     useAppStore.getState().setColorMode(COLOR_MODE.dark);
     renderWithProviders(<ColorModeMenu />);
 
     expect(within(triggerButton()).getByTestId('DarkModeOutlinedIcon')).toBeInTheDocument();
   });
 
-  it('shows the light icon when an explicit light mode is selected', () => {
+  it('shows the light icon when an explicit light mode is selected', async () => {
     useAppStore.getState().setColorMode(COLOR_MODE.light);
     renderWithProviders(<ColorModeMenu />);
 

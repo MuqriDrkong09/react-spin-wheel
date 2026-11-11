@@ -14,7 +14,7 @@ const document: WheelImportDocument = {
 };
 
 describe('ImportWheelDialog', () => {
-  it('does not render when there is no document', () => {
+  it('does not render when there is no document', async () => {
     renderWithProviders(
       <ImportWheelDialog
         document={null}
@@ -55,7 +55,7 @@ describe('ImportWheelDialog', () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('shows a name error', () => {
+  it('shows a name error', async () => {
     renderWithProviders(
       <ImportWheelDialog
         document={document}

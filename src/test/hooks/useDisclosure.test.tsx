@@ -3,19 +3,19 @@ import { act, renderHook } from '@testing-library/react';
 import { useDisclosure } from '@/hooks/useDisclosure';
 
 describe('useDisclosure', () => {
-  it('starts closed by default', () => {
+  it('starts closed by default', async () => {
     const { result } = renderHook(() => useDisclosure());
 
     expect(result.current.isOpen).toBe(false);
   });
 
-  it('starts open when asked', () => {
+  it('starts open when asked', async () => {
     const { result } = renderHook(() => useDisclosure(true));
 
     expect(result.current.isOpen).toBe(true);
   });
 
-  it('opens, closes, toggles, and sets the open state', () => {
+  it('opens, closes, toggles, and sets the open state', async () => {
     const { result } = renderHook(() => useDisclosure());
 
     act(() => {

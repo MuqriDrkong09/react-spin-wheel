@@ -19,7 +19,7 @@ const pizza = createWheel({ id: 'pizza', name: 'Pizza Night', category: 'Food' }
 const chores = createWheel({ id: 'chores', name: 'Chores', category: 'Decisions' });
 
 describe('FavoriteWheelsCard', () => {
-  it('shows an empty state when there are no favorite wheels', () => {
+  it('shows an empty state when there are no favorite wheels', async () => {
     renderWithProviders(
       <FavoriteWheelsCard wheels={[]} onOpen={vi.fn()} onToggleFavorite={vi.fn()} />,
     );
@@ -29,7 +29,7 @@ describe('FavoriteWheelsCard', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('lists favorite wheels with accessible star buttons', () => {
+  it('lists favorite wheels with accessible star buttons', async () => {
     renderWithProviders(
       <FavoriteWheelsCard wheels={[pizza, chores]} onOpen={vi.fn()} onToggleFavorite={vi.fn()} />,
     );

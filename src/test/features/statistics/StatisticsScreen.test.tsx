@@ -57,15 +57,15 @@ describe('StatisticsScreen', () => {
     resetHistoryStore();
   });
 
-  it('shows an empty state when there is no history', () => {
-    renderApp({ initialEntries: [ROUTES.statistics] });
+  it('shows an empty state when there is no history', async () => {
+    await renderApp({ initialEntries: [ROUTES.statistics] });
 
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.title, level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.emptyTitle })).toBeInTheDocument();
     expect(screen.getByText(STATISTICS_MESSAGES.emptyDescription)).toBeInTheDocument();
   });
 
-  it('renders derived totals, highlights, and charts from history', () => {
+  it('renders derived totals, highlights, and charts from history', async () => {
     useHistoryStore.getState().addSpinSession(
       historySession('r1', { timestamp: '2026-01-04T12:00:00.000Z' }),
     );
@@ -86,7 +86,7 @@ describe('StatisticsScreen', () => {
       }),
     );
 
-    renderApp({ initialEntries: [ROUTES.statistics] });
+    await renderApp({ initialEntries: [ROUTES.statistics] });
 
     expect(screen.getByText(STATISTICS_MESSAGES.totalSpins).nextElementSibling).toHaveTextContent('6');
     expect(
@@ -112,7 +112,7 @@ describe('StatisticsScreen', () => {
     expect(screen.getAllByText('Food Wheel').length).toBeGreaterThan(0);
   });
 
-  it('highlights the most repeated selection path', () => {
+  it('highlights the most repeated selection path', async () => {
     useHistoryStore.getState().addSpinSession(
       historySession('r1', {
         selectedItemName: 'Large',
@@ -134,7 +134,7 @@ describe('StatisticsScreen', () => {
       }),
     );
 
-    renderApp({ initialEntries: [ROUTES.statistics] });
+    await renderApp({ initialEntries: [ROUTES.statistics] });
 
     expect(screen.getByText(STATISTICS_MESSAGES.mostSelectedPath).nextElementSibling).toHaveTextContent(
       'Pizza → Chicken Pepperoni → Large',

@@ -5,6 +5,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Button, IconButton, Stack } from '@mui/material';
+import { memo } from 'react';
 
 import { TREE_NODE_KIND, type EditorTreeNode } from '@/features/wheel-editor/utils/toEditorTree';
 
@@ -21,7 +22,10 @@ interface TreeItemActionsProps {
   handlers: TreeItemHandlers;
 }
 
-export function TreeItemActions({ node, handlers }: TreeItemActionsProps) {
+export const TreeItemActions = memo(function TreeItemActions({
+  node,
+  handlers,
+}: TreeItemActionsProps) {
   const isItem = node.kind === TREE_NODE_KIND.item;
 
   return (
@@ -75,4 +79,4 @@ export function TreeItemActions({ node, handlers }: TreeItemActionsProps) {
       ) : null}
     </Stack>
   );
-}
+});

@@ -127,18 +127,18 @@ describe('SpinScreen', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows an empty state when no wheel is selected', () => {
-    renderApp({ initialEntries: [ROUTES.spin] });
+  it('shows an empty state when no wheel is selected', async () => {
+    await renderApp({ initialEntries: [ROUTES.spin] });
 
     expect(screen.getByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: SPIN_MESSAGES.noWheelTitle })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create a wheel' })).toBeInTheDocument();
   });
 
-  it('asks which wheel to spin when opened without a wheel id', () => {
+  it('asks which wheel to spin when opened without a wheel id', async () => {
     seedFoodWheel();
     useWheelStore.getState().createWheel({ id: 'games', name: 'Games Wheel', category: 'Games' });
-    renderApp({ initialEntries: [ROUTES.spin] });
+    await renderApp({ initialEntries: [ROUTES.spin] });
 
     expect(screen.getByText(SPIN_MESSAGES.chooseWheelDescription)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.chooseWheelAction('Food Wheel') })).toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('SpinScreen', () => {
       items: [{ id: 'chess', name: 'Chess', color: '#2563eb', enabled: true, weight: 1 }],
     });
     useWheelStore.getState().setActiveWheel('food');
-    renderApp({ initialEntries: [ROUTES.spin] });
+    await renderApp({ initialEntries: [ROUTES.spin] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.chooseWheelAction('Games Wheel') }));
 
@@ -167,7 +167,7 @@ describe('SpinScreen', () => {
   it('returns to the wheel picker from an open spin', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.changeWheel }));
 
@@ -179,7 +179,7 @@ describe('SpinScreen', () => {
   it('shows the picker from the sidebar even when a wheel is already active', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderApp({ initialEntries: [ROUTES.dashboard] });
+    await renderApp({ initialEntries: [ROUTES.dashboard] });
 
     await user.click(screen.getByRole('button', { name: 'Spin' }));
 
@@ -188,9 +188,9 @@ describe('SpinScreen', () => {
     expect(screen.queryByRole('button', { name: SPIN_MESSAGES.spinButton })).not.toBeInTheDocument();
   });
 
-  it('renders the visual wheel for a requested wheel', () => {
+  it('renders the visual wheel for a requested wheel', async () => {
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     expect(screen.getByText('Spin Food Wheel.')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /spin wheel with pizza, burger, sushi/i })).toBeInTheDocument();
@@ -205,7 +205,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     const button = screen.getByRole('button', { name: SPIN_MESSAGES.spinButton });
     await user.click(button);
@@ -221,7 +221,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
 
@@ -244,7 +244,7 @@ describe('SpinScreen', () => {
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
@@ -284,7 +284,7 @@ describe('SpinScreen', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     seedFoodWheel();
     useWheelStore.getState().updateWheelSettings('food', { selectionMode: SELECTION_MODE.automatic });
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
@@ -300,7 +300,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
@@ -315,7 +315,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
 
@@ -337,7 +337,7 @@ describe('SpinScreen', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     seedFoodWheel();
     const parentItems = structuredClone(useWheelStore.getState().getWheel('food')?.items);
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
@@ -357,7 +357,7 @@ describe('SpinScreen', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     seedFoodWheel();
     useWheelStore.getState().updateWheelSettings('food', { selectionMode: SELECTION_MODE.ask });
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
 
@@ -377,7 +377,7 @@ describe('SpinScreen', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     seedFoodWheel();
     useWheelStore.getState().updateWheelSettings('food', { selectionMode: SELECTION_MODE.automatic });
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
 
@@ -391,7 +391,7 @@ describe('SpinScreen', () => {
   it('persists Remove Winner on the wheel', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('switch', { name: SPIN_MESSAGES.removeWinner }));
 
@@ -404,7 +404,7 @@ describe('SpinScreen', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     seedFoodWheel();
     useWheelStore.getState().updateWheelSettings('food', { removeWinner: true });
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.keyboard('{Escape}');
@@ -426,7 +426,7 @@ describe('SpinScreen', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     seedFoodWheel();
     useWheelStore.getState().updateWheelSettings('food', { removeWinner: true });
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
@@ -444,7 +444,7 @@ describe('SpinScreen', () => {
   it('persists the selected selection mode on the wheel', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('combobox', { name: SPIN_MESSAGES.selectionMode }));
     await user.click(screen.getByRole('option', { name: SPIN_MESSAGES.selectionModeAutomatic }));
@@ -495,7 +495,7 @@ describe('SpinScreen', () => {
       ],
     });
     const parentItems = structuredClone(useWheelStore.getState().getWheel('pizza-night')?.items);
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'pizza-night')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'pizza-night')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
@@ -521,7 +521,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinChild }));
@@ -539,7 +539,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     expect(screen.getByRole('dialog', { name: SPIN_MESSAGES.winnerTitle })).toBeInTheDocument();
@@ -552,7 +552,7 @@ describe('SpinScreen', () => {
 
   it('opens create wheel from the empty state', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.spin] });
+    await renderApp({ initialEntries: [ROUTES.spin] });
 
     await user.click(screen.getByRole('button', { name: 'Create a wheel' }));
 
@@ -562,7 +562,7 @@ describe('SpinScreen', () => {
   it('opens create wheel from the picker header', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderApp({ initialEntries: [ROUTES.spin] });
+    await renderApp({ initialEntries: [ROUTES.spin] });
 
     await user.click(screen.getByRole('button', { name: 'Create Wheel' }));
 
@@ -571,7 +571,7 @@ describe('SpinScreen', () => {
 
   it('shows a missing-wheel empty state and returns to the dashboard', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'missing')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'missing')] });
 
     expect(screen.getByRole('heading', { name: SPIN_MESSAGES.missingWheelTitle, level: 2 })).toBeInTheDocument();
     expect(screen.getByText(SPIN_MESSAGES.missingWheelDescription)).toBeInTheDocument();
@@ -590,7 +590,7 @@ describe('SpinScreen', () => {
     });
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
@@ -609,7 +609,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     spinSessionHarness.mode = 'unsaved';
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.saveResult }));
 
@@ -626,7 +626,7 @@ describe('SpinScreen', () => {
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     spinSessionHarness.mode = 'unsaved';
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     spinSessionHarness.result = undefined;
     fireEvent.click(screen.getByRole('button', { name: SPIN_MESSAGES.copyResult }));
@@ -642,7 +642,7 @@ describe('SpinScreen', () => {
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     spinSessionHarness.mode = 'unsaved';
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.copyResult }));
 
@@ -656,7 +656,7 @@ describe('SpinScreen', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     vi.spyOn(selectionFlow, 'createHierarchicalSelectionResult').mockReturnValue(undefined);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton }));
     await user.click(screen.getByRole('button', { name: SPIN_MESSAGES.finish }));
@@ -665,7 +665,7 @@ describe('SpinScreen', () => {
     expect(useHistoryStore.getState().spinHistory).toHaveLength(0);
   });
 
-  it('treats a missing remove-winner setting as off', () => {
+  it('treats a missing remove-winner setting as off', async () => {
     seedFoodWheel();
     const food = useWheelStore.getState().getWheel('food');
     if (food) {
@@ -675,15 +675,15 @@ describe('SpinScreen', () => {
       });
     }
 
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     expect(screen.getByRole('switch', { name: SPIN_MESSAGES.removeWinner })).not.toBeChecked();
   });
 
-  it('renders a child-wheel caption when the ancestor name is missing', () => {
+  it('renders a child-wheel caption when the ancestor name is missing', async () => {
     spinSessionHarness.mode = 'nameless';
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     expect(screen.getByText(/Children of/)).toBeInTheDocument();
   });
@@ -693,7 +693,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     const count = screen.getByLabelText(SPIN_MESSAGES.autoSpinCount);
     const delay = screen.getByLabelText(SPIN_MESSAGES.autoSpinDelay);
@@ -723,7 +723,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.clear(screen.getByLabelText(SPIN_MESSAGES.autoSpinCount));
     await user.type(screen.getByLabelText(SPIN_MESSAGES.autoSpinCount), '10');
@@ -759,7 +759,7 @@ describe('SpinScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     seedFoodWheel();
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'food')] });
 
     await user.click(screen.getByRole('switch', { name: SPIN_MESSAGES.autoSpinSaveResults }));
     await user.clear(screen.getByLabelText(SPIN_MESSAGES.autoSpinCount));
@@ -774,14 +774,14 @@ describe('SpinScreen', () => {
     expect(useHistoryStore.getState().spinHistory).toHaveLength(0);
   });
 
-  it('handles a wheel with a single active item', () => {
+  it('handles a wheel with a single active item', async () => {
     useWheelStore.getState().createWheel({
       id: 'solo',
       name: 'Solo',
       items: [{ id: 'yes', name: 'Yes', color: '#16a34a', enabled: true, weight: 1 }],
     });
 
-    renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'solo')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'solo')] });
 
     expect(screen.getByRole('img', { name: /spin wheel with yes/i })).toBeInTheDocument();
     expect(screen.getByTitle('Yes')).toBeInTheDocument();

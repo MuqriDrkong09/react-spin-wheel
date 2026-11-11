@@ -3,7 +3,7 @@ import { WheelImportSnackbar } from '@/features/wheel-import/components/WheelImp
 import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
 
 describe('WheelImportSnackbar', () => {
-  it('does not render an alert when there is no status', () => {
+  it('does not render an alert when there is no status', async () => {
     renderWithProviders(<WheelImportSnackbar status={null} onClose={vi.fn()} />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });

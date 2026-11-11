@@ -25,24 +25,26 @@ const APP_PAGES = [
 ] as const;
 
 describe('App', () => {
-  it('renders providers and the router from App', () => {
+  it('renders providers and the router from App', async () => {
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Dashboard', level: 1 }, { timeout: 10_000 }),
+    ).toBeInTheDocument();
     for (const item of NAV_ITEMS) {
       expect(screen.getByRole('button', { name: item.label })).toBeInTheDocument();
     }
   });
 
-  it.each(APP_PAGES)('renders $heading at $path', ({ path, heading }) => {
-    renderApp({ initialEntries: [path] });
+  it.each(APP_PAGES)('renders $heading at $path', async ({ path, heading }) => {
+    await renderApp({ initialEntries: [path] });
 
     expect(screen.getByRole('heading', { name: heading, level: 1 })).toBeInTheDocument();
   });
 
   it('renders the not found page and returns to the dashboard', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: ['/missing-page'] });
+    await renderApp({ initialEntries: ['/missing-page'] });
 
     expect(screen.getByRole('heading', { name: /page not found/i, level: 1 })).toBeInTheDocument();
 

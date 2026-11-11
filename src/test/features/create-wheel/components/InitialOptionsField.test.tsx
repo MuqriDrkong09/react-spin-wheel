@@ -46,7 +46,7 @@ function OptionsHarness({
 }
 
 describe('InitialOptionsField', () => {
-  it('renders the helper copy and the first option', () => {
+  it('renders the helper copy and the first option', async () => {
     renderWithProviders(<OptionsHarness />);
 
     expect(screen.getByRole('heading', { name: 'Initial options', level: 2 })).toBeInTheDocument();

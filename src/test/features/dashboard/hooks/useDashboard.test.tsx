@@ -92,7 +92,7 @@ describe('useDashboard', () => {
     downloadJsonFileMock.mockReset();
   });
 
-  it('starts empty with default filters', () => {
+  it('starts empty with default filters', async () => {
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
     expect(result.current.hasWheels).toBe(false);
@@ -115,7 +115,7 @@ describe('useDashboard', () => {
     expect(result.current.pendingDeleteWheel).toBeNull();
   });
 
-  it('derives stats, favorites, recent usage, and results from stores', () => {
+  it('derives stats, favorites, recent usage, and results from stores', async () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
@@ -137,7 +137,7 @@ describe('useDashboard', () => {
     );
   });
 
-  it('debounces search against name, description, and category', () => {
+  it('debounces search against name, description, and category', async () => {
     vi.useFakeTimers();
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
@@ -177,7 +177,7 @@ describe('useDashboard', () => {
     }
   });
 
-  it('filters visible wheels by category, favorites, recently used, and sort', () => {
+  it('filters visible wheels by category, favorites, recently used, and sort', async () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
@@ -217,7 +217,7 @@ describe('useDashboard', () => {
     expect(result.current.visibleWheels[0]?.id).toBe('pizza');
   });
 
-  it('navigates to create, spin, and editor routes', () => {
+  it('navigates to create, spin, and editor routes', async () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
@@ -239,7 +239,7 @@ describe('useDashboard', () => {
     expect(result.current.href).toBe(withWheelId(ROUTES.wheelEditor, 'chores'));
   });
 
-  it('ignores delete requests for a missing wheel', () => {
+  it('ignores delete requests for a missing wheel', async () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
@@ -251,7 +251,7 @@ describe('useDashboard', () => {
     expect(useWheelStore.getState().wheels).toHaveLength(2);
   });
 
-  it('stages, cancels, and confirms a pending delete', () => {
+  it('stages, cancels, and confirms a pending delete', async () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
@@ -279,7 +279,7 @@ describe('useDashboard', () => {
     expect(useFavoritesStore.getState().favoriteWheelIds).not.toContain('pizza');
   });
 
-  it('does nothing when confirming a delete with no pending wheel', () => {
+  it('does nothing when confirming a delete with no pending wheel', async () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
@@ -290,7 +290,7 @@ describe('useDashboard', () => {
     expect(useWheelStore.getState().wheels).toHaveLength(2);
   });
 
-  it('deletes immediately when confirmation is disabled', () => {
+  it('deletes immediately when confirmation is disabled', async () => {
     useSettingsStore.getState().updateSettings({ confirmBeforeDelete: false });
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
@@ -304,7 +304,7 @@ describe('useDashboard', () => {
     expect(useFavoritesStore.getState().favoriteWheelIds).not.toContain('pizza');
   });
 
-  it('toggles a favorite from the returned action', () => {
+  it('toggles a favorite from the returned action', async () => {
     seedDashboard();
     const { result } = renderHook(() => useDashboardWithLocation(), { wrapper });
 
@@ -319,7 +319,7 @@ describe('useDashboard', () => {
     expect(result.current.favoriteWheelIds).toContain('pizza');
   });
 
-  it('exports a valid wheel and reports invalid data', () => {
+  it('exports a valid wheel and reports invalid data', async () => {
     seedDashboard();
     useWheelStore.getState().addItem('pizza', {
       name: 'Pepperoni',

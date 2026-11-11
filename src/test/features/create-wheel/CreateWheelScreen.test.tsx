@@ -14,7 +14,7 @@ describe('CreateWheelScreen', () => {
 
   it('shows validation errors for an empty submission', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.createWheel] });
+    await renderApp({ initialEntries: [ROUTES.createWheel] });
 
     await user.click(screen.getByRole('button', { name: 'Create wheel' }));
 
@@ -25,7 +25,7 @@ describe('CreateWheelScreen', () => {
 
   it('shows a minimum length error for a short wheel name', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.createWheel] });
+    await renderApp({ initialEntries: [ROUTES.createWheel] });
 
     await user.type(screen.getByLabelText(/wheel name/i), 'A');
     await user.type(screen.getByRole('textbox', { name: /option 1/i }), 'Pepperoni');
@@ -36,7 +36,7 @@ describe('CreateWheelScreen', () => {
 
   it('creates, persists, and opens the editor after a valid submission', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.createWheel] });
+    await renderApp({ initialEntries: [ROUTES.createWheel] });
 
     await user.type(screen.getByLabelText(/wheel name/i), 'Pizza Night');
     await user.type(screen.getByLabelText(/description/i), 'Weekend dinner');
@@ -64,7 +64,7 @@ describe('CreateWheelScreen', () => {
 
   it('allows optional description, category, and icon', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.createWheel] });
+    await renderApp({ initialEntries: [ROUTES.createWheel] });
 
     await user.type(screen.getByLabelText(/wheel name/i), 'Quick Pick');
     await user.type(screen.getByRole('textbox', { name: /option 1/i }), 'Yes');
@@ -83,7 +83,7 @@ describe('CreateWheelScreen', () => {
 
   it('returns to the dashboard without creating a wheel when Cancel is chosen', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.createWheel] });
+    await renderApp({ initialEntries: [ROUTES.createWheel] });
 
     await user.type(screen.getByLabelText(/wheel name/i), 'Abandoned');
     await user.type(screen.getByRole('textbox', { name: /option 1/i }), 'Maybe');

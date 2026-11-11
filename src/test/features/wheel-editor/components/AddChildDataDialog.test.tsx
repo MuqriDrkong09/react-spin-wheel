@@ -28,14 +28,14 @@ describe('AddChildDataDialog', () => {
     mobileHarness.isMobile = false;
   });
 
-  it('renders nothing when closed', () => {
+  it('renders nothing when closed', async () => {
     renderDialog({ open: false });
 
     expect(screen.queryByRole('dialog', { name: 'Add Child Data' })).not.toBeInTheDocument();
     expect(screen.queryByText('Parent')).not.toBeInTheDocument();
   });
 
-  it('shows the parent and child form in a dialog on desktop', () => {
+  it('shows the parent and child form in a dialog on desktop', async () => {
     renderDialog();
 
     const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
@@ -46,7 +46,7 @@ describe('AddChildDataDialog', () => {
     expect(within(dialog).getByRole('button', { name: 'Add Child' })).toBeInTheDocument();
   });
 
-  it('still shows the parent label when the parent name is missing', () => {
+  it('still shows the parent label when the parent name is missing', async () => {
     renderDialog({ parentName: undefined });
 
     const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });

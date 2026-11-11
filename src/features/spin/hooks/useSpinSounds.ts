@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useSound } from '@/features/sound/useSound';
 import { degreesToRadians, pointerSegmentIndex } from '@/features/spin/utils/pointerSegmentIndex';
@@ -18,6 +18,13 @@ interface UseSpinSoundsOptions {
 export function useSpinSounds({ enabled, spinning, segments }: UseSpinSoundsOptions) {
   const { play } = useSound();
   const lastSegmentRef = useRef<number | null>(null);
+  const enabledRef = useRef(enabled);
+  const spinningRef = useRef(spinning);
+  const segmentsRef = useRef(segments);
+
+  enabledRef.current = enabled;
+  spinningRef.current = spinning;
+  segmentsRef.current = segments;
 
   useEffect(() => {
     if (!spinning) {
@@ -25,38 +32,41 @@ export function useSpinSounds({ enabled, spinning, segments }: UseSpinSoundsOpti
     }
   }, [spinning]);
 
-  function handleSpinPress() {
-    if (!enabled) {
+  const handleSpinPress = useCallback(() => {
+    if (!enabledRef.current) {
       return;
     }
 
     play(SOUND_ID.spinStart);
-  }
+  }, [play]);
 
-  function handleRotationFrame(rotationDegrees: number) {
-    if (!enabled || !spinning) {
-      return;
-    }
+  const handleRotationFrame = useCallback(
+    (rotationDegrees: number) => {
+      if (!enabledRef.current || !spinningRef.current) {
+        return;
+      }
 
-    const index = pointerSegmentIndex(degreesToRadians(rotationDegrees), segments);
-    if (lastSegmentRef.current === null) {
-      lastSegmentRef.current = index;
-      return;
-    }
+      const index = pointerSegmentIndex(degreesToRadians(rotationDegrees), segmentsRef.current);
+      if (lastSegmentRef.current === null) {
+        lastSegmentRef.current = index;
+        return;
+      }
 
-    if (index !== lastSegmentRef.current && index >= 0) {
-      lastSegmentRef.current = index;
-      play(SOUND_ID.wheelTick);
-    }
-  }
+      if (index !== lastSegmentRef.current && index >= 0) {
+        lastSegmentRef.current = index;
+        play(SOUND_ID.wheelTick);
+      }
+    },
+    [play],
+  );
 
-  function handleSpinSettled() {
-    if (enabled) {
+  const handleSpinSettled = useCallback(() => {
+    if (enabledRef.current) {
       play(SOUND_ID.spinEnd);
     }
 
     lastSegmentRef.current = null;
-  }
+  }, [play]);
 
   return {
     handleSpinPress,

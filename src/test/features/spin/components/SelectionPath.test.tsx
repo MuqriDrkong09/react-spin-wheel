@@ -7,13 +7,13 @@ const pepperoni = { id: 'pepperoni', name: 'Pepperoni' };
 const large = { id: 'large', name: 'Large', icon: '📏' };
 
 describe('SelectionPath', () => {
-  it('renders nothing when there are no steps', () => {
+  it('renders nothing when there are no steps', async () => {
     const { container } = renderWithProviders(<SelectionPath steps={[]} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('labels a single screen step without an icon', () => {
+  it('labels a single screen step without an icon', async () => {
     renderWithProviders(<SelectionPath steps={[pepperoni]} />);
 
     const list = screen.getByRole('list', { name: 'Pepperoni' });
@@ -21,7 +21,7 @@ describe('SelectionPath', () => {
     expect(screen.queryByText('↓')).not.toBeInTheDocument();
   });
 
-  it('renders nested steps with arrows and a path label', () => {
+  it('renders nested steps with arrows and a path label', async () => {
     renderWithProviders(<SelectionPath steps={[pizza, pepperoni, large]} />);
 
     const list = screen.getByRole('list', {
@@ -38,7 +38,7 @@ describe('SelectionPath', () => {
     expect(within(list).getByText('📏')).toBeInTheDocument();
   });
 
-  it('omits the path label when an id is provided', () => {
+  it('omits the path label when an id is provided', async () => {
     renderWithProviders(<SelectionPath id="final-result-path" steps={[pizza]} />);
 
     const list = screen.getByRole('list');
@@ -46,7 +46,7 @@ describe('SelectionPath', () => {
     expect(list).not.toHaveAttribute('aria-label');
   });
 
-  it('emphasizes the leaf in dialog size', () => {
+  it('emphasizes the leaf in dialog size', async () => {
     renderWithProviders(<SelectionPath size="dialog" steps={[pizza, large]} />);
 
     expect(screen.getByText('Large').tagName).toBe('P');
@@ -54,14 +54,14 @@ describe('SelectionPath', () => {
     expect(screen.getByText('Pizza')).toHaveClass('MuiTypography-body1');
   });
 
-  it('emphasizes the leaf in result size', () => {
+  it('emphasizes the leaf in result size', async () => {
     renderWithProviders(<SelectionPath size="result" steps={[pizza, large]} />);
 
     expect(screen.getByText('Large')).toHaveClass('MuiTypography-h4');
     expect(screen.getByText('Pizza')).toHaveClass('MuiTypography-body1');
   });
 
-  it('applies a custom text color to ancestors and the leaf', () => {
+  it('applies a custom text color to ancestors and the leaf', async () => {
     renderWithProviders(
       <SelectionPath textColor="#f8fafc" steps={[pizza, pepperoni]} />,
     );

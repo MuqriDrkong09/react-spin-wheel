@@ -40,7 +40,7 @@ describe('DashboardToolbar', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders search, category, sort, favorites, and recently used controls', () => {
+  it('renders search, category, sort, favorites, and recently used controls', async () => {
     renderToolbar({
       search: 'pizza',
       category: 'Food',

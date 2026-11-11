@@ -34,7 +34,7 @@ export function TreeItem({
         node={node}
         isExpanded={isExpanded}
         handlers={handlers}
-        onToggleExpand={() => onToggleExpand(node.id)}
+        onToggleExpand={onToggleExpand}
       />
       {isExpanded ? (
         <Box

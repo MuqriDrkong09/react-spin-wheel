@@ -100,7 +100,7 @@ describe('useWheelImport', () => {
     expect(useWheelStore.getState().wheels).toHaveLength(0);
   });
 
-  it('cancels a pending import and tracks drag state', () => {
+  it('cancels a pending import and tracks drag state', async () => {
     const { result } = renderHook(() => useWheelImport());
     const preventDefault = vi.fn();
 
@@ -137,7 +137,7 @@ describe('useWheelImport', () => {
     expect(result.current.status).toBeNull();
   });
 
-  it('does nothing when confirming without a pending document', () => {
+  it('does nothing when confirming without a pending document', async () => {
     const { result } = renderHook(() => useWheelImport());
 
     act(() => {

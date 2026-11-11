@@ -37,14 +37,14 @@ const dishes: HistoryResult = {
 };
 
 describe('HistoryList', () => {
-  it('renders an empty history region', () => {
+  it('renders an empty history region', async () => {
     renderWithProviders(<HistoryList results={[]} onView={vi.fn()} onDelete={vi.fn()} />);
 
     expect(screen.getByRole('region', { name: HISTORY_MESSAGES.resultsAria })).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('lists results with path, wheel, time, mode, and duration', () => {
+  it('lists results with path, wheel, time, mode, and duration', async () => {
     renderWithProviders(<HistoryList results={[pizza, dishes]} onView={vi.fn()} onDelete={vi.fn()} />);
 
     const region = screen.getByRole('region', { name: HISTORY_MESSAGES.resultsAria });

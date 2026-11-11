@@ -2,7 +2,7 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { renderWithProviders, screen } from '@/test/test-utils';
 
 describe('LoadingState', () => {
-  it('announces a default Loading status with a centered spinner', () => {
+  it('announces a default Loading status with a centered spinner', async () => {
     renderWithProviders(<LoadingState />);
 
     const status = screen.getByRole('status', { name: 'Loading' });
@@ -12,7 +12,7 @@ describe('LoadingState', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it('uses a custom accessible label', () => {
+  it('uses a custom accessible label', async () => {
     renderWithProviders(<LoadingState label="Loading wheels" />);
 
     expect(screen.getByRole('status', { name: 'Loading wheels' })).toBeInTheDocument();

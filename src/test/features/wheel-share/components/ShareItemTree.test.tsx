@@ -2,7 +2,7 @@ import { ShareItemTree } from '@/features/wheel-share/components/ShareItemTree';
 import { renderWithProviders, screen } from '@/test/test-utils';
 
 describe('ShareItemTree', () => {
-  it('renders nested item names', () => {
+  it('renders nested item names', async () => {
     renderWithProviders(
       <ShareItemTree
         items={[

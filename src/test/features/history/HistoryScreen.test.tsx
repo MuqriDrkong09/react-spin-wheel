@@ -82,8 +82,8 @@ describe('HistoryScreen', () => {
     resetTournamentStore();
   });
 
-  it('shows an empty state when there is no history', () => {
-    renderApp({ initialEntries: [ROUTES.history] });
+  it('shows an empty state when there is no history', async () => {
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     expect(screen.getByRole('heading', { name: HISTORY_MESSAGES.title, level: 1 })).toBeInTheDocument();
     expect(screen.getByText(HISTORY_MESSAGES.description)).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('HistoryScreen', () => {
   it('searches, opens details, deletes a result, and clears history', async () => {
     const user = userEvent.setup();
     seedTwoResults();
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     expect(screen.getByText('Pizza → Chicken Pepperoni → Large')).toBeInTheDocument();
     expect(screen.getByText('Dishes')).toBeInTheDocument();
@@ -146,7 +146,7 @@ describe('HistoryScreen', () => {
         }),
       );
     }
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     expect(screen.getByText('Item 11')).toBeInTheDocument();
     expect(screen.queryByText('Item 1')).not.toBeInTheDocument();
@@ -158,7 +158,7 @@ describe('HistoryScreen', () => {
   it('shows an empty state when filters match no results', async () => {
     const user = userEvent.setup();
     seedTwoResults();
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     await user.type(screen.getByRole('textbox', { name: HISTORY_MESSAGES.searchLabel }), 'zzzzz');
 
@@ -173,7 +173,7 @@ describe('HistoryScreen', () => {
   it('filters by wheel and mode', async () => {
     const user = userEvent.setup();
     seedTwoResults();
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     await user.click(screen.getByRole('combobox', { name: HISTORY_MESSAGES.wheelFilter }));
     await user.click(screen.getByRole('option', { name: 'Chores' }));
@@ -191,7 +191,7 @@ describe('HistoryScreen', () => {
   it('sorts results by oldest first and by wheel name', async () => {
     const user = userEvent.setup();
     seedTwoResults();
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     const region = screen.getByRole('region', { name: HISTORY_MESSAGES.resultsAria });
     const newestFirst = within(region)
@@ -228,7 +228,7 @@ describe('HistoryScreen', () => {
   it('cancels delete and clear dialogs without changing history', async () => {
     const user = userEvent.setup();
     seedTwoResults();
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     await user.click(
       screen.getByRole('button', { name: `${HISTORY_MESSAGES.deleteResult}: Dishes` }),
@@ -265,7 +265,7 @@ describe('HistoryScreen', () => {
         }),
       );
     }
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     expect(screen.queryByText('Item 1')).not.toBeInTheDocument();
 
@@ -290,7 +290,7 @@ describe('HistoryScreen', () => {
         { name: 'Team B', members: ['Ali', 'John', 'Lisa'] },
       ],
     });
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     expect(screen.queryByRole('heading', { name: HISTORY_MESSAGES.emptyTitle })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: GENERATOR_MESSAGES.teamHistoryTitle })).toBeInTheDocument();
@@ -329,7 +329,7 @@ describe('HistoryScreen', () => {
     }
 
     useTournamentStore.getState().startTournament(created.value);
-    renderApp({ initialEntries: [ROUTES.history] });
+    await renderApp({ initialEntries: [ROUTES.history] });
 
     expect(screen.getByRole('heading', { name: GENERATOR_MESSAGES.tournamentHistoryTitle })).toBeInTheDocument();
     expect(screen.getByText('Quarter Finals → Semi Finals → Final → Winner')).toBeInTheDocument();

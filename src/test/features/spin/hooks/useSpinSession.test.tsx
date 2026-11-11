@@ -118,7 +118,7 @@ describe('useSpinSession', () => {
     vi.restoreAllMocks();
   });
 
-  it('tracks the name path through a child spin without mutating the parent items', () => {
+  it('tracks the name path through a child spin without mutating the parent items', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = foodWheel();
     const parentItems = wheel.items;
@@ -155,7 +155,7 @@ describe('useSpinSession', () => {
     expect(wheel.items[0]?.children?.[0]?.name).toBe('Chicken Pepperoni');
   });
 
-  it('spins parent, child, and grandchildren then finishes with a complete result', () => {
+  it('spins parent, child, and grandchildren then finishes with a complete result', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = pizzaNightWheel();
     const parentItems = wheel.items;
@@ -183,7 +183,7 @@ describe('useSpinSession', () => {
     expect(wheel.items[0]?.children?.[0]?.children?.[0]?.children?.[0]?.name).toBe('Thin Crust');
   });
 
-  it('finishes early on a parent that still has children', () => {
+  it('finishes early on a parent that still has children', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const { result } = renderHook(() => useSpinSession(pizzaNightWheel()));
 
@@ -209,7 +209,7 @@ describe('useSpinSession', () => {
     expect(result.current.winnerOpen).toBe(false);
   });
 
-  it('starts a new selection from the root of the same wheel', () => {
+  it('starts a new selection from the root of the same wheel', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const { result } = renderHook(() => useSpinSession(pizzaNightWheel()));
 
@@ -233,7 +233,7 @@ describe('useSpinSession', () => {
     expect(result.current.spin.status).toBe('idle');
   });
 
-  it('returns to an idle wheel after finishing so Spin Again can be started by the user', () => {
+  it('returns to an idle wheel after finishing so Spin Again can be started by the user', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const { result } = renderHook(() => useSpinSession(foodWheel()));
 
@@ -291,7 +291,7 @@ describe('useSpinSession', () => {
     expect(result.current.winnerOpen).toBe(true);
   });
 
-  it('automatically continues through nested children until a leaf', () => {
+  it('automatically continues through nested children until a leaf', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = pizzaNightWheel();
     wheel.settings.selectionMode = SELECTION_MODE.automatic;
@@ -307,7 +307,7 @@ describe('useSpinSession', () => {
     expect(result.current.winner?.name).toBe('Thin Crust');
   });
 
-  it('stops automatic spinning when an item would repeat', () => {
+  it('stops automatic spinning when an item would repeat', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const child = item('Child');
     const parent = item('Parent', { children: [child] });
@@ -388,7 +388,7 @@ describe('useSpinSession', () => {
     ]);
   });
 
-  it('removes a selected parent from future spins without deleting its children', () => {
+  it('removes a selected parent from future spins without deleting its children', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = foodWheel();
     wheel.settings.removeWinner = true;
@@ -416,7 +416,7 @@ describe('useSpinSession', () => {
     ]);
   });
 
-  it('removes only the selected nested item from its siblings', () => {
+  it('removes only the selected nested item from its siblings', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = pizzaNightWheel();
     wheel.settings.removeWinner = true;
@@ -445,7 +445,7 @@ describe('useSpinSession', () => {
     expect(result.current.items.map((entry) => entry.name)).toEqual(['Thin Crust', 'Thick Crust']);
   });
 
-  it('keeps removed winners out of a new selection until Restore Items', () => {
+  it('keeps removed winners out of a new selection until Restore Items', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = foodWheel();
     wheel.settings.removeWinner = true;
@@ -473,7 +473,7 @@ describe('useSpinSession', () => {
     ]);
   });
 
-  it('still auto-advances into children after the parent winner is removed', () => {
+  it('still auto-advances into children after the parent winner is removed', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = foodWheel();
     wheel.settings.selectionMode = SELECTION_MODE.automatic;
@@ -490,14 +490,14 @@ describe('useSpinSession', () => {
     expect(wheel.items[0]?.children).toHaveLength(2);
   });
 
-  it('invokes the default pending automatic spin callback', () => {
+  it('invokes the default pending automatic spin callback', async () => {
     sessionHarness.callDefaultPendingSpin = true;
     const { result } = renderHook(() => useSpinSession(foodWheel()));
 
     expect(result.current.spin.status).toBe(SPIN_STATUS.idle);
   });
 
-  it('defaults selection mode and remove-winner when settings omit them', () => {
+  it('defaults selection mode and remove-winner when settings omit them', async () => {
     const wheel = foodWheel();
     wheel.settings = {
       ...wheel.settings,
@@ -510,7 +510,7 @@ describe('useSpinSession', () => {
     expect(result.current.removeWinnerEnabled).toBe(false);
   });
 
-  it('closes the winner dialog and spins again from the same level', () => {
+  it('closes the winner dialog and spins again from the same level', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const { result } = renderHook(() => useSpinSession(foodWheel()));
 
@@ -532,7 +532,7 @@ describe('useSpinSession', () => {
     expect(result.current.path).toEqual(['Pizza']);
   });
 
-  it('does not continue a child spin without a winner or children', () => {
+  it('does not continue a child spin without a winner or children', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const { result } = renderHook(() => useSpinSession(foodWheel()));
 
@@ -554,7 +554,7 @@ describe('useSpinSession', () => {
     expect(result.current.winner?.name).toBe('Burger');
   });
 
-  it('ignores completeSpin while idle and finishes with no result before a spin', () => {
+  it('ignores completeSpin while idle and finishes with no result before a spin', async () => {
     const { result } = renderHook(() => useSpinSession(foodWheel()));
 
     act(() => {
@@ -569,7 +569,7 @@ describe('useSpinSession', () => {
     expect(result.current.finalOpen).toBe(false);
   });
 
-  it('treats a completed spin without a winner as settled', () => {
+  it('treats a completed spin without a winner as settled', async () => {
     const { result } = renderHook(() => useSpinSession(foodWheel()));
     result.current.spin.spin = () => ({
       status: SPIN_STATUS.completed,
@@ -585,7 +585,7 @@ describe('useSpinSession', () => {
     expect(result.current.winnerOpen).toBe(false);
   });
 
-  it('does not auto-advance when the next selection level cannot be built', () => {
+  it('does not auto-advance when the next selection level cannot be built', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     vi.spyOn(selectionFlow, 'advanceSelectionLevel').mockReturnValue(undefined);
     const wheel = foodWheel();
@@ -601,7 +601,7 @@ describe('useSpinSession', () => {
     expect(result.current.items.map((entry) => entry.name)).toEqual(['Pizza', 'Burger']);
   });
 
-  it('cancels a pending automatic child spin on unmount', () => {
+  it('cancels a pending automatic child spin on unmount', async () => {
     window.matchMedia = (query: string): MediaQueryList => ({
       matches: false,
       media: query,
@@ -672,7 +672,7 @@ describe('useSpinSession', () => {
     expect(result.current.spin.status).toBe(SPIN_STATUS.idle);
   });
 
-  it('skips a pending resume spin while the final result is open', () => {
+  it('skips a pending resume spin while the final result is open', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = foodWheel();
     wheel.settings.selectionMode = SELECTION_MODE.automatic;

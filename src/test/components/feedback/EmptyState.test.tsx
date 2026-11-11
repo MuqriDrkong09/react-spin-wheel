@@ -4,7 +4,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { renderWithProviders, screen } from '@/test/test-utils';
 
 describe('EmptyState', () => {
-  it('renders the title as an h1 heading by default', () => {
+  it('renders the title as an h1 heading by default', async () => {
     renderWithProviders(<EmptyState title="No wheels yet" />);
 
     const heading = screen.getByRole('heading', { name: 'No wheels yet', level: 1 });
@@ -17,7 +17,7 @@ describe('EmptyState', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('renders an optional description', () => {
+  it('renders an optional description', async () => {
     renderWithProviders(
       <EmptyState
         title="No matching wheels"
@@ -31,7 +31,7 @@ describe('EmptyState', () => {
     });
   });
 
-  it('renders an optional action under the copy', () => {
+  it('renders an optional action under the copy', async () => {
     renderWithProviders(
       <EmptyState title="No wheels yet" action={<Button>Create your first wheel</Button>} />,
     );
@@ -43,7 +43,7 @@ describe('EmptyState', () => {
     expect(action.parentElement).toHaveStyle({ marginTop: '24px' });
   });
 
-  it('can render the title as an h2', () => {
+  it('can render the title as an h2', async () => {
     renderWithProviders(
       <EmptyState
         title="No matching wheels"
@@ -56,7 +56,7 @@ describe('EmptyState', () => {
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
   });
 
-  it('can render the title as an h3', () => {
+  it('can render the title as an h3', async () => {
     renderWithProviders(<EmptyState title="This wheel has no items" titleComponent="h3" />);
 
     expect(
@@ -64,7 +64,7 @@ describe('EmptyState', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders title, description, and action together', () => {
+  it('renders title, description, and action together', async () => {
     renderWithProviders(
       <EmptyState
         title="Page not found"

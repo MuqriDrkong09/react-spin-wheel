@@ -41,7 +41,7 @@ describe('AppDrawer', () => {
     resetAppStore();
   });
 
-  it('renders a permanent drawer with the app name and nav items', () => {
+  it('renders a permanent drawer with the app name and nav items', async () => {
     renderDrawer();
 
     expect(screen.getByRole('heading', { name: APP_NAME, level: 6 })).toBeInTheDocument();
@@ -58,7 +58,7 @@ describe('AppDrawer', () => {
     expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
   });
 
-  it('marks the current route as selected', () => {
+  it('marks the current route as selected', async () => {
     renderDrawer(ROUTES.settings);
 
     expect(screen.getByRole('button', { name: 'Settings' })).toHaveClass('Mui-selected');
@@ -78,7 +78,7 @@ describe('AppDrawer', () => {
     expect(useAppStore.getState().sidebarOpen).toBe(true);
   });
 
-  it('keeps a closed temporary drawer mounted on mobile', () => {
+  it('keeps a closed temporary drawer mounted on mobile', async () => {
     stubViewport(true);
     renderDrawer();
 

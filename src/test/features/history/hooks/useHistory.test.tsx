@@ -79,7 +79,7 @@ describe('useHistory', () => {
     resetHistoryStore();
   });
 
-  it('starts empty with default filters', () => {
+  it('starts empty with default filters', async () => {
     const { result } = renderHook(() => useHistory());
 
     expect(result.current.hasHistory).toBe(false);
@@ -96,7 +96,7 @@ describe('useHistory', () => {
     expect(result.current.clearOpen).toBe(false);
   });
 
-  it('derives results, wheels, and newest-first visibility from the store', () => {
+  it('derives results, wheels, and newest-first visibility from the store', async () => {
     seedTwoResults();
     const { result } = renderHook(() => useHistory());
 
@@ -106,7 +106,7 @@ describe('useHistory', () => {
     expect(result.current.wheels.map((wheel) => wheel.id)).toEqual(['chores', 'pizza']);
   });
 
-  it('filters by search, wheel, mode, and sort, and resets the page', () => {
+  it('filters by search, wheel, mode, and sort, and resets the page', async () => {
     seedTwoResults();
     const { result } = renderHook(() => useHistory());
 
@@ -136,7 +136,7 @@ describe('useHistory', () => {
     expect(result.current.visible.map((item) => item.id)).toEqual(['r1', 'r2']);
   });
 
-  it('paginates and clamps an out-of-range page', () => {
+  it('paginates and clamps an out-of-range page', async () => {
     for (let index = 1; index <= 11; index += 1) {
       useHistoryStore.getState().addSpinSession(
         historySession(`r${index}`, {
@@ -165,7 +165,7 @@ describe('useHistory', () => {
     expect(result.current.visible).toHaveLength(11);
   });
 
-  it('opens and closes result details', () => {
+  it('opens and closes result details', async () => {
     seedTwoResults();
     const { result } = renderHook(() => useHistory());
     const first = result.current.visible[0];
@@ -181,7 +181,7 @@ describe('useHistory', () => {
     expect(result.current.selected).toBeNull();
   });
 
-  it('stages, cancels, and confirms a pending delete', () => {
+  it('stages, cancels, and confirms a pending delete', async () => {
     seedTwoResults();
     const { result } = renderHook(() => useHistory());
     const dishes = result.current.visible.find((item) => item.id === 'r2');
@@ -211,7 +211,7 @@ describe('useHistory', () => {
     expect(result.current.selected?.id).toBe('r1');
   });
 
-  it('clears the selected result when that result is deleted', () => {
+  it('clears the selected result when that result is deleted', async () => {
     seedTwoResults();
     const { result } = renderHook(() => useHistory());
     const dishes = result.current.visible.find((item) => item.id === 'r2');
@@ -228,7 +228,7 @@ describe('useHistory', () => {
     expect(useHistoryStore.getState().spinHistory.map((session) => session.id)).toEqual(['r1']);
   });
 
-  it('does not delete when confirming with no pending result', () => {
+  it('does not delete when confirming with no pending result', async () => {
     seedTwoResults();
     const { result } = renderHook(() => useHistory());
     const pizza = result.current.visible.find((item) => item.id === 'r1');
@@ -242,7 +242,7 @@ describe('useHistory', () => {
     expect(result.current.selected?.id).toBe('r1');
   });
 
-  it('opens, cancels, and confirms clearing history', () => {
+  it('opens, cancels, and confirms clearing history', async () => {
     seedTwoResults();
     const { result } = renderHook(() => useHistory());
 

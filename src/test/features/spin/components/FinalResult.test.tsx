@@ -16,7 +16,7 @@ describe('FinalResult', () => {
     resetSettingsStore();
   });
 
-  it('shows the wheel name, icon path, timestamp, and actions', () => {
+  it('shows the wheel name, icon path, timestamp, and actions', async () => {
     renderWithProviders(
       <FinalResult
         wheelName="Pizza Night"
@@ -49,7 +49,7 @@ describe('FinalResult', () => {
     expect(screen.queryByTestId('celebration-confetti')).not.toBeInTheDocument();
   });
 
-  it('celebrates the winner when motion is allowed', () => {
+  it('celebrates the winner when motion is allowed', async () => {
     renderWithProviders(
       <FinalResult
         wheelName="Pizza Night"

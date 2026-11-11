@@ -28,7 +28,7 @@ describe('WinnerCelebration', () => {
     resetSettingsStore();
   });
 
-  it('shows confetti and plays the celebration sound', () => {
+  it('shows confetti and plays the celebration sound', async () => {
     const play = vi.fn();
     renderCelebration(play);
 
@@ -37,7 +37,7 @@ describe('WinnerCelebration', () => {
     expect(play).toHaveBeenCalledWith(SOUND_ID.celebration);
   });
 
-  it('skips confetti when reduced motion is requested', () => {
+  it('skips confetti when reduced motion is requested', async () => {
     const play = vi.fn();
     renderCelebration(play, { reducedMotion: true });
 
@@ -45,7 +45,7 @@ describe('WinnerCelebration', () => {
     expect(play).toHaveBeenCalledWith(SOUND_ID.celebration);
   });
 
-  it('skips confetti when celebration effects are disabled', () => {
+  it('skips confetti when celebration effects are disabled', async () => {
     useSettingsStore.getState().updateSettings({ confettiEnabled: false });
     const play = vi.fn();
     renderCelebration(play);
@@ -54,7 +54,7 @@ describe('WinnerCelebration', () => {
     expect(play).toHaveBeenCalledWith(SOUND_ID.celebration);
   });
 
-  it('skips confetti when the wheel disables celebration', () => {
+  it('skips confetti when the wheel disables celebration', async () => {
     const play = vi.fn();
     renderCelebration(play, { enabled: false });
 
@@ -62,7 +62,7 @@ describe('WinnerCelebration', () => {
     expect(play).toHaveBeenCalledWith(SOUND_ID.celebration);
   });
 
-  it('does not play sound when sound is disabled', () => {
+  it('does not play sound when sound is disabled', async () => {
     const play = vi.fn();
     renderCelebration(play, { soundEnabled: false });
 

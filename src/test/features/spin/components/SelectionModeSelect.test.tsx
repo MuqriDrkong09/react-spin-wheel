@@ -22,7 +22,7 @@ describe('SelectionModeSelect', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders the current selection mode', () => {
+  it('renders the current selection mode', async () => {
     renderSelect({ value: SELECTION_MODE.ask });
 
     expect(screen.getByRole('combobox', { name: SPIN_MESSAGES.selectionMode })).toHaveTextContent(
@@ -43,7 +43,7 @@ describe('SelectionModeSelect', () => {
     expect(onChange).toHaveBeenCalledWith(SELECTION_MODE.automatic);
   });
 
-  it('disables the control when locked', () => {
+  it('disables the control when locked', async () => {
     renderSelect({ disabled: true });
 
     expect(screen.getByRole('combobox', { name: SPIN_MESSAGES.selectionMode })).toHaveAttribute(

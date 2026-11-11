@@ -1,4 +1,8 @@
 import '@testing-library/jest-dom/vitest';
+import { configure } from '@testing-library/react';
+
+// Lazy route chunks can take longer under a full suite than the 1s default.
+configure({ asyncUtilTimeout: 5_000 });
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

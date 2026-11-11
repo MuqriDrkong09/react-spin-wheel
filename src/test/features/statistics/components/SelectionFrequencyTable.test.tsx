@@ -10,14 +10,14 @@ describe('SelectionFrequencyTable', () => {
     window.matchMedia = originalMatchMedia;
   });
 
-  it('shows the empty description when there are no rows', () => {
+  it('shows the empty description when there are no rows', async () => {
     renderWithProviders(<SelectionFrequencyTable rows={[]} />);
 
     expect(screen.getByText(STATISTICS_MESSAGES.emptyDescription)).toBeInTheDocument();
     expect(screen.queryByRole('table', { name: STATISTICS_MESSAGES.frequencyAria })).not.toBeInTheDocument();
   });
 
-  it('renders compact frequency cards below the sm breakpoint', () => {
+  it('renders compact frequency cards below the sm breakpoint', async () => {
     window.matchMedia = (query: string): MediaQueryList => ({
       matches: query.includes('max-width'),
       media: query,
@@ -39,7 +39,7 @@ describe('SelectionFrequencyTable', () => {
     expect(screen.getByText(`${STATISTICS_MESSAGES.count} 4 · ${STATISTICS_MESSAGES.percentage} ${formatPercent(50)}`)).toBeInTheDocument();
   });
 
-  it('renders item counts and formatted percentages', () => {
+  it('renders item counts and formatted percentages', async () => {
     renderWithProviders(
       <SelectionFrequencyTable
         rows={[

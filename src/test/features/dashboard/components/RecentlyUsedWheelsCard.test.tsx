@@ -28,7 +28,7 @@ const chores: RecentWheelUsage = {
 };
 
 describe('RecentlyUsedWheelsCard', () => {
-  it('shows an empty state when there are no recently used wheels', () => {
+  it('shows an empty state when there are no recently used wheels', async () => {
     renderWithProviders(<RecentlyUsedWheelsCard wheels={[]} onOpen={vi.fn()} />);
 
     expect(screen.getByRole('heading', { name: 'Recently used wheels', level: 2 })).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe('RecentlyUsedWheelsCard', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('lists recently used wheels with last-used times', () => {
+  it('lists recently used wheels with last-used times', async () => {
     renderWithProviders(<RecentlyUsedWheelsCard wheels={[pizza, chores]} onOpen={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Open recently used Pizza Night' })).toBeInTheDocument();

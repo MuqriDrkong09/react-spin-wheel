@@ -47,7 +47,7 @@ function renderCard(overrides: Partial<Parameters<typeof WheelCard>[0]> = {}) {
 }
 
 describe('WheelCard', () => {
-  it('renders name, category, description, and plural item count', () => {
+  it('renders name, category, description, and plural item count', async () => {
     renderCard();
 
     expect(screen.getByRole('heading', { name: 'Pizza Night', level: 3 })).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('WheelCard', () => {
     expect(screen.getByTestId('StarBorderIcon')).toBeInTheDocument();
   });
 
-  it('falls back to the default category and no-description copy', () => {
+  it('falls back to the default category and no-description copy', async () => {
     renderCard({
       wheel: createWheel({
         description: '   ',
@@ -75,7 +75,7 @@ describe('WheelCard', () => {
     expect(screen.getByText('1 item')).toBeInTheDocument();
   });
 
-  it('shows a filled favorite control when the wheel is favorited', () => {
+  it('shows a filled favorite control when the wheel is favorited', async () => {
     renderCard({ isFavorite: true });
 
     expect(screen.getByRole('button', { name: 'Remove Pizza Night from favorites' })).toHaveAttribute(

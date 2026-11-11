@@ -82,7 +82,7 @@ describe('AutoSpinPanel', () => {
     expect(props.onStop).toHaveBeenCalledTimes(1);
   });
 
-  it('skips progress bar motion when reduced motion is preferred', () => {
+  it('skips progress bar motion when reduced motion is preferred', async () => {
     renderPanel({
       status: AUTO_SPIN_STATUS.delaying,
       total: 10,
@@ -103,7 +103,7 @@ describe('AutoSpinPanel', () => {
     expect(bar.querySelector('.MuiLinearProgress-bar')).toHaveStyle({ transition: 'none' });
   });
 
-  it('shows a validation error', () => {
+  it('shows a validation error', async () => {
     renderPanel({ error: SPIN_MESSAGES.autoSpinInvalidDelay });
 
     expect(screen.getByRole('alert')).toHaveTextContent(SPIN_MESSAGES.autoSpinInvalidDelay);

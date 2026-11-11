@@ -76,7 +76,7 @@ describe('TreeItemRow', () => {
     sortableHarness.id = undefined;
   });
 
-  it('renders a wheel heading without a reorder handle', () => {
+  it('renders a wheel heading without a reorder handle', async () => {
     renderRow({
       node: node({
         id: 'food',
@@ -97,7 +97,7 @@ describe('TreeItemRow', () => {
     expect(sortableHarness.id).toBeUndefined();
   });
 
-  it('renders a sortable item with icon, color, and reorder handle', () => {
+  it('renders a sortable item with icon, color, and reorder handle', async () => {
     const { container } = renderRow();
 
     expect(screen.getByText('🍕 Pizza')).toBeInTheDocument();
@@ -130,7 +130,7 @@ describe('TreeItemRow', () => {
     expect(props.handlers.onEdit).toHaveBeenCalledWith('pizza');
   });
 
-  it('dims the row while it is being dragged', () => {
+  it('dims the row while it is being dragged', async () => {
     sortableHarness.isDragging = true;
     sortableHarness.transform = { x: 8, y: 4, scaleX: 1, scaleY: 1 };
     sortableHarness.transition = 'transform 200ms ease';

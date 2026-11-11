@@ -15,7 +15,7 @@ describe('RandomGeneratorScreen', () => {
   it('renders the four tools and generates a random integer', async () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    renderApp({ initialEntries: [ROUTES.randomGenerator] });
+    await renderApp({ initialEntries: [ROUTES.randomGenerator] });
 
     expect(screen.getByRole('heading', { name: GENERATOR_MESSAGES.title, level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('tablist', { name: GENERATOR_MESSAGES.toolsLabel })).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe('RandomGeneratorScreen', () => {
   it('generates a decimal, a weighted item, a name, and a choice', async () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    renderApp({ initialEntries: [ROUTES.randomGenerator] });
+    await renderApp({ initialEntries: [ROUTES.randomGenerator] });
 
     const numberForm = screen.getByRole('form', { name: GENERATOR_MESSAGES.numberTab });
     await user.click(within(numberForm).getByRole('radio', { name: GENERATOR_MESSAGES.decimalLabel }));
@@ -68,7 +68,7 @@ describe('RandomGeneratorScreen', () => {
 
   it('shows validation for a custom choice list that is too short', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.randomGenerator] });
+    await renderApp({ initialEntries: [ROUTES.randomGenerator] });
 
     await user.click(screen.getByRole('tab', { name: GENERATOR_MESSAGES.choiceTab }));
     const choiceForm = screen.getByRole('form', { name: GENERATOR_MESSAGES.choiceTab });
@@ -82,7 +82,7 @@ describe('RandomGeneratorScreen', () => {
 
   it('generates balanced teams, rerolls, and saves results to history', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.randomGenerator] });
+    await renderApp({ initialEntries: [ROUTES.randomGenerator] });
 
     await user.click(screen.getByRole('tab', { name: GENERATOR_MESSAGES.teamTab }));
     const teamForm = screen.getByRole('form', { name: GENERATOR_MESSAGES.teamTab });
@@ -121,7 +121,7 @@ describe('RandomGeneratorScreen', () => {
   it('generates a tournament bracket, tracks a winner, rerolls, and saves history', async () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    renderApp({ initialEntries: [ROUTES.randomGenerator] });
+    await renderApp({ initialEntries: [ROUTES.randomGenerator] });
 
     await user.click(screen.getByRole('tab', { name: GENERATOR_MESSAGES.tournamentTab }));
     const form = screen.getByRole('form', { name: GENERATOR_MESSAGES.tournamentTab });

@@ -22,7 +22,7 @@ function snapshot(overrides: Partial<StatisticsSnapshot> = {}): StatisticsSnapsh
 }
 
 describe('StatisticsHighlights', () => {
-  it('shows zeros and none when there are no selections', () => {
+  it('shows zeros and none when there are no selections', async () => {
     renderWithProviders(<StatisticsHighlights snapshot={snapshot()} />);
 
     expect(screen.getByText(STATISTICS_MESSAGES.totalSpins).nextElementSibling).toHaveTextContent('0');
@@ -41,7 +41,7 @@ describe('StatisticsHighlights', () => {
     expect(screen.queryByText(/time/)).not.toBeInTheDocument();
   });
 
-  it('shows names and count hints for the most selected entries', () => {
+  it('shows names and count hints for the most selected entries', async () => {
     renderWithProviders(
       <StatisticsHighlights
         snapshot={snapshot({

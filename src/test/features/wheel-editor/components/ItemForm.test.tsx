@@ -18,7 +18,7 @@ function renderForm(overrides: Partial<ComponentProps<typeof ItemForm>> = {}) {
 }
 
 describe('ItemForm', () => {
-  it('renders default fields without a cancel action', () => {
+  it('renders default fields without a cancel action', async () => {
     renderForm();
 
     expect(screen.getByLabelText(/^name/i)).toHaveValue('');
@@ -32,7 +32,7 @@ describe('ItemForm', () => {
     expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
   });
 
-  it('applies custom labels, ids, and default values', () => {
+  it('applies custom labels, ids, and default values', async () => {
     renderForm({
       nameLabel: 'Child name',
       ariaLabel: 'Add Child Data',

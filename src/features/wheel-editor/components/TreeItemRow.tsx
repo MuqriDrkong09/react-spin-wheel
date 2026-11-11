@@ -2,7 +2,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Box, Chip, IconButton, Stack, Typography } from '@mui/material';
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
 import { TreeItemActions, type TreeItemHandlers } from '@/features/wheel-editor/components/TreeItemActions';
 import { TREE_NODE_KIND, type EditorTreeNode } from '@/features/wheel-editor/utils/toEditorTree';
@@ -12,10 +12,15 @@ interface TreeItemRowProps {
   node: EditorTreeNode;
   isExpanded: boolean;
   handlers: TreeItemHandlers;
-  onToggleExpand: () => void;
+  onToggleExpand: (id: string) => void;
 }
 
-export function TreeItemRow({ node, isExpanded, handlers, onToggleExpand }: TreeItemRowProps) {
+export const TreeItemRow = memo(function TreeItemRow({
+  node,
+  isExpanded,
+  handlers,
+  onToggleExpand,
+}: TreeItemRowProps) {
   if (node.kind === TREE_NODE_KIND.wheel) {
     return (
       <TreeItemRowLayout
@@ -35,7 +40,7 @@ export function TreeItemRow({ node, isExpanded, handlers, onToggleExpand }: Tree
       onToggleExpand={onToggleExpand}
     />
   );
-}
+});
 
 function SortableTreeItemRow({ node, isExpanded, handlers, onToggleExpand }: TreeItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -105,7 +110,7 @@ function TreeItemRowLayout({
           size="small"
           aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${node.name}`}
           aria-expanded={isExpanded}
-          onClick={onToggleExpand}
+          onClick={() => onToggleExpand(node.id)}
         >
           {isExpanded ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
         </IconButton>

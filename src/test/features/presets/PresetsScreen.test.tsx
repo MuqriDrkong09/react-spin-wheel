@@ -43,7 +43,7 @@ describe('PresetsScreen', () => {
 
   it('lists built-in presets and previews hierarchical food options', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.presets] });
+    await renderApp({ initialEntries: [ROUTES.presets] });
 
     expect(screen.getByRole('heading', { name: PRESET_MESSAGES.title, level: 1 })).toBeInTheDocument();
     expect(screen.getByText(PRESET_MESSAGES.description)).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe('PresetsScreen', () => {
 
   it('closes the preview without creating a wheel', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.presets] });
+    await renderApp({ initialEntries: [ROUTES.presets] });
 
     await user.click(screen.getByRole('button', { name: 'Preview Food' }));
     const dialog = screen.getByRole('dialog', { name: PRESET_MESSAGES.previewTitle('Food') });
@@ -74,7 +74,7 @@ describe('PresetsScreen', () => {
 
   it('creates a copy from a preset and opens spin without changing the catalog', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.presets] });
+    await renderApp({ initialEntries: [ROUTES.presets] });
 
     await user.click(screen.getByRole('button', { name: 'Create Food from preset' }));
 
@@ -87,13 +87,13 @@ describe('PresetsScreen', () => {
     ]);
     expect(useWheelStore.getState().activeWheelId).toBe(created?.id);
     expect(loadPersistedState().wheels[0]?.name).toBe('Food');
-    expect(screen.getByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
     expect(getFrozenPresetCatalog()[0]?.items[0]?.name).toBe('Pizza');
   });
 
   it('opens a copy in the editor when modifying a preset', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.presets] });
+    await renderApp({ initialEntries: [ROUTES.presets] });
 
     await user.click(screen.getByRole('button', { name: 'Modify Food' }));
 
@@ -106,7 +106,7 @@ describe('PresetsScreen', () => {
 
   it('opens a copy in the editor from the preview dialog', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.presets] });
+    await renderApp({ initialEntries: [ROUTES.presets] });
 
     await user.click(screen.getByRole('button', { name: 'Preview Food' }));
     const dialog = screen.getByRole('dialog', { name: PRESET_MESSAGES.previewTitle('Food') });
@@ -122,7 +122,7 @@ describe('PresetsScreen', () => {
 
   it('saves a previewed preset as a user wheel', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.presets] });
+    await renderApp({ initialEntries: [ROUTES.presets] });
 
     await user.click(screen.getByRole('button', { name: 'Preview Team' }));
     await user.click(screen.getByRole('button', { name: 'Save Team as my wheel' }));

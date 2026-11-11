@@ -55,7 +55,7 @@ function renderSounds(
 }
 
 describe('useSpinSounds', () => {
-  it('plays spin start only when sound is enabled', () => {
+  it('plays spin start only when sound is enabled', async () => {
     const play = vi.fn();
     const { result, rerender } = renderSounds(play);
 
@@ -72,7 +72,7 @@ describe('useSpinSounds', () => {
     expect(play).not.toHaveBeenCalled();
   });
 
-  it('ticks when the pointer crosses into a new segment', () => {
+  it('ticks when the pointer crosses into a new segment', async () => {
     const play = vi.fn();
     const { result } = renderSounds(play);
 
@@ -93,7 +93,7 @@ describe('useSpinSounds', () => {
     expect(play).toHaveBeenCalledWith(SOUND_ID.wheelTick);
   });
 
-  it('ignores rotation frames when sound is off or the wheel is idle', () => {
+  it('ignores rotation frames when sound is off or the wheel is idle', async () => {
     const play = vi.fn();
     const { result, rerender } = renderSounds(play, {
       enabled: false,
@@ -113,7 +113,7 @@ describe('useSpinSounds', () => {
     expect(play).not.toHaveBeenCalled();
   });
 
-  it('does not tick when the pointer index is invalid', () => {
+  it('does not tick when the pointer index is invalid', async () => {
     const play = vi.fn();
     const { result, rerender } = renderSounds(play);
 
@@ -129,7 +129,7 @@ describe('useSpinSounds', () => {
     expect(play).not.toHaveBeenCalled();
   });
 
-  it('plays spin end when enabled and always clears the last segment', () => {
+  it('plays spin end when enabled and always clears the last segment', async () => {
     const play = vi.fn();
     const { result, rerender } = renderSounds(play);
 
@@ -153,7 +153,7 @@ describe('useSpinSounds', () => {
     expect(play).not.toHaveBeenCalled();
   });
 
-  it('resets the last segment when spinning stops so the next spin does not tick immediately', () => {
+  it('resets the last segment when spinning stops so the next spin does not tick immediately', async () => {
     const play = vi.fn();
     const { result, rerender } = renderSounds(play);
 

@@ -13,7 +13,7 @@ describe('SettingsScreen', () => {
 
   it('lets the user disable sound and individual channels', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: ['/settings'] });
+    await renderApp({ initialEntries: ['/settings'] });
 
     expect(screen.getByRole('heading', { name: SETTINGS_MESSAGES.title })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: SOUND_MESSAGES.enabled })).toBeChecked();
@@ -29,7 +29,7 @@ describe('SettingsScreen', () => {
 
   it('lets the user disable celebration effects', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: ['/settings'] });
+    await renderApp({ initialEntries: ['/settings'] });
 
     expect(screen.getByRole('switch', { name: CELEBRATION_MESSAGES.enabled })).toBeChecked();
 
@@ -38,8 +38,8 @@ describe('SettingsScreen', () => {
     expect(screen.getByRole('switch', { name: CELEBRATION_MESSAGES.enabled })).not.toBeChecked();
   });
 
-  it('updates master volume from the slider', () => {
-    renderApp({ initialEntries: ['/settings'] });
+  it('updates master volume from the slider', async () => {
+    await renderApp({ initialEntries: ['/settings'] });
 
     fireEvent.change(screen.getByRole('slider', { name: SOUND_MESSAGES.masterVolume }), {
       target: { value: '40' },
@@ -51,7 +51,7 @@ describe('SettingsScreen', () => {
 
   it('restores sound channels when sound is turned back on', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: ['/settings'] });
+    await renderApp({ initialEntries: ['/settings'] });
 
     await user.click(screen.getByRole('switch', { name: SOUND_MESSAGES.enabled }));
     expect(screen.getByRole('switch', { name: SOUND_MESSAGES.spinSound })).toBeDisabled();

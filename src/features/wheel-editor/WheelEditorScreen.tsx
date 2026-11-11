@@ -78,13 +78,7 @@ export function WheelEditorScreen() {
                 <WheelTree
                   root={tree}
                   expandedIds={editor.expandedIds}
-                  handlers={{
-                    onEdit: editor.openEdit,
-                    onDelete: editor.requestDelete,
-                    onAddChild: editor.openAddChild,
-                    onToggleEnabled: editor.toggleEnabled,
-                    onDuplicate: editor.duplicate,
-                  }}
+                  handlers={editor.treeHandlers}
                   onToggleExpand={editor.toggleExpand}
                   onMove={editor.moveItem}
                 />

@@ -316,6 +316,17 @@ export function useWheelEditor() {
     void navigate(ROUTES.wheelEditor);
   }, [navigate]);
 
+  const treeHandlers = useMemo(
+    () => ({
+      onEdit: openEdit,
+      onDelete: requestDelete,
+      onAddChild: openAddChild,
+      onToggleEnabled: toggleEnabled,
+      onDuplicate: duplicate,
+    }),
+    [duplicate, openAddChild, openEdit, requestDelete, toggleEnabled],
+  );
+
   return {
     wheel,
     availableWheels,
@@ -345,6 +356,7 @@ export function useWheelEditor() {
     toggleEnabled,
     duplicate,
     moveItem,
+    treeHandlers,
     goToCreate,
     goToDashboard,
     selectWheel,

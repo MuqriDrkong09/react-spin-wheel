@@ -40,7 +40,7 @@ describe('HistoryToolbar', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders search, wheel, mode, and sort controls', () => {
+  it('renders search, wheel, mode, and sort controls', async () => {
     renderToolbar({ search: 'chicken', wheelId: 'pizza', mode: SELECTION_MODE.ask });
 
     expect(screen.getByLabelText(HISTORY_MESSAGES.searchLabel)).toHaveValue('chicken');

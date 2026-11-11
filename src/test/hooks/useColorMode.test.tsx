@@ -47,7 +47,7 @@ describe('useColorMode', () => {
     window.matchMedia = originalMatchMedia;
   });
 
-  it('resolves system preference to the current color scheme', () => {
+  it('resolves system preference to the current color scheme', async () => {
     stubColorScheme(true);
     const { result } = renderHook(() => useColorMode());
 
@@ -55,7 +55,7 @@ describe('useColorMode', () => {
     expect(result.current.resolvedMode).toBe('dark');
   });
 
-  it('updates the resolved theme when the system color scheme changes', () => {
+  it('updates the resolved theme when the system color scheme changes', async () => {
     const scheme = stubColorScheme(false);
     const { result } = renderHook(() => useColorMode());
 
@@ -68,7 +68,7 @@ describe('useColorMode', () => {
     expect(result.current.resolvedMode).toBe('dark');
   });
 
-  it('keeps an explicit dark preference when the system scheme is light', () => {
+  it('keeps an explicit dark preference when the system scheme is light', async () => {
     stubColorScheme(false);
     useAppStore.getState().setColorMode(COLOR_MODE.dark);
     const { result } = renderHook(() => useColorMode());

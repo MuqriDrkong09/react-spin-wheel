@@ -3,7 +3,7 @@ import { GENERATOR_MESSAGES } from '@/features/random-generator/constants';
 import { renderWithProviders, screen } from '@/test/test-utils';
 
 describe('TeamResultCard', () => {
-  it('shows empty, success, and error states', () => {
+  it('shows empty, success, and error states', async () => {
     const { rerender } = renderWithProviders(<TeamResultCard />);
     expect(screen.getByRole('status')).toHaveTextContent(GENERATOR_MESSAGES.emptyTeamResult);
 

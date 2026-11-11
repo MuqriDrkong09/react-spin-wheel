@@ -64,7 +64,7 @@ describe('SegmentColorList', () => {
     expect(onChange).toHaveBeenLastCalledWith(['#0f766e']);
   });
 
-  it('disables remove when only one color remains', () => {
+  it('disables remove when only one color remains', async () => {
     renderWithProviders(<SegmentColorList colors={['#ea580c']} onChange={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: CUSTOMIZATION_MESSAGES.removeColor(0) })).toBeDisabled();

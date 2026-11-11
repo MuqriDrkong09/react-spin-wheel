@@ -30,7 +30,7 @@ describe('AppHeader', () => {
     resetAppStore();
   });
 
-  it('renders the app name and color mode menu without a navigation button on desktop', () => {
+  it('renders the app name and color mode menu without a navigation button on desktop', async () => {
     renderWithProviders(<AppHeader />);
 
     expect(screen.getByRole('banner')).toHaveClass('MuiAppBar-positionFixed');
@@ -40,7 +40,7 @@ describe('AppHeader', () => {
     expect(screen.queryByRole('button', { name: 'Open navigation' })).not.toBeInTheDocument();
   });
 
-  it('shows an open-navigation button on mobile', () => {
+  it('shows an open-navigation button on mobile', async () => {
     stubViewport(true);
     renderWithProviders(<AppHeader />);
 

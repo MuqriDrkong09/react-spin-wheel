@@ -25,7 +25,7 @@ const food = [
 ];
 
 describe('useSpinWheel', () => {
-  it('walks idle → spinning → completed and blocks duplicate spins', () => {
+  it('walks idle → spinning → completed and blocks duplicate spins', async () => {
     const randomValue = vi.fn(() => 0.5);
     const { result } = renderHook(() =>
       useSpinWheel(food, {
@@ -65,7 +65,7 @@ describe('useSpinWheel', () => {
     expect(result.current.rotation).toBeGreaterThan(0);
   });
 
-  it('jumps to completed when reduced motion is preferred', () => {
+  it('jumps to completed when reduced motion is preferred', async () => {
     const { result } = renderHook(() =>
       useSpinWheel(food, { randomValue: 0, reducedMotion: true, rotations: 4 }),
     );
@@ -79,7 +79,7 @@ describe('useSpinWheel', () => {
     expect(result.current.durationSeconds).toBe(0);
   });
 
-  it('keeps adding rotation on the next spin', () => {
+  it('keeps adding rotation on the next spin', async () => {
     const { result } = renderHook(() =>
       useSpinWheel(food, { randomValue: 0.5, reducedMotion: false, rotations: 4 }),
     );
@@ -99,7 +99,7 @@ describe('useSpinWheel', () => {
     expect(result.current.rotation).toBeGreaterThan(firstTarget);
   });
 
-  it('resets to idle at 0 so the next spin is a new animation', () => {
+  it('resets to idle at 0 so the next spin is a new animation', async () => {
     const { result } = renderHook(() =>
       useSpinWheel(food, { randomValue: 0, reducedMotion: false, rotations: 4 }),
     );
@@ -128,7 +128,7 @@ describe('useSpinWheel', () => {
     expect(result.current.rotation).toBeGreaterThan(0);
   });
 
-  it('starts a child-level spin from a fresh rotation', () => {
+  it('starts a child-level spin from a fresh rotation', async () => {
     const children = [item('Pepperoni', { color: '#dc2626' }), item('Mushroom', { color: '#ca8a04' })];
     const { result } = renderHook(() =>
       useSpinWheel(food, { randomValue: 0, reducedMotion: true, rotations: 4 }),
@@ -147,7 +147,7 @@ describe('useSpinWheel', () => {
     expect(result.current.result?.item.name).toBe('Pepperoni');
   });
 
-  it('stays idle when there is nothing to spin', () => {
+  it('stays idle when there is nothing to spin', async () => {
     const { result } = renderHook(() =>
       useSpinWheel([item('Pizza', { enabled: false })], {
         randomValue: 0,
@@ -168,7 +168,7 @@ describe('useSpinWheel', () => {
     expect(result.current.status).toBe(SPIN_STATUS.idle);
   });
 
-  it('reads animation and rotation range from wheel settings', () => {
+  it('reads animation and rotation range from wheel settings', async () => {
     const { result } = renderHook(() =>
       useSpinWheel(food, {
         randomValue: 0,
@@ -197,7 +197,7 @@ describe('useSpinWheel', () => {
     expect(result.current.rotationDegrees).toBeGreaterThan(0);
   });
 
-  it('uses a separate rotation-random sample', () => {
+  it('uses a separate rotation-random sample', async () => {
     const { result } = renderHook(() =>
       useSpinWheel(food, {
         randomValue: 0,
@@ -219,7 +219,7 @@ describe('useSpinWheel', () => {
     expect(result.current.result?.fullRotations).toBe(8);
   });
 
-  it('uses Math.random and prefers-reduced-motion when options are omitted', () => {
+  it('uses Math.random and prefers-reduced-motion when options are omitted', async () => {
     const originalMatchMedia = window.matchMedia;
     window.matchMedia = (query: string): MediaQueryList => ({
       matches: query.includes('prefers-reduced-motion'),

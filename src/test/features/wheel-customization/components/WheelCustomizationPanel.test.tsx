@@ -112,7 +112,7 @@ describe('WheelCustomizationPanel', () => {
     seedWheel();
   });
 
-  it('renders customization copy and the live preview title', () => {
+  it('renders customization copy and the live preview title', async () => {
     renderWithProviders(<Panel />);
 
     expect(screen.getByRole('heading', { name: CUSTOMIZATION_MESSAGES.title, level: 2 })).toBeInTheDocument();

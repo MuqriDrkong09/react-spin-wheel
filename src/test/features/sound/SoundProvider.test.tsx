@@ -92,7 +92,7 @@ describe('SoundProvider', () => {
     vi.useRealTimers();
   });
 
-  it('creates an engine, applies settings, and disposes it on unmount', () => {
+  it('creates an engine, applies settings, and disposes it on unmount', async () => {
     const { unmount } = renderHook(() => useSound(), { wrapper: wrapper() });
     const engine = soundEngineMocks.instances[0];
 
@@ -112,7 +112,7 @@ describe('SoundProvider', () => {
     expect(engine?.dispose).toHaveBeenCalledTimes(1);
   });
 
-  it('uses an injected engine without attaching listeners or disposing it', () => {
+  it('uses an injected engine without attaching listeners or disposing it', async () => {
     const engine = createMockEngine();
     const { unmount } = renderHook(() => useSound(), {
       wrapper: wrapper(engine as unknown as SoundEngine),
@@ -129,7 +129,7 @@ describe('SoundProvider', () => {
     expect(engine.dispose).not.toHaveBeenCalled();
   });
 
-  it('creates an engine from play when the provider has not mounted its own yet', () => {
+  it('creates an engine from play when the provider has not mounted its own yet', async () => {
     function PlayOnRender() {
       const sound = useSound();
       sound.play(SOUND_ID.winner);
@@ -174,7 +174,7 @@ describe('SoundProvider', () => {
     await expect(result.current.unlock()).resolves.toBe(false);
   });
 
-  it('reapplies settings when the store changes', () => {
+  it('reapplies settings when the store changes', async () => {
     const engine = createMockEngine();
     renderHook(() => useSound(), { wrapper: wrapper(engine as unknown as SoundEngine) });
 
@@ -197,7 +197,7 @@ describe('SoundProvider', () => {
     });
   });
 
-  it('previews sounds in order and replaces a queued preview', () => {
+  it('previews sounds in order and replaces a queued preview', async () => {
     vi.useFakeTimers();
     const engine = createMockEngine();
     const { result } = renderHook(() => useSound(), {
@@ -216,7 +216,7 @@ describe('SoundProvider', () => {
     expect(engine.play.mock.calls.map((call) => call[0])).toEqual(SOUND_PREVIEW_ORDER);
   });
 
-  it('clears preview timers on unmount', () => {
+  it('clears preview timers on unmount', async () => {
     vi.useFakeTimers();
     const engine = createMockEngine();
     const { result, unmount } = renderHook(() => useSound(), {
@@ -235,7 +235,7 @@ describe('SoundProvider', () => {
     expect(engine.play).not.toHaveBeenCalled();
   });
 
-  it('skips applying settings when the engine is not ready', () => {
+  it('skips applying settings when the engine is not ready', async () => {
     soundEngineMocks.applySettingsEarly = true;
 
     render(
@@ -247,7 +247,7 @@ describe('SoundProvider', () => {
     expect(soundEngineMocks.instances.length).toBeGreaterThan(0);
   });
 
-  it('adopts an injected engine after disposing the default engine', () => {
+  it('adopts an injected engine after disposing the default engine', async () => {
     const injected = createMockEngine();
 
     function Harness({ engine }: { engine?: SoundEngine }) {

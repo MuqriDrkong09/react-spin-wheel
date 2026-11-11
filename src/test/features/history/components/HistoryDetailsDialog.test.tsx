@@ -22,19 +22,19 @@ const result: HistoryResult = {
 };
 
 describe('HistoryDetailsDialog', () => {
-  it('stays closed when no result is selected', () => {
+  it('stays closed when no result is selected', async () => {
     renderWithProviders(<HistoryDetailsDialog result={null} onClose={vi.fn()} />);
 
     expect(screen.queryByRole('dialog', { name: HISTORY_MESSAGES.detailsTitle })).not.toBeInTheDocument();
   });
 
-  it('stays closed when the result is omitted', () => {
+  it('stays closed when the result is omitted', async () => {
     renderWithProviders(<HistoryDetailsDialog onClose={vi.fn()} />);
 
     expect(screen.queryByRole('dialog', { name: HISTORY_MESSAGES.detailsTitle })).not.toBeInTheDocument();
   });
 
-  it('shows wheel, path, item, time, duration, mode, and session', () => {
+  it('shows wheel, path, item, time, duration, mode, and session', async () => {
     renderWithProviders(<HistoryDetailsDialog result={result} onClose={vi.fn()} />);
 
     const dialog = screen.getByRole('dialog', { name: HISTORY_MESSAGES.detailsTitle });

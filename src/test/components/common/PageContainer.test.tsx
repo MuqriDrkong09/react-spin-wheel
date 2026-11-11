@@ -2,7 +2,7 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { renderWithProviders, screen } from '@/test/test-utils';
 
 describe('PageContainer', () => {
-  it('renders children in a gutterless large container with no default padding', () => {
+  it('renders children in a gutterless large container with no default padding', async () => {
     renderWithProviders(
       <PageContainer>
         <h1>Dashboard</h1>
@@ -18,7 +18,7 @@ describe('PageContainer', () => {
     expect(container).toHaveStyle({ padding: '0px' });
   });
 
-  it('merges a single sx value after the default padding', () => {
+  it('merges a single sx value after the default padding', async () => {
     renderWithProviders(
       <PageContainer sx={{ mt: 2 }} data-testid="page">
         Content
@@ -28,7 +28,7 @@ describe('PageContainer', () => {
     expect(screen.getByTestId('page')).toHaveStyle({ padding: '0px', marginTop: '16px' });
   });
 
-  it('merges an sx array after the default padding', () => {
+  it('merges an sx array after the default padding', async () => {
     renderWithProviders(
       <PageContainer sx={[{ mt: 1 }, { px: 2 }]} data-testid="page">
         Content
@@ -42,7 +42,7 @@ describe('PageContainer', () => {
     });
   });
 
-  it('forwards extra container props', () => {
+  it('forwards extra container props', async () => {
     renderWithProviders(
       <PageContainer component="section" aria-label="Page">
         Content

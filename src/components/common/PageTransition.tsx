@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { Box } from '@mui/material';
 import type { ReactNode } from 'react';
 
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -11,12 +11,23 @@ export function PageTransition({ children }: PageTransitionProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
   return (
-    <motion.div
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: 'easeOut' }}
+    <Box
+      sx={
+        prefersReducedMotion
+          ? undefined
+          : {
+              animation: 'spinflow-page-enter 200ms ease-out',
+              '@keyframes spinflow-page-enter': {
+                from: { opacity: 0, transform: 'translateY(8px)' },
+                to: { opacity: 1, transform: 'translateY(0)' },
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                animation: 'none',
+              },
+            }
+      }
     >
       {children}
-    </motion.div>
+    </Box>
   );
 }

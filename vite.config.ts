@@ -13,6 +13,35 @@ export default defineConfig({
       '@': path.resolve(rootDir, 'src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return undefined;
+          }
+
+          if (id.includes('recharts') || id.includes('victory-vendor') || id.includes('d3-')) {
+            return 'charts';
+          }
+
+          if (id.includes('framer-motion')) {
+            return 'motion';
+          }
+
+          if (id.includes('@dnd-kit')) {
+            return 'dnd';
+          }
+
+          if (id.includes('@mui')) {
+            return 'mui';
+          }
+
+          return undefined;
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

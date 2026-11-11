@@ -93,7 +93,7 @@ describe('SpinWheel', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders an empty state when there are no active items', () => {
+  it('renders an empty state when there are no active items', async () => {
     renderWithProviders(
       <SpinWheel items={[item('Pizza', { enabled: false }), item('Burger', { weight: 0 })]} />,
     );
@@ -102,7 +102,7 @@ describe('SpinWheel', () => {
     expect(screen.queryByRole('button', { name: SPIN_MESSAGES.spinButton })).not.toBeInTheDocument();
   });
 
-  it('renders names, icons, colors, pointer, and a center spin button', () => {
+  it('renders names, icons, colors, pointer, and a center spin button', async () => {
     renderWithProviders(
       <SpinWheel
         items={[
@@ -121,7 +121,7 @@ describe('SpinWheel', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeEnabled();
   });
 
-  it('excludes disabled items from the wheel', () => {
+  it('excludes disabled items from the wheel', async () => {
     renderWithProviders(
       <SpinWheel
         items={[item('Pizza', { icon: '🍕' }), item('Burger', { icon: '🍔', enabled: false })]}
@@ -132,7 +132,7 @@ describe('SpinWheel', () => {
     expect(screen.queryByTitle('🍔 Burger')).not.toBeInTheDocument();
   });
 
-  it('clips long labels to their own slices', () => {
+  it('clips long labels to their own slices', async () => {
     const items = Array.from({ length: 11 }, (_, index) =>
       item('Cadillac F1 Team', { id: `team-${index}`, color: '#0ea5e9' }),
     );
@@ -147,7 +147,7 @@ describe('SpinWheel', () => {
     expect(screen.getAllByTitle('Cadillac F1 Team')).toHaveLength(11);
   });
 
-  it('keeps the hub a static color that does not follow slice colors', () => {
+  it('keeps the hub a static color that does not follow slice colors', async () => {
     const { container, rerender } = renderWithProviders(
       <SpinWheel
         items={[item('Pizza', { icon: '🍕', color: '#ea580c' }), item('Burger', { icon: '🍔' })]}
@@ -169,7 +169,7 @@ describe('SpinWheel', () => {
     expect(container.querySelector('circle')).toHaveAttribute('fill', WHEEL_HUB_COLOR);
   });
 
-  it('renders a single item as a full wheel', () => {
+  it('renders a single item as a full wheel', async () => {
     renderWithProviders(<SpinWheel items={[item('Pizza', { icon: '🍕' })]} />);
 
     expect(screen.getByRole('img', { name: /spin wheel with pizza/i })).toBeInTheDocument();
@@ -177,7 +177,7 @@ describe('SpinWheel', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeInTheDocument();
   });
 
-  it('does not complete a spin when rotation snaps while idle', () => {
+  it('does not complete a spin when rotation snaps while idle', async () => {
     const onSpinComplete = vi.fn();
     const { rerender } = renderWithProviders(
       <SpinWheel
@@ -201,7 +201,7 @@ describe('SpinWheel', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeEnabled();
   });
 
-  it('disables the spin button while spinning', () => {
+  it('disables the spin button while spinning', async () => {
     const onSpin = vi.fn();
     renderWithProviders(
       <SpinWheel items={[item('Pizza', { icon: '🍕' })]} spinning onSpin={onSpin} />,
@@ -212,7 +212,7 @@ describe('SpinWheel', () => {
     expect(button.closest('[aria-busy="true"]')).toBeTruthy();
   });
 
-  it('disables the spin button when auto spin has locked controls', () => {
+  it('disables the spin button when auto spin has locked controls', async () => {
     renderWithProviders(
       <SpinWheel items={[item('Pizza', { icon: '🍕' })]} spinLocked />,
     );
@@ -220,7 +220,7 @@ describe('SpinWheel', () => {
     expect(screen.getByRole('button', { name: SPIN_MESSAGES.spinButton })).toBeDisabled();
   });
 
-  it('applies custom pointer, hub, and border colors from appearance', () => {
+  it('applies custom pointer, hub, and border colors from appearance', async () => {
     const { container } = renderWithProviders(
       <SpinWheel
         items={[item('Pizza', { icon: '🍕' }), item('Burger', { icon: '🍔' })]}
@@ -242,7 +242,7 @@ describe('SpinWheel', () => {
     expect(slice).toHaveAttribute('stroke-width', '3');
   });
 
-  it('omits slice strokes when the border width is zero', () => {
+  it('omits slice strokes when the border width is zero', async () => {
     const { container } = renderWithProviders(
       <SpinWheel
         items={[item('Pizza'), item('Burger')]}
@@ -254,14 +254,14 @@ describe('SpinWheel', () => {
     expect(slices.every((path) => path.getAttribute('stroke') === 'none')).toBe(true);
   });
 
-  it('hides labels on very narrow slices', () => {
+  it('hides labels on very narrow slices', async () => {
     const items = Array.from({ length: 24 }, (_, index) => item(`Item ${index}`, { id: `item-${index}` }));
     const { container } = renderWithProviders(<SpinWheel items={items} />);
 
     expect(container.querySelectorAll('tspan')).toHaveLength(0);
   });
 
-  it('uses outlined and ghost center-button styles', () => {
+  it('uses outlined and ghost center-button styles', async () => {
     const { rerender } = renderWithProviders(
       <SpinWheel
         items={[item('Pizza'), item('Burger')]}
@@ -285,7 +285,7 @@ describe('SpinWheel', () => {
     );
   });
 
-  it('falls back to ease-in-out when the animation type is unknown', () => {
+  it('falls back to ease-in-out when the animation type is unknown', async () => {
     renderWithProviders(
       <SpinWheel
         items={[item('Pizza'), item('Burger')]}
@@ -306,7 +306,7 @@ describe('SpinWheel', () => {
     expect(onSpin).toHaveBeenCalledTimes(1);
   });
 
-  it('completes a reduced-motion spin and tracks rotation frames', () => {
+  it('completes a reduced-motion spin and tracks rotation frames', async () => {
     const onSpinComplete = vi.fn();
     motionHarness.fireComplete = true;
     motionHarness.updateRotate = 90;
@@ -324,7 +324,7 @@ describe('SpinWheel', () => {
     expect(onSpinComplete).toHaveBeenCalledTimes(1);
   });
 
-  it('ignores non-numeric rotation updates and too-short spin completions', () => {
+  it('ignores non-numeric rotation updates and too-short spin completions', async () => {
     const onSpinComplete = vi.fn();
     motionHarness.fireComplete = true;
     motionHarness.updateRotate = '90deg';
@@ -342,7 +342,7 @@ describe('SpinWheel', () => {
     expect(onSpinComplete).not.toHaveBeenCalled();
   });
 
-  it('does not complete while the minimum spin duration is still running', () => {
+  it('does not complete while the minimum spin duration is still running', async () => {
     const now = vi.spyOn(performance, 'now');
     now.mockReturnValue(1_000);
     const onSpinComplete = vi.fn();
@@ -360,7 +360,7 @@ describe('SpinWheel', () => {
     expect(onSpinComplete).not.toHaveBeenCalled();
   });
 
-  it('completes a spin after the minimum duration has elapsed', () => {
+  it('completes a spin after the minimum duration has elapsed', async () => {
     const now = vi.spyOn(performance, 'now');
     now.mockReturnValue(1_000);
     const onSpinComplete = vi.fn();

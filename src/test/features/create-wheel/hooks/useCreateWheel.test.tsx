@@ -38,7 +38,7 @@ describe('useCreateWheel', () => {
     resetWheelStore();
   });
 
-  it('creates, persists, and opens the editor for a submitted wheel', () => {
+  it('creates, persists, and opens the editor for a submitted wheel', async () => {
     const { result } = renderHook(() => useCreateWheelWithLocation(), { wrapper });
 
     act(() => {
@@ -57,7 +57,7 @@ describe('useCreateWheel', () => {
     expect(result.current.href).toBe(withWheelId(ROUTES.wheelEditor, created?.id ?? ''));
   });
 
-  it('omits empty optional fields on the created wheel', () => {
+  it('omits empty optional fields on the created wheel', async () => {
     const { result } = renderHook(() => useCreateWheelWithLocation(), { wrapper });
 
     act(() => {
@@ -80,7 +80,7 @@ describe('useCreateWheel', () => {
     expect(result.current.href).toBe(withWheelId(ROUTES.wheelEditor, created?.id ?? ''));
   });
 
-  it('returns to the dashboard without creating a wheel', () => {
+  it('returns to the dashboard without creating a wheel', async () => {
     const { result } = renderHook(() => useCreateWheelWithLocation(), { wrapper });
 
     act(() => {

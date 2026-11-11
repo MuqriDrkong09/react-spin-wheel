@@ -97,7 +97,7 @@ describe('useWheelEditor', () => {
     vi.restoreAllMocks();
   });
 
-  it('does not ask for a wheel when the store is empty', () => {
+  it('does not ask for a wheel when the store is empty', async () => {
     const { result } = renderEditor(ROUTES.wheelEditor);
 
     expect(result.current.wheel).toBeUndefined();
@@ -122,7 +122,7 @@ describe('useWheelEditor', () => {
     expect(persistStores).not.toHaveBeenCalled();
   });
 
-  it('sorts picker wheels by recency, then name', () => {
+  it('sorts picker wheels by recency, then name', async () => {
     useWheelStore.getState().createWheel({ id: 'food', name: 'Food Wheel' });
     useWheelStore.getState().createWheel({ id: 'games', name: 'Games Wheel' });
     useWheelStore.getState().createWheel({ id: 'alpha', name: 'Alpha' });
@@ -152,7 +152,7 @@ describe('useWheelEditor', () => {
     ]);
   });
 
-  it('loads the requested wheel, marks it active, and skips a matching active id', () => {
+  it('loads the requested wheel, marks it active, and skips a matching active id', async () => {
     seedFoodWheel();
     const { result } = renderEditor();
 
@@ -170,7 +170,7 @@ describe('useWheelEditor', () => {
     expect(setActiveWheel).not.toHaveBeenCalled();
   });
 
-  it('reports a missing wheel without changing the active selection', () => {
+  it('reports a missing wheel without changing the active selection', async () => {
     seedFoodWheel();
     useWheelStore.getState().setActiveWheel(null);
     const { result } = renderEditor(withWheelId(ROUTES.wheelEditor, 'ghost'));
@@ -181,7 +181,7 @@ describe('useWheelEditor', () => {
     expect(useWheelStore.getState().activeWheelId).toBeNull();
   });
 
-  it('selects a wheel, clears the selection, and navigates to create or dashboard', () => {
+  it('selects a wheel, clears the selection, and navigates to create or dashboard', async () => {
     seedFoodWheel();
     const { result } = renderEditor(ROUTES.wheelEditor);
 
@@ -207,7 +207,7 @@ describe('useWheelEditor', () => {
     expect(result.current.href).toBe(ROUTES.dashboard);
   });
 
-  it('toggles expansion and keeps ids when the selected wheel changes', () => {
+  it('toggles expansion and keeps ids when the selected wheel changes', async () => {
     seedFoodWheel();
     useWheelStore.getState().createWheel({ id: 'games', name: 'Games Wheel' });
     const { result } = renderEditor();
@@ -230,7 +230,7 @@ describe('useWheelEditor', () => {
     expect(result.current.expandedIds.has('sushi')).toBe(false);
   });
 
-  it('adds main data and expands the wheel when it was collapsed', () => {
+  it('adds main data and expands the wheel when it was collapsed', async () => {
     seedFoodWheel();
     const { result } = renderEditor();
 
@@ -253,7 +253,7 @@ describe('useWheelEditor', () => {
     expect(result.current.successMessage).toBeNull();
   });
 
-  it('skips adding main data when the store does not create an item', () => {
+  it('skips adding main data when the store does not create an item', async () => {
     seedFoodWheel();
     vi.spyOn(useWheelStore.getState(), 'addItem').mockReturnValue(undefined);
     const { result } = renderEditor();
@@ -266,7 +266,7 @@ describe('useWheelEditor', () => {
     expect(useWheelStore.getState().getWheel('food')?.items).toHaveLength(2);
   });
 
-  it('opens add and edit dialogs with form defaults, including missing item fields', () => {
+  it('opens add and edit dialogs with form defaults, including missing item fields', async () => {
     seedFoodWheel();
     const { result } = renderEditor();
 
@@ -304,7 +304,7 @@ describe('useWheelEditor', () => {
     expect(result.current.formDefaults).toEqual(defaultItemFormValues);
   });
 
-  it('submits a child and expands the parent', () => {
+  it('submits a child and expands the parent', async () => {
     seedFoodWheel();
     const { result } = renderEditor();
 
@@ -320,7 +320,7 @@ describe('useWheelEditor', () => {
     expect(result.current.expandedIds.has('sushi')).toBe(true);
   });
 
-  it('closes an add dialog without a success message when the child is not created', () => {
+  it('closes an add dialog without a success message when the child is not created', async () => {
     seedFoodWheel();
     vi.spyOn(useWheelStore.getState(), 'addChildItem').mockReturnValue(undefined);
     const { result } = renderEditor();
@@ -336,7 +336,7 @@ describe('useWheelEditor', () => {
     expect(result.current.dialog).toBeNull();
   });
 
-  it('edits a wheel, an item, and a missing node', () => {
+  it('edits a wheel, an item, and a missing node', async () => {
     seedFoodWheel();
     const { result } = renderEditor();
 
@@ -366,7 +366,7 @@ describe('useWheelEditor', () => {
     expect(result.current.dialog).toBeNull();
   });
 
-  it('closes an edit dialog without a success message when the item is not updated', () => {
+  it('closes an edit dialog without a success message when the item is not updated', async () => {
     seedFoodWheel();
     vi.spyOn(useWheelStore.getState(), 'updateChildItem').mockReturnValue(undefined);
     const { result } = renderEditor();
@@ -382,7 +382,7 @@ describe('useWheelEditor', () => {
     expect(result.current.dialog).toBeNull();
   });
 
-  it('requests, cancels, and confirms deletion', () => {
+  it('requests, cancels, and confirms deletion', async () => {
     seedFoodWheel();
     const { result } = renderEditor();
 
@@ -416,7 +416,7 @@ describe('useWheelEditor', () => {
     expect(useWheelStore.getState().getWheel('food')?.items.map((item) => item.id)).toEqual(['pizza']);
   });
 
-  it('ignores enable and duplicate actions on the wheel root', () => {
+  it('ignores enable and duplicate actions on the wheel root', async () => {
     seedFoodWheel();
     const { result } = renderEditor();
 
@@ -438,7 +438,7 @@ describe('useWheelEditor', () => {
     ).toBe(true);
   });
 
-  it('moves an item, persists, and ignores a failed move', () => {
+  it('moves an item, persists, and ignores a failed move', async () => {
     seedFoodWheel();
     const { result } = renderEditor();
 
@@ -462,7 +462,7 @@ describe('useWheelEditor', () => {
     );
   });
 
-  it('ignores a move that the store does not apply', () => {
+  it('ignores a move that the store does not apply', async () => {
     seedFoodWheel();
     vi.spyOn(useWheelStore.getState(), 'moveItem').mockReturnValue(undefined);
     const { result } = renderEditor();
@@ -478,7 +478,7 @@ describe('useWheelEditor', () => {
     ]);
   });
 
-  it('does not announce a child when the parent node is missing', () => {
+  it('does not announce a child when the parent node is missing', async () => {
     seedFoodWheel();
     vi.spyOn(useWheelStore.getState(), 'addChildItem').mockReturnValue({
       id: 'ghost-child',
@@ -502,7 +502,7 @@ describe('useWheelEditor', () => {
     expect(result.current.dialog).toBeNull();
   });
 
-  it('skips expansion when the editor tree is unavailable', () => {
+  it('skips expansion when the editor tree is unavailable', async () => {
     seedFoodWheel();
     treeHarness.passThrough = false;
     const { result } = renderEditor();

@@ -147,7 +147,7 @@ describe('WheelTree', () => {
     expect(treeHandlers.onEdit).toHaveBeenCalledWith('burger');
   });
 
-  it('shows a drag overlay with an icon and reports a completed move', () => {
+  it('shows a drag overlay with an icon and reports a completed move', async () => {
     const { onMove } = renderTree();
 
     act(() => {
@@ -166,7 +166,7 @@ describe('WheelTree', () => {
     expect(within(screen.getByTestId('drag-overlay')).queryByText('🍕 Pizza')).not.toBeInTheDocument();
   });
 
-  it('shows a plain-name overlay and ignores a cancelled or empty drop', () => {
+  it('shows a plain-name overlay and ignores a cancelled or empty drop', async () => {
     const { onMove } = renderTree();
 
     act(() => {
@@ -186,7 +186,7 @@ describe('WheelTree', () => {
     expect(within(screen.getByTestId('drag-overlay')).queryByText('Burger')).not.toBeInTheDocument();
   });
 
-  it('announces drag progress, including unknown nodes and droppable parents', () => {
+  it('announces drag progress, including unknown nodes and droppable parents', async () => {
     renderTree();
     const announcements = dndHarness.announcements;
     expect(announcements).toBeDefined();

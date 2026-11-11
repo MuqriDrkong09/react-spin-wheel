@@ -31,7 +31,7 @@ describe('usePresets', () => {
     resetWheelStore();
   });
 
-  it('lists catalog clones and starts without a preview', () => {
+  it('lists catalog clones and starts without a preview', async () => {
     const { result } = renderHook(() => usePresetsWithLocation(), { wrapper });
 
     expect(result.current.presets.map((preset) => preset.id)).toEqual([
@@ -44,7 +44,7 @@ describe('usePresets', () => {
     expect(result.current.href).toBe(ROUTES.presets);
   });
 
-  it('opens and closes a preview without changing the frozen catalog', () => {
+  it('opens and closes a preview without changing the frozen catalog', async () => {
     const { result } = renderHook(() => usePresetsWithLocation(), { wrapper });
 
     act(() => {
@@ -69,7 +69,7 @@ describe('usePresets', () => {
     expect(useWheelStore.getState().wheels).toHaveLength(0);
   });
 
-  it('creates a copy and opens spin', () => {
+  it('creates a copy and opens spin', async () => {
     const { result } = renderHook(() => usePresetsWithLocation(), { wrapper });
 
     act(() => {
@@ -85,7 +85,7 @@ describe('usePresets', () => {
     expect(getFrozenPresetCatalog()[0]?.name).toBe('Food');
   });
 
-  it('closes preview and opens the editor when modifying a preset', () => {
+  it('closes preview and opens the editor when modifying a preset', async () => {
     const { result } = renderHook(() => usePresetsWithLocation(), { wrapper });
 
     act(() => {
@@ -102,7 +102,7 @@ describe('usePresets', () => {
     expect(result.current.href).toBe(withWheelId(ROUTES.wheelEditor, created?.id ?? ''));
   });
 
-  it('closes preview and returns to the dashboard when saving as a user wheel', () => {
+  it('closes preview and returns to the dashboard when saving as a user wheel', async () => {
     const { result } = renderHook(() => usePresetsWithLocation(), { wrapper });
 
     act(() => {
@@ -124,7 +124,7 @@ describe('usePresets', () => {
     expect(result.current.href).toBe(ROUTES.dashboard);
   });
 
-  it('does not create or navigate when the preset is missing', () => {
+  it('does not create or navigate when the preset is missing', async () => {
     const { result } = renderHook(() => usePresetsWithLocation(), { wrapper });
 
     act(() => {

@@ -73,8 +73,8 @@ describe('DashboardScreen', () => {
     downloadJsonFileMock.mockReset();
   });
 
-  it('shows an empty state when there are no wheels', () => {
-    renderApp();
+  it('shows an empty state when there are no wheels', async () => {
+    await renderApp();
 
     expect(screen.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
     expect(screen.getByText(APP_DESCRIPTION)).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('DashboardScreen', () => {
 
   it('opens the create wheel page', async () => {
     const user = userEvent.setup();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Create Wheel' }));
 
@@ -99,7 +99,7 @@ describe('DashboardScreen', () => {
 
   it('opens create wheel from the empty-state action', async () => {
     const user = userEvent.setup();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Create your first wheel' }));
 
@@ -109,7 +109,7 @@ describe('DashboardScreen', () => {
   it('shows an empty state when filters match no wheels', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     await user.type(screen.getByLabelText('Search wheels'), 'zzzzz');
 
@@ -124,7 +124,7 @@ describe('DashboardScreen', () => {
   it('renders stats, lists, search, filter, favorite, open, edit, and delete', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     expect(screen.getByText('Total wheels').nextElementSibling).toHaveTextContent('2');
     expect(screen.getByText('Total spins').nextElementSibling).toHaveTextContent('1');
@@ -197,38 +197,38 @@ describe('DashboardScreen', () => {
   it('opens a wheel on the spin page', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Open Pizza Night' }));
-    expect(screen.getByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
     expect(useWheelStore.getState().activeWheelId).toBe('pizza');
   });
 
   it('opens a wheel in the editor', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Edit Pizza Night' }));
-    expect(screen.getByRole('heading', { name: 'Wheel editor', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wheel editor', level: 1 })).toBeInTheDocument();
     expect(useWheelStore.getState().activeWheelId).toBe('pizza');
   });
 
   it('opens a favorite wheel from the side card', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Open favorite Pizza Night' }));
 
-    expect(screen.getByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
     expect(useWheelStore.getState().activeWheelId).toBe('pizza');
   });
 
   it('unfavorites a wheel from the favorite section', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     const favoriteHeading = screen.getByRole('heading', { name: 'Favorite wheels', level: 2 });
     const favoriteCard = favoriteHeading.parentElement;
@@ -246,7 +246,7 @@ describe('DashboardScreen', () => {
   it('cancels a pending delete', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Delete Chores' }));
     const dialog = screen.getByRole('dialog', { name: 'Delete wheel' });
@@ -260,7 +260,7 @@ describe('DashboardScreen', () => {
     const user = userEvent.setup();
     useSettingsStore.getState().updateSettings({ confirmBeforeDelete: false });
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Delete Chores' }));
     expect(useWheelStore.getState().getWheel('chores')).toBeUndefined();
@@ -276,7 +276,7 @@ describe('DashboardScreen', () => {
       enabled: true,
       weight: 1,
     });
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
 
@@ -300,7 +300,7 @@ describe('DashboardScreen', () => {
       enabled: true,
       weight: 1,
     });
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Share Pizza Night' }));
 
@@ -312,7 +312,7 @@ describe('DashboardScreen', () => {
   it('does not export a wheel with no items', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
 
@@ -322,7 +322,7 @@ describe('DashboardScreen', () => {
 
   it('imports a valid json file after the user confirms a name', async () => {
     const user = userEvent.setup();
-    renderApp();
+    await renderApp();
     const file = new File(
       [
         JSON.stringify({
@@ -367,7 +367,7 @@ describe('DashboardScreen', () => {
 
   it('shows an error for malformed json and does not import', async () => {
     const user = userEvent.setup();
-    renderApp();
+    await renderApp();
 
     await user.upload(
       screen.getByLabelText('Choose wheel JSON file'),
@@ -381,7 +381,7 @@ describe('DashboardScreen', () => {
 
   it('imports from a dropped json file', async () => {
     const user = userEvent.setup();
-    renderApp();
+    await renderApp();
     const file = new File(
       [
         JSON.stringify({
@@ -411,7 +411,7 @@ describe('DashboardScreen', () => {
   it('sorts wheel cards by name', async () => {
     const user = userEvent.setup();
     seedDashboard();
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('combobox', { name: 'Sort' }));
     await user.click(screen.getByRole('option', { name: 'Name' }));
@@ -434,7 +434,7 @@ describe('DashboardScreen', () => {
       enabled: true,
       weight: 1,
     });
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
 
@@ -444,7 +444,7 @@ describe('DashboardScreen', () => {
 
   it('cancels an import without creating a wheel', async () => {
     const user = userEvent.setup();
-    renderApp();
+    await renderApp();
     const file = new File(
       [
         JSON.stringify({
@@ -469,7 +469,7 @@ describe('DashboardScreen', () => {
 
   it('rejects a json file that is not a wheel export', async () => {
     const user = userEvent.setup();
-    renderApp();
+    await renderApp();
 
     await user.upload(
       screen.getByLabelText('Choose wheel JSON file'),
@@ -502,7 +502,7 @@ describe('DashboardScreen', () => {
         weight: 1,
       },
     );
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole('button', { name: 'Export Pizza Night' }));
     const exportedJson = downloadJsonFileMock.mock.calls[0]?.[1];

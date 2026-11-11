@@ -1,8 +1,10 @@
 import { Box, Toolbar } from '@mui/material';
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { PageTransition } from '@/components/common/PageTransition';
 import { AppErrorBoundary } from '@/components/feedback/AppErrorBoundary';
+import { RouteFallback } from '@/components/feedback/RouteFallback';
 import { RuntimeNoticeBanner } from '@/components/feedback/RuntimeNoticeBanner';
 
 import { AppDrawer } from './AppDrawer';
@@ -59,9 +61,11 @@ export function AppLayout() {
         <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 } }}>
           <RuntimeNoticeBanner />
           <AppErrorBoundary>
-            <PageTransition>
-              <Outlet />
-            </PageTransition>
+            <Suspense fallback={<RouteFallback />}>
+              <PageTransition>
+                <Outlet />
+              </PageTransition>
+            </Suspense>
           </AppErrorBoundary>
         </Box>
         <AppFooter />

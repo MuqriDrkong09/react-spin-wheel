@@ -20,7 +20,7 @@ const yes: RecentResult = {
 };
 
 describe('RecentResultsCard', () => {
-  it('shows an empty state when there are no results', () => {
+  it('shows an empty state when there are no results', async () => {
     renderWithProviders(<RecentResultsCard results={[]} onOpen={vi.fn()} />);
 
     expect(screen.getByRole('heading', { name: 'Recently selected results', level: 2 })).toBeInTheDocument();
@@ -28,7 +28,7 @@ describe('RecentResultsCard', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('lists recent results with wheel name and time', () => {
+  it('lists recent results with wheel name and time', async () => {
     renderWithProviders(<RecentResultsCard results={[pepperoni, yes]} onOpen={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Open result Pepperoni' })).toBeInTheDocument();

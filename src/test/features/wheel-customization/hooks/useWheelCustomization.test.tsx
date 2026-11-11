@@ -27,7 +27,7 @@ describe('useWheelCustomization', () => {
     vi.useRealTimers();
   });
 
-  it('resolves appearance from the wheel and commits a title', () => {
+  it('resolves appearance from the wheel and commits a title', async () => {
     const { result } = renderHook(() => useLiveCustomization());
 
     expect(result.current.appearance.title).toBe('');
@@ -46,7 +46,7 @@ describe('useWheelCustomization', () => {
     expect(persistStores).toHaveBeenCalledTimes(1);
   });
 
-  it('can skip persistence or persist immediately', () => {
+  it('can skip persistence or persist immediately', async () => {
     const { result } = renderHook(() => useLiveCustomization());
 
     act(() => {
@@ -63,7 +63,7 @@ describe('useWheelCustomization', () => {
     expect(persistStores).toHaveBeenCalledTimes(1);
   });
 
-  it('replaces a pending persist timer and flushes on unmount', () => {
+  it('replaces a pending persist timer and flushes on unmount', async () => {
     const { result, unmount } = renderHook(() => useLiveCustomization());
 
     act(() => {
@@ -85,14 +85,14 @@ describe('useWheelCustomization', () => {
     expect(persistStores).toHaveBeenCalledTimes(2);
   });
 
-  it('does not flush persistence on unmount when nothing is pending', () => {
+  it('does not flush persistence on unmount when nothing is pending', async () => {
     const { unmount } = renderHook(() => useLiveCustomization());
 
     unmount();
     expect(persistStores).not.toHaveBeenCalled();
   });
 
-  it('applies a named theme now and ignores custom', () => {
+  it('applies a named theme now and ignores custom', async () => {
     const { result } = renderHook(() => useLiveCustomization());
 
     act(() => {

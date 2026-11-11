@@ -67,7 +67,7 @@ function seedFoodWheel() {
   store.setActiveWheel('food');
 }
 
-function renderEditor() {
+async function renderEditor() {
   return renderApp({ initialEntries: [withWheelId(ROUTES.wheelEditor, 'food')] });
 }
 
@@ -107,8 +107,8 @@ describe('WheelEditorScreen', () => {
     downloadJsonFileMock.mockReset();
   });
 
-  it('shows an empty state when no wheel is selected', () => {
-    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+  it('shows an empty state when no wheel is selected', async () => {
+    await renderApp({ initialEntries: [ROUTES.wheelEditor] });
 
     expect(screen.getByRole('heading', { name: 'Wheel editor', level: 1 })).toBeInTheDocument();
     expect(screen.getByText('Design wheel segments and settings.')).toBeInTheDocument();
@@ -118,10 +118,10 @@ describe('WheelEditorScreen', () => {
     expect(screen.getByRole('button', { name: 'Back to dashboard' })).toBeInTheDocument();
   });
 
-  it('asks which wheel to edit when the editor is opened without a wheel id', () => {
+  it('asks which wheel to edit when the editor is opened without a wheel id', async () => {
     seedFoodWheel();
     useWheelStore.getState().createWheel({ id: 'games', name: 'Games Wheel', category: 'Games' });
-    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+    await renderApp({ initialEntries: [ROUTES.wheelEditor] });
 
     expect(screen.getByText(EDITOR_MESSAGES.chooseWheelDescription)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Food Wheel') })).toBeInTheDocument();
@@ -141,7 +141,7 @@ describe('WheelEditorScreen', () => {
       category: 'Games',
     });
     useWheelStore.getState().setActiveWheel('food');
-    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+    await renderApp({ initialEntries: [ROUTES.wheelEditor] });
 
     await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.chooseWheelAction('Games Wheel') }));
 
@@ -152,7 +152,7 @@ describe('WheelEditorScreen', () => {
 
   it('opens create wheel from the empty state', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+    await renderApp({ initialEntries: [ROUTES.wheelEditor] });
 
     await user.click(screen.getByRole('button', { name: 'Create a wheel' }));
 
@@ -162,7 +162,7 @@ describe('WheelEditorScreen', () => {
   it('opens create wheel from the picker header', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderApp({ initialEntries: [ROUTES.wheelEditor] });
+    await renderApp({ initialEntries: [ROUTES.wheelEditor] });
 
     await user.click(screen.getByRole('button', { name: 'Create Wheel' }));
 
@@ -171,7 +171,7 @@ describe('WheelEditorScreen', () => {
 
   it('shows a missing-wheel empty state and returns to the dashboard', async () => {
     const user = userEvent.setup();
-    renderApp({ initialEntries: [withWheelId(ROUTES.wheelEditor, 'missing')] });
+    await renderApp({ initialEntries: [withWheelId(ROUTES.wheelEditor, 'missing')] });
 
     expect(screen.getByRole('heading', { name: 'Wheel not found', level: 2 })).toBeInTheDocument();
     expect(
@@ -186,7 +186,7 @@ describe('WheelEditorScreen', () => {
   it('returns to the wheel picker from an open editor', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.changeWheel }));
 
@@ -197,7 +197,7 @@ describe('WheelEditorScreen', () => {
   it('exports the open wheel as json', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Export Food Wheel' }));
 
@@ -217,7 +217,7 @@ describe('WheelEditorScreen', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Share Food Wheel' }));
 
@@ -226,9 +226,9 @@ describe('WheelEditorScreen', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders hierarchical items with one recursive tree', () => {
+  it('renders hierarchical items with one recursive tree', async () => {
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     expect(screen.getByRole('heading', { name: '📁 Food Wheel', level: 2 })).toBeInTheDocument();
     expect(screen.getByText('🍕 Pizza')).toBeInTheDocument();
@@ -248,7 +248,7 @@ describe('WheelEditorScreen', () => {
   it('collapses and expands nested children', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Collapse Pizza' }));
 
@@ -263,7 +263,7 @@ describe('WheelEditorScreen', () => {
   it('shows an empty child state for a leaf that can still nest', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Expand Sushi' }));
 
@@ -278,7 +278,7 @@ describe('WheelEditorScreen', () => {
   it('adds child data under the selected parent', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Sushi' }));
     const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
@@ -298,7 +298,7 @@ describe('WheelEditorScreen', () => {
 
   it('stores a child under the parent children array at any nesting level', async () => {
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await addChildFromTree('Pizza', 'Hawaiian');
     const pizza = useWheelStore.getState().getWheel('food')?.items.find((item) => item.id === 'pizza');
@@ -318,7 +318,7 @@ describe('WheelEditorScreen', () => {
   it('prevents adding child data without a name', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Pizza' }));
     const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
@@ -333,7 +333,7 @@ describe('WheelEditorScreen', () => {
   it('cancels adding a child without changing the tree', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Sushi' }));
     const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
@@ -348,7 +348,7 @@ describe('WheelEditorScreen', () => {
   it('adds a child with custom weight and disabled state', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Sushi' }));
     const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
@@ -369,7 +369,7 @@ describe('WheelEditorScreen', () => {
     const user = userEvent.setup();
     seedFoodWheel();
     const before = foodItem('pizza');
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Edit Pizza' }));
     const dialog = screen.getByRole('dialog', { name: 'Edit Pizza' });
@@ -403,7 +403,7 @@ describe('WheelEditorScreen', () => {
   it('cancels an edit without saving changes', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Edit Burger' }));
     const dialog = screen.getByRole('dialog', { name: 'Edit Burger' });
@@ -420,7 +420,7 @@ describe('WheelEditorScreen', () => {
   it('blocks saving an edited item without a name', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Edit Sushi' }));
     const dialog = screen.getByRole('dialog', { name: 'Edit Sushi' });
@@ -436,7 +436,7 @@ describe('WheelEditorScreen', () => {
     seedFoodWheel();
     const before = foodItem('chicken');
     const beefBefore = foodItem('beef');
-    renderEditor();
+    await renderEditor();
 
     await saveEditedName(user, 'Chicken Pepperoni', 'Chicken Deluxe');
 
@@ -473,7 +473,7 @@ describe('WheelEditorScreen', () => {
     const smallBefore = foodItem('small');
     const chickenBefore = foodItem('chicken');
     const pizzaBefore = foodItem('pizza');
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Edit Large' }));
     const dialog = screen.getByRole('dialog', { name: 'Edit Large' });
@@ -504,7 +504,7 @@ describe('WheelEditorScreen', () => {
   it('duplicates, disables, and deletes an item with confirmation', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Duplicate Sushi' }));
     expect(await screen.findByText('🍣 Sushi copy')).toBeInTheDocument();
@@ -523,7 +523,7 @@ describe('WheelEditorScreen', () => {
   it('deletes a leaf after confirmation and keeps siblings', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Delete Sushi' }));
     const dialog = deleteDialog();
@@ -542,7 +542,7 @@ describe('WheelEditorScreen', () => {
   it('deletes a parent and all descendants after an explicit warning', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Delete Pizza' }));
     const dialog = deleteDialog();
@@ -578,7 +578,7 @@ describe('WheelEditorScreen', () => {
       enabled: true,
       weight: 1,
     });
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Delete Chicken Pepperoni' }));
     const dialog = deleteDialog();
@@ -600,7 +600,7 @@ describe('WheelEditorScreen', () => {
   it('cancels deletion and leaves the tree unchanged', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Delete Pizza' }));
     const dialog = deleteDialog();
@@ -617,7 +617,7 @@ describe('WheelEditorScreen', () => {
     window.localStorage.clear();
     storageService.clearMemory();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Delete Sushi' }));
     await user.click(within(deleteDialog()).getByRole('button', { name: 'Delete' }));
@@ -631,7 +631,7 @@ describe('WheelEditorScreen', () => {
   it('adds a child two levels deep without duplicating tree rendering', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Add child to Chicken Pepperoni' }));
     const dialog = screen.getByRole('dialog', { name: 'Add Child Data' });
@@ -645,7 +645,7 @@ describe('WheelEditorScreen', () => {
   it('prevents adding main data without a name', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     const form = screen.getByRole('form', { name: 'Add Main Data' });
     await user.click(within(form).getByRole('button', { name: 'Add item' }));
@@ -657,7 +657,7 @@ describe('WheelEditorScreen', () => {
   it('adds main data to the active wheel, resets the form, and shows success', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     const form = screen.getByRole('form', { name: 'Add Main Data' });
     expect(within(form).getByRole('spinbutton', { name: 'Weight' })).toHaveValue(1);
@@ -691,7 +691,7 @@ describe('WheelEditorScreen', () => {
   it('adds a disabled main item with a custom weight', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     const form = screen.getByRole('form', { name: 'Add Main Data' });
     await user.type(within(form).getByLabelText(/^name/i), 'Salad');
@@ -711,7 +711,7 @@ describe('WheelEditorScreen', () => {
     const user = userEvent.setup();
     downloadJsonFileMock.mockReturnValue(false);
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'Export Food Wheel' }));
 
@@ -721,7 +721,7 @@ describe('WheelEditorScreen', () => {
   it('dismisses the success snackbar', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     const form = screen.getByRole('form', { name: 'Add Main Data' });
     await user.type(within(form).getByLabelText(/^name/i), 'Taco');
@@ -739,7 +739,7 @@ describe('WheelEditorScreen', () => {
   it('assigns a unique id for each main item', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     const form = screen.getByRole('form', { name: 'Add Main Data' });
     await user.type(within(form).getByLabelText(/^name/i), 'Taco');
@@ -765,7 +765,7 @@ describe('WheelEditorScreen', () => {
     window.localStorage.clear();
     storageService.clearMemory();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     expect(screen.getByRole('heading', { name: CUSTOMIZATION_MESSAGES.title })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: CUSTOMIZATION_MESSAGES.applyTheme('Neon') }));
@@ -784,7 +784,7 @@ describe('WheelEditorScreen', () => {
   it('lets the color picker stay open while a color is chosen', async () => {
     const user = userEvent.setup();
     seedFoodWheel();
-    renderEditor();
+    await renderEditor();
 
     const swatch = screen.getByRole('button', { name: CUSTOMIZATION_MESSAGES.pointerColor });
     await user.click(swatch);
@@ -800,4 +800,5 @@ describe('WheelEditorScreen', () => {
     expect(screen.getByRole('button', { name: CUSTOMIZATION_MESSAGES.pointerColor })).toBe(swatch);
   });
 });
+
 

@@ -59,7 +59,7 @@ describe('useSpinScreen', () => {
     vi.restoreAllMocks();
   });
 
-  it('asks the user to choose a wheel when none is in the URL', () => {
+  it('asks the user to choose a wheel when none is in the URL', async () => {
     seedWheels();
     const { result } = renderSpinScreen();
 
@@ -74,7 +74,7 @@ describe('useSpinScreen', () => {
     ]);
   });
 
-  it('does not ask for a wheel when the store is empty', () => {
+  it('does not ask for a wheel when the store is empty', async () => {
     const { result } = renderSpinScreen();
 
     expect(result.current.availableWheels).toEqual([]);
@@ -82,7 +82,7 @@ describe('useSpinScreen', () => {
     expect(result.current.isMissingWheel).toBe(false);
   });
 
-  it('loads the requested wheel and marks it active', () => {
+  it('loads the requested wheel and marks it active', async () => {
     seedWheels();
     const { result } = renderSpinScreen(withWheelId(ROUTES.spin, 'food'));
 
@@ -92,7 +92,7 @@ describe('useSpinScreen', () => {
     expect(useWheelStore.getState().activeWheelId).toBe('food');
   });
 
-  it('does not reset the active wheel when it already matches the URL', () => {
+  it('does not reset the active wheel when it already matches the URL', async () => {
     seedWheels();
     useWheelStore.getState().setActiveWheel('food');
     const setActiveWheel = vi.spyOn(useWheelStore.getState(), 'setActiveWheel');
@@ -103,7 +103,7 @@ describe('useSpinScreen', () => {
     expect(useWheelStore.getState().activeWheelId).toBe('food');
   });
 
-  it('reports a missing wheel without changing the active selection', () => {
+  it('reports a missing wheel without changing the active selection', async () => {
     seedWheels();
     const { result } = renderSpinScreen(withWheelId(ROUTES.spin, 'ghost'));
 
@@ -113,7 +113,7 @@ describe('useSpinScreen', () => {
     expect(useWheelStore.getState().activeWheelId).toBeNull();
   });
 
-  it('selects a wheel, clears the selection, and navigates to create or dashboard', () => {
+  it('selects a wheel, clears the selection, and navigates to create or dashboard', async () => {
     seedWheels();
     const { result } = renderSpinScreen();
 
@@ -139,7 +139,7 @@ describe('useSpinScreen', () => {
     expect(result.current.href).toBe(ROUTES.dashboard);
   });
 
-  it('updates selection mode and remove-winner only when a wheel is in the URL', () => {
+  it('updates selection mode and remove-winner only when a wheel is in the URL', async () => {
     seedWheels();
     const withoutWheel = renderSpinScreen();
 

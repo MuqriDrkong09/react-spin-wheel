@@ -10,6 +10,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { memo } from 'react';
 
 import { formatDateTime } from '@/features/dashboard/utils/formatDateTime';
 import { HISTORY_MESSAGES, HISTORY_MODE_LABELS } from '@/features/history/constants';
@@ -32,54 +33,69 @@ export function HistoryList({ results, onView, onDelete }: HistoryListProps) {
     >
       <List disablePadding>
         {results.map((result, index) => (
-          <ListItem
+          <HistoryListItem
             key={result.id}
+            result={result}
             divider={index < results.length - 1}
-            disablePadding
-            sx={{ alignItems: 'stretch' }}
-          >
-            <Stack
-              direction="row"
-              spacing={0.5}
-              sx={{ width: '100%', alignItems: 'flex-start', minWidth: 0 }}
-            >
-              <ListItemButton onClick={() => onView(result)} sx={{ flex: 1, minWidth: 0, py: 1.5 }}>
-                <ListItemText
-                  primary={result.pathLabel}
-                  secondary={
-                    <Typography component="span" variant="body2" color="text.secondary">
-                      {result.wheelName} · {formatDateTime(result.timestamp)} ·{' '}
-                      {HISTORY_MODE_LABELS[result.mode]} · {formatDuration(result.duration)}
-                    </Typography>
-                  }
-                  slotProps={{
-                    primary: { sx: { fontWeight: 600, overflowWrap: 'anywhere' } },
-                    secondary: { sx: { overflowWrap: 'anywhere' } },
-                  }}
-                />
-              </ListItemButton>
-              <Stack
-                direction="row"
-                spacing={0.25}
-                sx={{ flexShrink: 0, pt: 0.75, pr: 0.75 }}
-              >
-                <IconButton
-                  aria-label={`${HISTORY_MESSAGES.viewDetails}: ${result.pathLabel}`}
-                  onClick={() => onView(result)}
-                >
-                  <VisibilityOutlinedIcon />
-                </IconButton>
-                <IconButton
-                  aria-label={`${HISTORY_MESSAGES.deleteResult}: ${result.pathLabel}`}
-                  onClick={() => onDelete(result)}
-                >
-                  <DeleteOutlinedIcon />
-                </IconButton>
-              </Stack>
-            </Stack>
-          </ListItem>
+            onView={onView}
+            onDelete={onDelete}
+          />
         ))}
       </List>
     </Paper>
   );
 }
+
+interface HistoryListItemProps {
+  result: HistoryResult;
+  divider: boolean;
+  onView: (result: HistoryResult) => void;
+  onDelete: (result: HistoryResult) => void;
+}
+
+const HistoryListItem = memo(function HistoryListItem({
+  result,
+  divider,
+  onView,
+  onDelete,
+}: HistoryListItemProps) {
+  return (
+    <ListItem divider={divider} disablePadding sx={{ alignItems: 'stretch' }}>
+      <Stack
+        direction="row"
+        spacing={0.5}
+        sx={{ width: '100%', alignItems: 'flex-start', minWidth: 0 }}
+      >
+        <ListItemButton onClick={() => onView(result)} sx={{ flex: 1, minWidth: 0, py: 1.5 }}>
+          <ListItemText
+            primary={result.pathLabel}
+            secondary={
+              <Typography component="span" variant="body2" color="text.secondary">
+                {result.wheelName} · {formatDateTime(result.timestamp)} ·{' '}
+                {HISTORY_MODE_LABELS[result.mode]} · {formatDuration(result.duration)}
+              </Typography>
+            }
+            slotProps={{
+              primary: { sx: { fontWeight: 600, overflowWrap: 'anywhere' } },
+              secondary: { sx: { overflowWrap: 'anywhere' } },
+            }}
+          />
+        </ListItemButton>
+        <Stack direction="row" spacing={0.25} sx={{ flexShrink: 0, pt: 0.75, pr: 0.75 }}>
+          <IconButton
+            aria-label={`${HISTORY_MESSAGES.viewDetails}: ${result.pathLabel}`}
+            onClick={() => onView(result)}
+          >
+            <VisibilityOutlinedIcon />
+          </IconButton>
+          <IconButton
+            aria-label={`${HISTORY_MESSAGES.deleteResult}: ${result.pathLabel}`}
+            onClick={() => onDelete(result)}
+          >
+            <DeleteOutlinedIcon />
+          </IconButton>
+        </Stack>
+      </Stack>
+    </ListItem>
+  );
+});

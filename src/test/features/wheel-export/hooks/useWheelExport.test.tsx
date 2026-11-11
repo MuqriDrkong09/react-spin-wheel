@@ -17,7 +17,7 @@ describe('useWheelExport', () => {
     downloadJsonFileMock.mockReset();
   });
 
-  it('downloads a valid wheel and reports success', () => {
+  it('downloads a valid wheel and reports success', async () => {
     useWheelStore.getState().createWheel({
       id: 'food',
       name: 'Food Picker',
@@ -44,7 +44,7 @@ describe('useWheelExport', () => {
     expect(result.current.status).toBeNull();
   });
 
-  it('reports a missing wheel without downloading', () => {
+  it('reports a missing wheel without downloading', async () => {
     const { result } = renderHook(() => useWheelExport());
 
     act(() => {
@@ -58,7 +58,7 @@ describe('useWheelExport', () => {
     });
   });
 
-  it('reports invalid wheel data without downloading', () => {
+  it('reports invalid wheel data without downloading', async () => {
     const wheel = useWheelStore.getState().createWheel({
       id: 'empty',
       name: 'Empty',

@@ -98,7 +98,7 @@ describe('TreeItem', () => {
     dropHarness.disabled = undefined;
   });
 
-  it('hides children until the node is expanded', () => {
+  it('hides children until the node is expanded', async () => {
     renderTree({ node: sushi, expandedIds: new Set() });
 
     expect(screen.getByText('🍣 Sushi')).toBeInTheDocument();
@@ -107,7 +107,7 @@ describe('TreeItem', () => {
     expect(dropHarness.disabled).toBe(true);
   });
 
-  it('shows nested children and empty-child copy when expanded', () => {
+  it('shows nested children and empty-child copy when expanded', async () => {
     renderTree();
 
     expect(screen.getByRole('heading', { name: '📁 Food Wheel', level: 2 })).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe('TreeItem', () => {
     expect(onToggleExpand).toHaveBeenCalledWith('sushi');
   });
 
-  it('disables dropping onto a blocked expanded parent', () => {
+  it('disables dropping onto a blocked expanded parent', async () => {
     renderTree({
       node: sushi,
       expandedIds: new Set(['sushi']),
@@ -150,7 +150,7 @@ describe('TreeItem', () => {
     expect(dropHarness.disabled).toBe(true);
   });
 
-  it('highlights the drop target while a drag is over it', () => {
+  it('highlights the drop target while a drag is over it', async () => {
     dropHarness.isOver = true;
     renderTree({
       node: sushi,
