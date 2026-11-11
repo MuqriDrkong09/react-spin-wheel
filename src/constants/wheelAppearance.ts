@@ -118,9 +118,9 @@ export const WHEEL_THEME_PRESETS: Record<Exclude<WheelTheme, 'custom'>, WheelApp
 };
 
 export const WHEEL_SIZE_MAX_WIDTH = {
-  [WHEEL_SIZE.sm]: { xs: 240, sm: 280, md: 320 },
-  [WHEEL_SIZE.md]: { xs: 320, sm: 420, md: 520 },
-  [WHEEL_SIZE.lg]: { xs: 320, sm: 520, md: 640 },
+  [WHEEL_SIZE.sm]: { xs: 300, sm: 360, md: 420 },
+  [WHEEL_SIZE.md]: { xs: 360, sm: 520, md: 640 },
+  [WHEEL_SIZE.lg]: { xs: 360, sm: 600, md: 760 },
 } as const;
 
 export const WHEEL_FONT_SIZE_MIN = 10;

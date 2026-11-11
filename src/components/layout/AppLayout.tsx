@@ -13,7 +13,14 @@ import { AppHeader } from './AppHeader';
 
 export function AppLayout() {
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: '100vh',
+        width: '100%',
+        overflowX: 'hidden',
+      }}
+    >
       <Box
         component="a"
         href="#main-content"
@@ -52,13 +59,18 @@ export function AppLayout() {
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
+          // Allow the main column to shrink beside the drawer. Do not set
+          // maxWidth: 100% here — that equals the full viewport and overflows
+          // by the drawer width, leaving empty white space on the right.
           minWidth: 0,
+          width: '100%',
           bgcolor: 'background.default',
           outline: 'none',
+          overflowX: 'hidden',
         }}
       >
         <Toolbar />
-        <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2.5, md: 3.5 }, maxWidth: '100%' }}>
+        <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2.5, md: 3.5 }, minWidth: 0, width: '100%' }}>
           <RuntimeNoticeBanner />
           <AppErrorBoundary>
             <Suspense fallback={<RouteFallback />}>

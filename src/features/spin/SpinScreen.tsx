@@ -51,6 +51,9 @@ export function SpinScreen() {
         spacing={3}
         sx={{
           minHeight: { xs: 'auto', md: 'calc(100dvh - 10.5rem)' },
+          minWidth: 0,
+          width: '100%',
+          maxWidth: '100%',
         }}
       >
         <PageHeader
@@ -277,27 +280,29 @@ function ActiveWheelSpin({
       ) : (
         <Box
           sx={{
-            flex: 1,
+            flex: '1 1 auto',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            minHeight: { xs: 420, md: 520 },
-            gap: 2.5,
+            maxWidth: '100%',
+            minWidth: 0,
+            // Keep a real stage floor so the wheel never collapses when the
+            // page already fills the viewport (flex leftover space ≈ 0).
+            minHeight: { xs: 420, sm: 520, md: 640 },
+            gap: 2,
             overflow: 'hidden',
-            scrollbarGutter: 'stable',
             bgcolor: appearance.background,
             border: 1,
             borderColor: 'divider',
             borderRadius: 2,
             px: { xs: 2, md: 3 },
-            py: { xs: 3, md: 4 },
+            py: { xs: 2.5, md: 3 },
           }}
         >
           <Box
             sx={{
-              minHeight: { xs: 72, md: 0 },
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -319,25 +324,41 @@ function ActiveWheelSpin({
               </>
             ) : null}
           </Box>
-          <SpinWheel
-            key={spinWheelKey}
-            items={session.items}
-            appearance={appearance}
-            onSpin={session.startSpin}
-            spinning={session.spin.spinning}
-            spinLocked={autoSpin.controlsLocked}
-            rotationDegrees={session.spin.rotationDegrees}
-            spinDuration={session.spin.animation.spinDuration}
-            animationType={session.spin.animation.animationType}
-            reducedMotion={session.spin.reducedMotion}
-            soundEnabled={wheel.settings.soundEnabled}
-            onSpinComplete={session.completeSpin}
-          />
+          <Box
+            sx={{
+              flex: '1 1 auto',
+              // height: 1px gives container queries a definite block size so
+              // 100cqh works; minHeight keeps a usable wheel when flex space is tight.
+              height: 1,
+              minHeight: { xs: 280, sm: 360, md: 440 },
+              minWidth: 0,
+              width: '100%',
+              display: 'grid',
+              placeItems: 'center',
+              overflow: 'hidden',
+              containerType: 'size',
+            }}
+          >
+            <SpinWheel
+              key={spinWheelKey}
+              items={session.items}
+              appearance={appearance}
+              onSpin={session.startSpin}
+              spinning={session.spin.spinning}
+              spinLocked={autoSpin.controlsLocked}
+              rotationDegrees={session.spin.rotationDegrees}
+              spinDuration={session.spin.animation.spinDuration}
+              animationType={session.spin.animation.animationType}
+              reducedMotion={session.spin.reducedMotion}
+              soundEnabled={wheel.settings.soundEnabled}
+              onSpinComplete={session.completeSpin}
+            />
+          </Box>
           {session.spin.status === SPIN_STATUS.spinning ? (
             <Typography
               role="status"
               aria-live="polite"
-              sx={{ color: appearance.textColor, opacity: 0.8 }}
+              sx={{ color: appearance.textColor, opacity: 0.8, flexShrink: 0 }}
             >
               {SPIN_MESSAGES.spinning}
             </Typography>

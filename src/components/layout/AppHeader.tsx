@@ -18,8 +18,13 @@ export function AppHeader() {
         borderColor: 'divider',
         bgcolor: 'background.paper',
         color: 'text.primary',
-        width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-        ml: { md: `${DRAWER_WIDTH}px` },
+        // Keep explicit calc width (overrides MUI AppBar width: 100%). Using
+        // left + width:auto let the default 100% width win and overflow by the
+        // drawer width, creating the empty white column on the right.
+        left: { xs: 0, md: `${DRAWER_WIDTH}px` },
+        width: { xs: '100%', md: `calc(100% - ${DRAWER_WIDTH}px)` },
+        right: 'auto',
+        ml: 0,
       }}
     >
       <Toolbar sx={{ gap: 1, minHeight: { xs: 56, sm: 64 } }}>

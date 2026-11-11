@@ -131,17 +131,29 @@ export function SpinWheel({
     </>
   );
 
+  const maxWidth = WHEEL_SIZE_MAX_WIDTH[appearance.size];
+
   return (
     <Box
       sx={{
         position: 'relative',
-        width: '100%',
-        maxWidth: WHEEL_SIZE_MAX_WIDTH[appearance.size],
+        // Cap by stage width/height. Floor 100cqh so a 0-height container query
+        // cannot shrink the disc to nothing before the stage minHeight applies.
+        width: {
+          xs: `min(100%, ${maxWidth.xs}px, max(260px, 100cqh))`,
+          sm: `min(100%, ${maxWidth.sm}px, max(320px, 100cqh))`,
+          md: `min(100%, ${maxWidth.md}px, max(400px, 100cqh))`,
+        },
+        maxWidth: '100%',
+        maxHeight: '100%',
+        aspectRatio: '1 / 1',
+        height: 'auto',
         mx: 'auto',
-        flexShrink: 0,
+        minWidth: 0,
+        minHeight: 0,
       }}
     >
-      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '1' }} aria-busy={spinning}>
+      <Box sx={{ position: 'relative', width: '100%', height: '100%' }} aria-busy={spinning}>
         <motion.div
           initial={false}
           animate={{ rotate: rotationDegrees }}
