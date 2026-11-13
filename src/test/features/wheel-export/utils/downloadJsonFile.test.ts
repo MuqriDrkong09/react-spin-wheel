@@ -41,4 +41,12 @@ describe('downloadJsonFile', () => {
     expect(link).toBeNull();
     expect(click).toHaveBeenCalledTimes(1);
   });
+
+  it('returns false when the download cannot be started', () => {
+    vi.spyOn(document, 'createElement').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    expect(downloadJsonFile('wheel.json', '{"name":"Wheel"}')).toBe(false);
+  });
 });

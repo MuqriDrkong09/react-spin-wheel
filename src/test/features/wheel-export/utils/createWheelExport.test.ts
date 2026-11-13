@@ -1,5 +1,8 @@
+import { ZodError } from 'zod';
+
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
 import { EXPORT_MESSAGES } from '@/features/wheel-export/constants';
+import { wheelExportDocumentSchema } from '@/features/wheel-export/schema';
 import { createWheelExport } from '@/features/wheel-export/utils/createWheelExport';
 import type { Wheel, WheelItem } from '@/types/wheel';
 
@@ -27,6 +30,10 @@ function createWheel(overrides: Partial<Wheel> = {}): Wheel {
 }
 
 describe('createWheelExport', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('validates and serializes a portable json document', () => {
     const result = createWheelExport(createWheel());
 
@@ -111,6 +118,58 @@ describe('createWheelExport', () => {
         }),
       ),
     ).toEqual({
+      ok: false,
+      error: EXPORT_MESSAGES.invalidSettings,
+    });
+  });
+
+  it('falls back to a generic invalid message when issues have no path', () => {
+    vi.spyOn(wheelExportDocumentSchema, 'safeParse').mockReturnValueOnce({
+      success: false,
+      error: new ZodError([]),
+    });
+
+    expect(createWheelExport(createWheel())).toEqual({
+      ok: false,
+      error: EXPORT_MESSAGES.invalid,
+    });
+  });
+
+  it('rejects nested empty item collections', () => {
+    vi.spyOn(wheelExportDocumentSchema, 'safeParse').mockReturnValueOnce({
+      success: false,
+      error: new ZodError([
+        {
+          code: 'too_small',
+          minimum: 1,
+          type: 'array',
+          inclusive: true,
+          exact: false,
+          message: 'Required',
+          path: ['items', 0, 'items'],
+        },
+      ]),
+    });
+
+    expect(createWheelExport(createWheel())).toEqual({
+      ok: false,
+      error: EXPORT_MESSAGES.itemsRequired,
+    });
+  });
+
+  it('rejects invalid appearance settings', () => {
+    vi.spyOn(wheelExportDocumentSchema, 'safeParse').mockReturnValueOnce({
+      success: false,
+      error: new ZodError([
+        {
+          code: 'custom',
+          message: 'Invalid',
+          path: ['settings', 'appearance', 'pointerColor'],
+        },
+      ]),
+    });
+
+    expect(createWheelExport(createWheel())).toEqual({
       ok: false,
       error: EXPORT_MESSAGES.invalidSettings,
     });

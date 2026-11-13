@@ -1,4 +1,4 @@
-import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
+import { DEFAULT_WHEEL_CATEGORY, DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
 import { ROUTES } from '@/constants/routes';
 import { SHARE_MESSAGES, WHEEL_SHARE_FORMAT, WHEEL_SHARE_VERSION } from '@/features/wheel-share/constants';
 import { encodeJsonToBase64Url } from '@/features/wheel-share/utils/base64Url';
@@ -9,28 +9,37 @@ import { renderApp, screen, userEvent } from '@/test/test-utils';
 function validShareToken(
   expiresAt = '2026-12-01T00:00:00.000Z',
   createdAt = '2026-11-01T00:00:00.000Z',
+  wheelOverrides: Record<string, unknown> = {},
 ) {
+  const { omitMeta, ...restOverrides } = wheelOverrides;
+  const wheel = {
+    name: 'Food Picker',
+    ...(omitMeta
+      ? {}
+      : {
+          description: 'Dinner ideas',
+          category: 'Food',
+        }),
+    items: [
+      {
+        name: 'Pizza',
+        icon: '🍕',
+        color: '#ea580c',
+        enabled: true,
+        weight: 1,
+        children: [{ name: 'Pepperoni', color: '#dc2626', enabled: true, weight: 2 }],
+      },
+    ],
+    settings: DEFAULT_WHEEL_SETTINGS,
+    ...restOverrides,
+  };
+
   return encodeJsonToBase64Url({
     format: WHEEL_SHARE_FORMAT,
     version: WHEEL_SHARE_VERSION,
     createdAt,
     expiresAt,
-    wheel: {
-      name: 'Food Picker',
-      description: 'Dinner ideas',
-      category: 'Food',
-      items: [
-        {
-          name: 'Pizza',
-          icon: '🍕',
-          color: '#ea580c',
-          enabled: true,
-          weight: 1,
-          children: [{ name: 'Pepperoni', color: '#dc2626', enabled: true, weight: 2 }],
-        },
-      ],
-      settings: DEFAULT_WHEEL_SETTINGS,
-    },
+    wheel,
   });
 }
 
@@ -105,5 +114,21 @@ describe('SharedWheelScreen', () => {
 
     await user.click(screen.getByRole('button', { name: SHARE_MESSAGES.backToDashboard }));
     expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
+  });
+
+  it('falls back to defaults when category and description are omitted', async () => {
+    await renderApp({
+      initialEntries: [
+        buildEncodedSharePath(
+          validShareToken('2026-12-01T00:00:00.000Z', '2026-11-01T00:00:00.000Z', {
+            omitMeta: true,
+          }),
+        ),
+      ],
+    });
+
+    expect(screen.getByRole('heading', { name: 'Food Picker', level: 2 })).toBeInTheDocument();
+    expect(screen.getByText(DEFAULT_WHEEL_CATEGORY)).toBeInTheDocument();
+    expect(screen.getByText('No description')).toBeInTheDocument();
   });
 });

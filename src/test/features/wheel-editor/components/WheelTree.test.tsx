@@ -224,6 +224,22 @@ describe('WheelTree', () => {
     expect(announcements?.onDragEnd({ active: { id: 'missing' } })).toBe(
       EDITOR_MESSAGES.dndDropped('item'),
     );
+    expect(
+      announcements?.onDragEnd({ active: { id: 'burger' }, over: { id: toDroppableId('food') } }),
+    ).toBe(EDITOR_MESSAGES.dndDropped('Burger', 'children of Food Wheel'));
+    expect(
+      announcements?.onDragEnd({ active: { id: 'burger' }, over: { id: toDroppableId('missing') } }),
+    ).toBe(EDITOR_MESSAGES.dndDropped('Burger', 'children of item'));
+    expect(announcements?.onDragEnd({ active: { id: 'burger' }, over: { id: 'pizza' } })).toBe(
+      EDITOR_MESSAGES.dndDropped('Burger', 'Pizza'),
+    );
+    expect(announcements?.onDragEnd({ active: { id: 'burger' }, over: { id: 'missing' } })).toBe(
+      EDITOR_MESSAGES.dndDropped('Burger', 'item'),
+    );
+    expect(announcements?.onDragEnd({ active: { id: 'missing' }, over: { id: 'pizza' } })).toBe(
+      EDITOR_MESSAGES.dndDropped('item', 'Pizza'),
+    );
+
     expect(announcements?.onDragCancel({ active: { id: 'pizza' } })).toBe(
       EDITOR_MESSAGES.dndCancelled('Pizza'),
     );

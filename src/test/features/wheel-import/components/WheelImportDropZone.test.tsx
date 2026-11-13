@@ -41,4 +41,12 @@ describe('WheelImportDropZone', () => {
     fireEvent.change(input, { target: { files: [file] } });
     expect(onInputChange).toHaveBeenCalled();
   });
+
+  it('highlights the drop zone while a file is dragged over it', () => {
+    renderWithProviders(<DropZoneHarness dragging />);
+
+    expect(screen.getByRole('region', { name: 'Import wheel JSON' })).toBeInTheDocument();
+    expect(screen.getByText('Drop a file here or choose an exported wheel JSON file.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Choose JSON file' })).toBeInTheDocument();
+  });
 });

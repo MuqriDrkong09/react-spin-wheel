@@ -1,6 +1,9 @@
+import { ZodError } from 'zod';
+
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
 import { WHEEL_EXPORT_FORMAT, WHEEL_EXPORT_VERSION } from '@/features/wheel-export/constants';
 import { IMPORT_MESSAGES, MAX_IMPORT_BYTES } from '@/features/wheel-import/constants';
+import { wheelImportDocumentSchema } from '@/features/wheel-import/schema';
 import {
   parseImportedWheelFile,
   parseImportedWheelJson,
@@ -39,6 +42,10 @@ function validDocument(overrides: Record<string, unknown> = {}) {
 }
 
 describe('parseImportedWheelJson', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('accepts a valid exported wheel including nested children', () => {
     const exported = createWheelExport({
       id: 'food',
@@ -76,12 +83,23 @@ describe('parseImportedWheelJson', () => {
   it('rejects malformed json', () => {
     expect(parseImportedWheelJson('{')).toEqual({ ok: false, error: IMPORT_MESSAGES.malformed });
     expect(parseImportedWheelJson('')).toEqual({ ok: false, error: IMPORT_MESSAGES.empty });
+    expect(parseImportedWheelJson('\uFEFF   ')).toEqual({ ok: false, error: IMPORT_MESSAGES.empty });
     expect(parseImportedWheelJson('[]')).toEqual({ ok: false, error: IMPORT_MESSAGES.notWheel });
     expect(parseImportedWheelJson('null')).toEqual({ ok: false, error: IMPORT_MESSAGES.notWheel });
+    expect(parseImportedWheelJson('42')).toEqual({ ok: false, error: IMPORT_MESSAGES.notWheel });
+    expect(parseImportedWheelJson('"wheel"')).toEqual({ ok: false, error: IMPORT_MESSAGES.notWheel });
   });
 
   it('rejects the wrong format and missing required fields', () => {
     expect(parseImportedWheelJson(JSON.stringify({ name: 'Food Picker' }))).toEqual({
+      ok: false,
+      error: IMPORT_MESSAGES.notWheel,
+    });
+    expect(
+      parseImportedWheelJson(
+        JSON.stringify(validDocument({ format: WHEEL_EXPORT_FORMAT, version: 999 })),
+      ),
+    ).toEqual({
       ok: false,
       error: IMPORT_MESSAGES.notWheel,
     });
@@ -148,6 +166,36 @@ describe('parseImportedWheelJson', () => {
         ),
       ),
     ).toEqual({ ok: false, error: IMPORT_MESSAGES.invalidSettings });
+  });
+
+  it('rejects invalid appearance settings', () => {
+    expect(
+      parseImportedWheelJson(
+        JSON.stringify(
+          validDocument({
+            settings: {
+              ...DEFAULT_WHEEL_SETTINGS,
+              appearance: {
+                ...DEFAULT_WHEEL_SETTINGS.appearance,
+                pointerColor: 'red',
+              },
+            },
+          }),
+        ),
+      ),
+    ).toEqual({ ok: false, error: IMPORT_MESSAGES.invalidSettings });
+  });
+
+  it('falls back to a generic invalid message when issues have no path', () => {
+    vi.spyOn(wheelImportDocumentSchema, 'safeParse').mockReturnValueOnce({
+      success: false,
+      error: new ZodError([]),
+    });
+
+    expect(parseImportedWheelJson(JSON.stringify(validDocument()))).toEqual({
+      ok: false,
+      error: IMPORT_MESSAGES.invalid,
+    });
   });
 
   it('rejects settings where maxRotations is below minRotations', () => {

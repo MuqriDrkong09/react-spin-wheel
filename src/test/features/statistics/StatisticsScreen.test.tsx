@@ -156,6 +156,31 @@ describe('StatisticsScreen', () => {
     expect(useHistoryStore.getState().spinHistory).toHaveLength(2);
   });
 
+  it('shows an empty-range state when history exists but the filter matches nothing', async () => {
+    const user = userEvent.setup();
+    useHistoryStore.getState().addSpinSession(
+      historySession('old', {
+        selectedItemName: 'Burger',
+        pathLabels: ['Burger'],
+        timestamp: '2025-01-01T12:00:00.000Z',
+      }),
+    );
+
+    await renderApp({ initialEntries: [ROUTES.statistics] });
+
+    expect(screen.getByRole('group', { name: STATISTICS_MESSAGES.dateRange })).toBeInTheDocument();
+    expect(screen.getByText(STATISTICS_MESSAGES.totalCompletedSelections).nextElementSibling).toHaveTextContent(
+      '1',
+    );
+
+    await user.click(screen.getByRole('button', { name: STATISTICS_MESSAGES.rangeToday }));
+
+    expect(screen.getByRole('heading', { name: STATISTICS_MESSAGES.emptyRangeTitle })).toBeInTheDocument();
+    expect(screen.getByText(STATISTICS_MESSAGES.emptyRangeDescription)).toBeInTheDocument();
+    expect(screen.queryByText(STATISTICS_MESSAGES.totalSpins)).not.toBeInTheDocument();
+    expect(useHistoryStore.getState().spinHistory).toHaveLength(1);
+  });
+
   it('highlights the most repeated selection path', async () => {
     useHistoryStore.getState().addSpinSession(
       historySession('r1', {
