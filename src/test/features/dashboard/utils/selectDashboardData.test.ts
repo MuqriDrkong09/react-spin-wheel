@@ -374,4 +374,66 @@ describe('selectDashboardData', () => {
 
     expect(selectRecentResults(sessions)).toHaveLength(DASHBOARD_LIST_LIMIT);
   });
+
+  it('handles empty dashboard inputs safely', () => {
+    expect(selectDashboardStats([], [], [])).toEqual({
+      totalWheels: 0,
+      totalSpins: 0,
+      totalWinners: 0,
+      favoriteCount: 0,
+    });
+    expect(selectFavoriteWheels([], ['missing'])).toEqual([]);
+    expect(selectRecentlyUsedWheels([], history)).toEqual([]);
+    expect(selectRecentResults([])).toEqual([]);
+    expect(selectFilteredWheels([], [], query())).toEqual([]);
+    expect(getCategoryOptions([])[0]).toBe(CATEGORY_FILTER_ALL);
+  });
+
+  it('treats favoritesOnly with no favorite ids as an empty match set', () => {
+    expect(
+      selectFilteredWheels([pizza, chores], history, query({ favoritesOnly: true })).map(
+        (wheel) => wheel.id,
+      ),
+    ).toEqual([]);
+  });
+
+  it('filters blank-category wheels through the default General category', () => {
+    const plain = createWheel({ id: 'plain', name: 'Plain', category: '   ' });
+
+    expect(
+      selectFilteredWheels([plain, pizza], [], query({ category: 'General' })).map((wheel) => wheel.id),
+    ).toEqual(['plain']);
+  });
+
+  it('breaks used-count ties with updatedAt for unused wheels', () => {
+    const olderUnused = createWheel({
+      id: 'alpha',
+      name: 'Alpha',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    const newerUnused = createWheel({
+      id: 'beta',
+      name: 'Beta',
+      updatedAt: '2026-01-05T00:00:00.000Z',
+    });
+    const usedOnce = createWheel({
+      id: 'gamma',
+      name: 'Gamma',
+      updatedAt: '2026-01-02T00:00:00.000Z',
+    });
+    const once = createSession({
+      id: 'gamma-use',
+      wheelId: 'gamma',
+      wheelName: 'Gamma',
+      startedAt: '2026-01-06T00:00:00.000Z',
+    });
+
+    expect(
+      selectFilteredWheels(
+        [olderUnused, newerUnused, usedOnce],
+        [once],
+        query({ sort: WHEEL_SORT.usedCountDesc }),
+      ).map((wheel) => wheel.id),
+    ).toEqual(['gamma', 'beta', 'alpha']);
+  });
 });
