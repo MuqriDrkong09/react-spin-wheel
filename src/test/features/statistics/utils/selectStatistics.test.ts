@@ -4,6 +4,7 @@ import { STATISTICS_DATE_RANGE } from '@/features/statistics/constants';
 import {
   filterHistoryResultsByRange,
   percentOf,
+  rangeStartDate,
   selectStatistics,
   toChartSlices,
 } from '@/features/statistics/utils/selectStatistics';
@@ -285,5 +286,91 @@ describe('selectStatistics', () => {
     ]);
 
     expect(stats.dailySpinCount.map((entry) => entry.date)).toEqual(['2026-01-01', '2026-06-01']);
+  });
+
+  it('filters the last 7 days and drops unparseable timestamps', () => {
+    const now = new Date(2026, 0, 10, 18, 0, 0);
+    const inWindow = result({
+      id: 'in',
+      timestamp: new Date(2026, 0, 5, 12, 0, 0).toISOString(),
+      pathLabels: ['In Range'],
+    });
+    const tooOld = result({
+      id: 'old',
+      timestamp: new Date(2025, 11, 20, 12, 0, 0).toISOString(),
+      pathLabels: ['Too Old'],
+    });
+    const invalid = result({
+      id: 'bad',
+      timestamp: 'not-a-real-timestamp',
+      pathLabels: ['Broken'],
+    });
+
+    expect(rangeStartDate(STATISTICS_DATE_RANGE.days7, now)).toEqual(new Date(2026, 0, 4));
+    expect(
+      filterHistoryResultsByRange([inWindow, tooOld, invalid], STATISTICS_DATE_RANGE.days7, now).map(
+        (entry) => entry.id,
+      ),
+    ).toEqual(['in']);
+
+    const stats = selectStatistics([inWindow, tooOld, invalid], {
+      range: STATISTICS_DATE_RANGE.days7,
+      now,
+    });
+    expect(stats.totalCompletedSelections).toBe(1);
+    expect(stats.mostSelectedItem?.name).toBe('In Range');
+  });
+
+  it('lists only weeks with spins when the span exceeds 52 weeks', () => {
+    const stats = selectStatistics([
+      result({ id: 'early', timestamp: '2024-01-01T12:00:00.000Z', pathLabels: ['Alpha'] }),
+      result({ id: 'late', timestamp: '2026-01-01T12:00:00.000Z', pathLabels: ['Zeta'] }),
+    ]);
+
+    expect(stats.weeklySpinCount).toHaveLength(2);
+    expect(stats.weeklySpinCount.every((entry) => entry.spins > 0)).toBe(true);
+  });
+
+  it('lists only months with spins when the span exceeds 36 months', () => {
+    const stats = selectStatistics([
+      result({ id: 'early', timestamp: '2020-01-15T12:00:00.000Z', pathLabels: ['Alpha'] }),
+      result({ id: 'late', timestamp: '2026-01-15T12:00:00.000Z', pathLabels: ['Zeta'] }),
+    ]);
+
+    expect(stats.monthlySpinCount.map((entry) => entry.key)).toEqual(['2020-01', '2026-01']);
+  });
+
+  it('anchors week keys to Monday including Sunday timestamps', () => {
+    const sunday = result({
+      id: 'sun',
+      // 2026-01-04 is a Sunday in local/UTC depending on offset; use an explicit Sunday UTC noon.
+      timestamp: '2026-01-04T12:00:00.000Z',
+      pathLabels: ['Sunday Spin'],
+    });
+    const stats = selectStatistics([sunday]);
+    const week = stats.weeklySpinCount.find((entry) => entry.spins > 0);
+
+    expect(week).toBeDefined();
+    // Monday on or before that Sunday.
+    expect(week?.key <= '2026-01-04').toBe(true);
+    expect(week?.label.startsWith('Week of ')).toBe(true);
+  });
+
+  it('defaults to all-time when no range or now is provided', () => {
+    const stats = selectStatistics([burger]);
+    expect(stats.totalCompletedSelections).toBe(1);
+    expect(rangeStartDate(STATISTICS_DATE_RANGE.all)).toBeNull();
+  });
+
+  it('falls back to pathLabel when building path frequency', () => {
+    const stats = selectStatistics([
+      result({
+        id: 'custom-path',
+        pathLabels: ['Pizza', 'Large'],
+        pathLabel: 'Custom Path Label',
+      }),
+    ]);
+
+    expect(stats.mostSelectedPath?.name).toBe('Custom Path Label');
   });
 });

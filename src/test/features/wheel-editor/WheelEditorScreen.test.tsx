@@ -1,5 +1,6 @@
 import { fireEvent } from '@testing-library/react';
 
+import { APP_ERROR_MESSAGES } from '@/constants/errorMessages';
 import { ROUTES, withWheelId } from '@/constants/routes';
 import { WHEEL_THEME_PRESETS } from '@/constants/wheelAppearance';
 import { CUSTOMIZATION_MESSAGES } from '@/features/wheel-customization/constants';
@@ -181,6 +182,30 @@ describe('WheelEditorScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Back to dashboard' }));
 
     expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
+  });
+
+  it('shows an invalid-wheel empty state when stored wheel data is unusable', async () => {
+    useWheelStore.getState().createWheel({
+      id: 'broken',
+      name: 'Broken Wheel',
+      items: [{ id: 'a', name: 'A', color: '#16a34a', enabled: true, weight: 1 }],
+    });
+    const broken = useWheelStore.getState().getWheel('broken');
+    if (broken) {
+      useWheelStore.setState({
+        wheels: [{ ...broken, name: '   ' }],
+      });
+    }
+
+    await renderApp({ initialEntries: [withWheelId(ROUTES.wheelEditor, 'broken')] });
+
+    expect(screen.getByRole('heading', { name: 'Wheel not found', level: 2 })).toBeInTheDocument();
+    expect(screen.getByText(APP_ERROR_MESSAGES.invalidWheel)).toBeInTheDocument();
+    expect(
+      screen.queryByText('This wheel is missing or was deleted. Create a new wheel or open one from the dashboard.'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create a wheel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to dashboard' })).toBeInTheDocument();
   });
 
   it('returns to the wheel picker from an open editor', async () => {

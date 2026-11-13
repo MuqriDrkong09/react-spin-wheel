@@ -247,4 +247,55 @@ describe('useSpinWheel', () => {
     random.mockRestore();
     window.matchMedia = originalMatchMedia;
   });
+
+  it('stays idle when the rotation range is invalid', () => {
+    const { result } = renderHook(() =>
+      useSpinWheel(food, {
+        randomValue: 0,
+        reducedMotion: false,
+        wheelSettings: {
+          ...DEFAULT_WHEEL_SETTINGS,
+          minRotations: 8,
+          maxRotations: 4,
+        },
+      }),
+    );
+
+    let next;
+    act(() => {
+      next = result.current.spin();
+    });
+
+    expect(result.current.status).toBe(SPIN_STATUS.idle);
+    expect(result.current.result).toBeUndefined();
+    expect(next).toEqual(
+      expect.objectContaining({
+        status: SPIN_STATUS.idle,
+        rotation: 0,
+      }),
+    );
+  });
+
+  it('returns the current state when startSpin cannot begin', () => {
+    const { result } = renderHook(() =>
+      useSpinWheel(food, { randomValue: 0, reducedMotion: false, rotations: 4 }),
+    );
+
+    act(() => {
+      result.current.spin();
+    });
+    expect(result.current.status).toBe(SPIN_STATUS.spinning);
+
+    let blocked;
+    act(() => {
+      blocked = result.current.spin();
+    });
+
+    expect(blocked).toEqual(
+      expect.objectContaining({
+        status: SPIN_STATUS.spinning,
+      }),
+    );
+    expect(result.current.status).toBe(SPIN_STATUS.spinning);
+  });
 });

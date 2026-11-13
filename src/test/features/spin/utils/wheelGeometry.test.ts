@@ -15,6 +15,10 @@ function item(name: string, extra?: Partial<WheelItem>): WheelItem {
 }
 
 describe('buildWheelGeometry', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('builds no segments for an empty list', () => {
     const geometry = buildWheelGeometry([]);
 
@@ -276,5 +280,70 @@ describe('buildWheelGeometry', () => {
     expect(geometry.segments[0]?.color).toBe('#111111');
     expect(geometry.segments[1]?.color).toBe('#ca8a04');
     expect(geometry.radius).toBeGreaterThan(100);
+  });
+
+  it('ignores invalid requested text colors and invalid backgrounds for contrast', () => {
+    const invalidText = buildWheelGeometry([item('Pizza', { color: '#ea580c' })], 200, {
+      appearance: { textColor: 'not-a-color' as HexColor, fontSize: 14 },
+    });
+    expect(invalidText.segments[0]?.labelFill).toBe('#0f172a');
+
+    const invalidBackground = buildWheelGeometry(
+      [item('Broken', { color: 'nope' as HexColor })],
+      200,
+      { appearance: { textColor: '#ffffff', fontSize: 14 } },
+    );
+    expect(invalidBackground.segments[0]?.labelFill).toBe('#ffffff');
+  });
+
+  it('merges a leading symbol token when the first split part is nullish', () => {
+    const splitOriginal = String.prototype.split;
+    const filterOriginal = Array.prototype.filter;
+
+    vi.spyOn(String.prototype, 'split').mockImplementation(function (
+      this: string,
+      ...args: unknown[]
+    ) {
+      if (String(this) === '⚠ Caution') {
+        return Object.assign([], { 0: undefined, 1: 'Caution', length: 2 }) as string[];
+      }
+      return splitOriginal.apply(this, args as [string | RegExp]);
+    });
+
+    vi.spyOn(Array.prototype, 'filter').mockImplementation(function (
+      this: unknown[],
+      predicate: (value: unknown, index: number, array: unknown[]) => unknown,
+      thisArg?: unknown,
+    ) {
+      if (this.length === 2 && this[0] == null && this[1] === 'Caution') {
+        return this as string[];
+      }
+      return filterOriginal.call(this, predicate as never, thisArg) as string[];
+    });
+
+    const geometry = buildWheelGeometry([item('Symbol', { name: '⚠ Caution' })]);
+    expect(geometry.segments[0]?.labelText).toBe('⚠ Caution');
+    expect(geometry.segments[0]?.labelLines.length).toBeGreaterThan(0);
+  });
+
+  it('keeps truncate text as-is when width already fits', () => {
+    const long = 'Supercalifragilisticexpialidocious';
+    const iteratorOriginal = String.prototype[Symbol.iterator];
+
+    vi.spyOn(String.prototype, Symbol.iterator).mockImplementation(function (this: String) {
+      const value = String(this);
+      // Only collapse width inside truncateToWidth's fit check so layoutLines still rejects the token.
+      if (value === long && new Error().stack?.includes('truncateToWidth')) {
+        return [][Symbol.iterator]();
+      }
+
+      return iteratorOriginal.call(value);
+    });
+
+    const geometry = buildWheelGeometry(
+      Array.from({ length: 12 }, (_, index) => item(long, { id: `fit-${index}` })),
+    );
+
+    expect(geometry.segments[0]?.labelLines.some((line) => line.text === long)).toBe(true);
   });
 });

@@ -4,14 +4,19 @@ import {
   canAutoAdvanceSelection,
   canContinueSelection,
   createHierarchicalSelectionResult,
+  eligibleChildItems,
   eligibleRootItems,
+  hasSelectionCycle,
   SELECTION_DECISION,
+  selectionAfterWinner,
   selectionDecision,
+  selectionPathWithItem,
   shouldAutoAdvanceSelection,
 } from '@/features/spin/utils/selectionFlow';
-import { SELECTION_MODE } from '@/types/wheel';
 import { toSelectionStep, type SelectionStep } from '@/features/spin/utils/selectionPath';
+import { SELECTION_MODE } from '@/types/wheel';
 import type { WheelItem } from '@/types/wheel';
+import * as idUtils from '@/utils/id';
 import {
   createMaxWinsCondition,
   createRequiresSelectedItemCondition,
@@ -197,5 +202,95 @@ describe('selectionFlow', () => {
         winCounts: { limited: 1 },
       }).map((entry) => entry.name),
     ).toEqual(['Open']);
+  });
+
+  it('builds a selection path that appends the current item id', () => {
+    expect(selectionPathWithItem([], pizza.id)).toEqual(['pizza']);
+    expect(selectionPathWithItem([toSelectionStep(pizza), toSelectionStep(chicken)], large.id)).toEqual([
+      'pizza',
+      'chicken-pepperoni',
+      'large',
+    ]);
+  });
+
+  it('returns eligible children and treats empty filtered sets as terminal', () => {
+    expect(eligibleChildItems(thinCrust)).toBeUndefined();
+    expect(eligibleChildItems(pizza)?.map((entry) => entry.name)).toEqual([
+      'Chicken Pepperoni',
+      'Beef Pepperoni',
+    ]);
+
+    const gated = nested('Parent', [nested('Gated Child')]);
+    expect(
+      eligibleChildItems(gated, {
+        conditions: [createRequiresSelectedItemCondition('gated-child', 'missing', 'c1')],
+      }),
+    ).toBeUndefined();
+  });
+
+  it('continues when win counts leave at least one child eligible', () => {
+    const open = nested('Open Child');
+    const limited = nested('Limited Child');
+    const parent = nested('Parent', [open, limited]);
+    const options = {
+      conditions: [createMaxWinsCondition('limited-child', 1, 'max-1')],
+      winCounts: { 'limited-child': 1 },
+    };
+
+    expect(selectionDecision(parent, options)).toBe(SELECTION_DECISION.continue);
+    expect(eligibleChildItems(parent, options)?.map((entry) => entry.name)).toEqual(['Open Child']);
+    expect(selectionDecision(parent, { winCounts: { 'limited-child': 0 } })).toBe(
+      SELECTION_DECISION.continue,
+    );
+  });
+
+  it('detects selection cycles by winner id', () => {
+    expect(hasSelectionCycle([], pizza.id)).toBe(false);
+    expect(hasSelectionCycle([toSelectionStep(pizza)], chicken.id)).toBe(false);
+    expect(hasSelectionCycle([toSelectionStep(pizza), toSelectionStep(chicken)], pizza.id)).toBe(
+      true,
+    );
+  });
+
+  it('appends the winner onto the ancestor path', () => {
+    const ancestors = [toSelectionStep(pizza)];
+    expect(selectionAfterWinner(ancestors)).toEqual(ancestors);
+    expect(selectionAfterWinner(ancestors, chicken)).toEqual([
+      toSelectionStep(pizza),
+      toSelectionStep(chicken),
+    ]);
+  });
+
+  it('defaults timestamp and duration when creating a result', () => {
+    const now = vi.spyOn(idUtils, 'nowIso').mockReturnValue('2026-11-13T00:00:00.000Z');
+    const selection = [toSelectionStep(pizza)];
+
+    expect(
+      createHierarchicalSelectionResult({
+        sessionId: 'session-2',
+        wheelId: 'pizza-night',
+        selection,
+      }),
+    ).toEqual({
+      sessionId: 'session-2',
+      wheelId: 'pizza-night',
+      selectedItemId: 'pizza',
+      path: ['pizza'],
+      labels: ['Pizza'],
+      timestamp: '2026-11-13T00:00:00.000Z',
+      durationMs: 0,
+    });
+
+    expect(
+      createHierarchicalSelectionResult({
+        sessionId: 'session-2',
+        wheelId: 'pizza-night',
+        selection,
+        durationMs: 1250,
+        timestamp: '2026-11-13T01:00:00.000Z',
+      })?.durationMs,
+    ).toBe(1250);
+
+    now.mockRestore();
   });
 });
