@@ -19,7 +19,7 @@ function bracketOf(participants: string[]) {
 
 describe('selectTournamentWinner', () => {
   it('advances the winner, eliminates the loser, and completes the tournament', () => {
-    let bracket = bracketOf(['A', 'B', 'C', 'D']);
+    const bracket = bracketOf(['A', 'B', 'C', 'D']);
 
     const quarter = selectTournamentWinner(bracket, '0-0', 'p0');
     expect(quarter.ok).toBe(true);
@@ -57,8 +57,13 @@ describe('selectTournamentWinner', () => {
     });
   });
 
-  it('rejects picks that are not ready or already complete', () => {
+  it('rejects missing, pending, complete, bye, and invalid winners', () => {
     const bracket = bracketOf(['A', 'B', 'C', 'D']);
+
+    expect(selectTournamentWinner(bracket, 'missing-match', 'p0')).toEqual({
+      ok: false,
+      error: GENERATOR_MESSAGES.matchNotReady,
+    });
 
     expect(selectTournamentWinner(bracket, '1-0', 'p0')).toEqual({
       ok: false,
@@ -78,6 +83,66 @@ describe('selectTournamentWinner', () => {
     expect(selectTournamentWinner(first.value, '0-1', 'p0')).toEqual({
       ok: false,
       error: GENERATOR_MESSAGES.invalidWinner,
+    });
+
+    const withBye = bracketOf(['A', 'B', 'C', 'D', 'E']);
+    expect(selectTournamentWinner(withBye, '0-2', 'p4')).toEqual({
+      ok: false,
+      error: GENERATOR_MESSAGES.matchAlreadyComplete,
+    });
+  });
+
+  it('does not duplicate a loser already listed as eliminated', () => {
+    const bracket = {
+      ...bracketOf(['A', 'B', 'C', 'D']),
+      eliminatedIds: ['p1'],
+    };
+
+    const result = selectTournamentWinner(bracket, '0-0', 'p0');
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.value.eliminatedIds).toEqual(['p1']);
+  });
+
+  it('skips elimination when the ready match has no opposing participant', () => {
+    const bracket = bracketOf(['A', 'B', 'C', 'D']);
+    const oneSided = {
+      ...bracket,
+      rounds: bracket.rounds.map((round, roundIndex) =>
+        roundIndex === 0
+          ? {
+              ...round,
+              matches: round.matches.map((match, matchIndex) =>
+                matchIndex === 0
+                  ? {
+                      ...match,
+                      slots: [{ participantId: 'p0' }, { participantId: null }] as [
+                        { participantId: string | null },
+                        { participantId: string | null },
+                      ],
+                      status: MATCH_STATUS.ready,
+                      winnerId: null,
+                    }
+                  : match,
+              ),
+            }
+          : round,
+      ),
+    };
+
+    const result = selectTournamentWinner(oneSided, '0-0', 'p0');
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.value.eliminatedIds).toEqual([]);
+    expect(result.value.rounds[0]?.matches[0]).toMatchObject({
+      status: MATCH_STATUS.complete,
+      winnerId: 'p0',
     });
   });
 });

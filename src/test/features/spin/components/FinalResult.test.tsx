@@ -65,6 +65,28 @@ describe('FinalResult', () => {
     expect(screen.getByTestId('celebration-confetti')).toBeInTheDocument();
   });
 
+  it('skips the winner announcement when there are no steps', () => {
+    renderWithProviders(
+      <FinalResult
+        wheelName="Empty Wheel"
+        steps={[]}
+        timestamp={timestamp}
+        reducedMotion
+        celebrationEnabled={false}
+        soundEnabled={false}
+        onSpinAgain={vi.fn()}
+        onStartNewSelection={vi.fn()}
+        onCopy={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: SPIN_MESSAGES.finalResultTitle })).toBeInTheDocument();
+    expect(screen.getByText('Empty Wheel')).toBeInTheDocument();
+    expect(screen.queryByText(/Winner:/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('celebration-confetti')).not.toBeInTheDocument();
+  });
+
   it('invokes the matching action and marks a saved result', async () => {
     const user = userEvent.setup();
     const onSpinAgain = vi.fn();

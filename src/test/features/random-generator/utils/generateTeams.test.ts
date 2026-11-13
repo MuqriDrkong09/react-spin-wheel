@@ -1,4 +1,8 @@
-import { DEFAULT_TEAM_PARTICIPANTS, GENERATOR_MESSAGES } from '@/features/random-generator/constants';
+import {
+  DEFAULT_TEAM_PARTICIPANTS,
+  GENERATOR_LIMITS,
+  GENERATOR_MESSAGES,
+} from '@/features/random-generator/constants';
 import {
   generateTeams,
   parseParticipants,
@@ -205,5 +209,84 @@ describe('generateTeams', () => {
         0,
       ),
     ).toEqual({ ok: false, error: GENERATOR_MESSAGES.teamCountRequired });
+
+    expect(
+      generateTeams(
+        {
+          participants: examplePeople,
+          teamCount: 2.5,
+          balanced: true,
+          random: false,
+          preventDuplicates: true,
+        },
+        0,
+      ),
+    ).toEqual({ ok: false, error: GENERATOR_MESSAGES.teamCountRequired });
+
+    expect(
+      generateTeams(
+        {
+          participants: examplePeople,
+          teamCount: GENERATOR_LIMITS.maxTeamCount + 1,
+          balanced: true,
+          random: false,
+          preventDuplicates: true,
+        },
+        0,
+      ),
+    ).toEqual({ ok: false, error: GENERATOR_MESSAGES.teamCountRequired });
+  });
+
+  it('rejects oversized participant lists and names that are too long', () => {
+    const tooMany = Array.from(
+      { length: GENERATOR_LIMITS.maxParticipants + 1 },
+      (_, index) => `Person ${index}`,
+    );
+    expect(
+      generateTeams(
+        {
+          participants: tooMany,
+          teamCount: 2,
+          balanced: true,
+          random: false,
+          preventDuplicates: false,
+        },
+        0,
+      ),
+    ).toEqual({ ok: false, error: GENERATOR_MESSAGES.tooManyParticipants });
+
+    expect(
+      generateTeams(
+        {
+          participants: ['Ahmad', 'x'.repeat(GENERATOR_LIMITS.maxParticipantName + 1)],
+          teamCount: 2,
+          balanced: true,
+          random: false,
+          preventDuplicates: true,
+        },
+        0,
+      ),
+    ).toEqual({ ok: false, error: GENERATOR_MESSAGES.participantNameTooLong });
+  });
+
+  it('trims blank array entries before assigning teams', () => {
+    const result = generateTeams(
+      {
+        participants: [' Ahmad ', '', '  ', 'Ali', 'John'],
+        teamCount: 2,
+        balanced: true,
+        random: false,
+        preventDuplicates: true,
+      },
+      0,
+    );
+
+    expect(result).toEqual({
+      ok: true,
+      value: [
+        { name: 'Team A', members: ['Ahmad', 'John'] },
+        { name: 'Team B', members: ['Ali'] },
+      ],
+    });
   });
 });

@@ -1,5 +1,6 @@
 import { fireEvent } from '@testing-library/react';
 
+import { APP_ERROR_MESSAGES } from '@/constants/errorMessages';
 import { ROUTES, withWheelId } from '@/constants/routes';
 import { SPIN_MESSAGES } from '@/features/spin/constants';
 import * as selectionFlow from '@/features/spin/utils/selectionFlow';
@@ -579,6 +580,27 @@ describe('SpinScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Back to dashboard' }));
 
     expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
+  });
+
+  it('shows an invalid-wheel empty state when stored wheel data is unusable', async () => {
+    useWheelStore.getState().createWheel({
+      id: 'broken',
+      name: 'Broken Wheel',
+      items: [{ id: 'a', name: 'A', color: '#16a34a', enabled: true, weight: 1 }],
+    });
+    const broken = useWheelStore.getState().getWheel('broken');
+    if (broken) {
+      useWheelStore.setState({
+        wheels: [{ ...broken, name: '   ' }],
+      });
+    }
+
+    await renderApp({ initialEntries: [withWheelId(ROUTES.spin, 'broken')] });
+
+    expect(screen.getByRole('heading', { name: SPIN_MESSAGES.missingWheelTitle, level: 2 })).toBeInTheDocument();
+    expect(screen.getByText(APP_ERROR_MESSAGES.invalidWheel)).toBeInTheDocument();
+    expect(screen.queryByText(SPIN_MESSAGES.missingWheelDescription)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create a wheel' })).toBeInTheDocument();
   });
 
   it('shows an error when copying the final result fails and can dismiss it', async () => {

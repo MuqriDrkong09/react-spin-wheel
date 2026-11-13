@@ -1,8 +1,13 @@
-import { NAME_STYLE } from '@/features/random-generator/constants';
+import { GENERATOR_LIMITS, GENERATOR_MESSAGES, NAME_STYLE } from '@/features/random-generator/constants';
 import { FIRST_NAMES, LAST_NAMES } from '@/features/random-generator/data/names';
 import { generateRandomName } from '@/features/random-generator/utils/generateRandomName';
+import * as random from '@/utils/random';
 
 describe('generateRandomName', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('picks first, last, and full names from the shared lists', () => {
     expect(generateRandomName({ style: NAME_STYLE.first, count: 1 }, 0)).toEqual({
       ok: true,
@@ -32,7 +37,34 @@ describe('generateRandomName', () => {
     }
     expect(randomValue).toHaveBeenCalledTimes(4);
     expect(spy).not.toHaveBeenCalled();
+  });
 
-    spy.mockRestore();
+  it('rejects out-of-range or non-integer name counts', () => {
+    expect(generateRandomName({ style: NAME_STYLE.first, count: 0 }, 0)).toEqual({
+      ok: false,
+      error: GENERATOR_MESSAGES.nameCountRequired,
+    });
+    expect(
+      generateRandomName({ style: NAME_STYLE.first, count: GENERATOR_LIMITS.maxNameCount + 1 }, 0),
+    ).toEqual({
+      ok: false,
+      error: GENERATOR_MESSAGES.nameCountRequired,
+    });
+    expect(generateRandomName({ style: NAME_STYLE.first, count: 1.5 }, 0)).toEqual({
+      ok: false,
+      error: GENERATOR_MESSAGES.nameCountRequired,
+    });
+    expect(generateRandomName({ style: NAME_STYLE.first, count: Number.NaN }, 0)).toEqual({
+      ok: false,
+      error: GENERATOR_MESSAGES.nameCountRequired,
+    });
+  });
+
+  it('throws when the name list picker returns nothing', () => {
+    vi.spyOn(random, 'pickItem').mockReturnValue(undefined);
+
+    expect(() => generateRandomName({ style: NAME_STYLE.first, count: 1 }, 0)).toThrow(
+      GENERATOR_MESSAGES.nameCountRequired,
+    );
   });
 });
