@@ -72,4 +72,20 @@ describe('parseShareDocument', () => {
       reason: 'invalid',
     });
   });
+
+  it('rejects envelopes whose expiry is earlier than createdAt', () => {
+    expect(
+      parseShareDocument(
+        validDocument({
+          createdAt: '2026-11-01T00:00:00.000Z',
+          expiresAt: '2026-10-01T00:00:00.000Z',
+        }),
+        now,
+      ),
+    ).toEqual({
+      ok: false,
+      error: SHARE_MESSAGES.invalid,
+      reason: 'invalid',
+    });
+  });
 });

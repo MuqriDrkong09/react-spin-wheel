@@ -1,9 +1,14 @@
+import { DEFAULT_WHEEL_APPEARANCE } from '@/constants/wheelAppearance';
 import { COLOR_MODE } from '@/types/colorMode';
 import { resetAppStore, useAppStore } from '@/stores/appStore';
 import { resetFavoritesStore, useFavoritesStore } from '@/stores/favoritesStore';
 import { resetGeneratorHistoryStore, useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 import { resetHistoryStore, useHistoryStore } from '@/stores/historyStore';
 import { resetTournamentStore, useTournamentStore } from '@/stores/tournamentStore';
+import {
+  resetRuntimeNoticeStore,
+  useRuntimeNoticeStore,
+} from '@/stores/runtimeNoticeStore';
 import { resetSettingsStore, useSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
 import { SPIN_SESSION_STATUS } from '@/types/wheel';
@@ -11,7 +16,12 @@ import { SPIN_SESSION_STATUS } from '@/types/wheel';
 import { generateTournament } from '@/features/random-generator/utils/generateTournament';
 import { STORAGE_KEY, loadPersistedState } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
-import { persistStores, startStorePersistence } from '@/services/storage/storePersistence';
+import {
+  hydrateStoresFromStorage,
+  persistStores,
+  startStorePersistence,
+  subscribeStoresToStorage,
+} from '@/services/storage/storePersistence';
 
 function resetStores() {
   resetAppStore();
@@ -21,6 +31,7 @@ function resetStores() {
   resetTournamentStore();
   resetSettingsStore();
   resetFavoritesStore();
+  resetRuntimeNoticeStore();
 }
 
 describe('storePersistence', () => {
@@ -153,5 +164,116 @@ describe('storePersistence', () => {
     expect(useHistoryStore.getState().spinHistory).toEqual([]);
     expect(useWheelStore.getState().wheels).toEqual([]);
     stop();
+  });
+
+  it('reports when browser storage is unavailable on hydrate', () => {
+    const availability = vi.spyOn(storageService, 'isAvailable').mockReturnValue(false);
+
+    hydrateStoresFromStorage();
+
+    expect(useRuntimeNoticeStore.getState().notice?.kind).toBe('storageUnavailable');
+    availability.mockRestore();
+  });
+
+  it('reports when saved data is recovered on hydrate', () => {
+    window.localStorage.setItem(STORAGE_KEY, '{bad');
+
+    hydrateStoresFromStorage();
+
+    expect(useRuntimeNoticeStore.getState().notice?.kind).toBe('storageRecovered');
+  });
+
+  it('reports when wheel hierarchy is repaired on hydrate', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        data: {
+          colorMode: COLOR_MODE.system,
+          wheels: [
+            {
+              id: 'wheel-1',
+              name: 'Broken',
+              items: [
+                {
+                  id: 'same',
+                  name: 'One',
+                  color: '#ef4444',
+                  enabled: true,
+                  weight: 1,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+                {
+                  id: 'same',
+                  name: 'Two',
+                  color: '#22c55e',
+                  enabled: true,
+                  weight: 2,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+              ],
+              settings: {
+                durationMs: 4000,
+                minRotations: 4,
+                maxRotations: 8,
+                soundEnabled: true,
+                confettiEnabled: true,
+                eliminationMode: false,
+                selectionMode: 'manual',
+                removeWinner: false,
+                skipDisabledItems: true,
+                appearance: DEFAULT_WHEEL_APPEARANCE,
+              },
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          activeWheelId: null,
+          snapshots: {},
+          spinHistory: [],
+          settings: {
+            soundEnabled: true,
+            confettiEnabled: true,
+            confirmBeforeDelete: true,
+          },
+          favoriteWheelIds: [],
+        },
+      }),
+    );
+
+    hydrateStoresFromStorage();
+
+    expect(useRuntimeNoticeStore.getState().notice?.kind).toBe('hierarchyRepaired');
+    expect(useWheelStore.getState().wheels[0]?.items).toHaveLength(2);
+    expect(useWheelStore.getState().wheels[0]?.items[0]?.id).not.toBe(
+      useWheelStore.getState().wheels[0]?.items[1]?.id,
+    );
+  });
+
+  it('reports save failures from persistStores when storage is available', () => {
+    const writeSpy = vi.spyOn(storageService, 'writeJson').mockReturnValue(false);
+    const availability = vi.spyOn(storageService, 'isAvailable').mockReturnValue(true);
+
+    expect(persistStores()).toBe(false);
+    expect(useRuntimeNoticeStore.getState().notice?.kind).toBe('storageSaveFailed');
+
+    writeSpy.mockRestore();
+    availability.mockRestore();
+  });
+
+  it('reports save failures from subscribed store updates', () => {
+    const writeSpy = vi.spyOn(storageService, 'writeJson').mockReturnValue(false);
+    const availability = vi.spyOn(storageService, 'isAvailable').mockReturnValue(true);
+    const stop = subscribeStoresToStorage();
+
+    useAppStore.getState().setColorMode(COLOR_MODE.dark);
+
+    expect(useRuntimeNoticeStore.getState().notice?.kind).toBe('storageSaveFailed');
+
+    stop();
+    writeSpy.mockRestore();
+    availability.mockRestore();
   });
 });

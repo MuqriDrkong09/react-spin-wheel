@@ -65,7 +65,22 @@ describe('itemConditions', () => {
           winCounts: new Map([['pizza', 2]]),
         }),
       ).toBe(false);
+      expect(
+        evaluateItemCondition(condition, item('pizza'), {
+          winCounts: new Map([['other', 9]]),
+        }),
+      ).toBe(true);
       expect(evaluateItemCondition(condition, item('pizza'), {})).toBe(true);
+      expect(
+        evaluateItemCondition(condition, item('pizza'), {
+          winCounts: { pizza: Number.NaN },
+        }),
+      ).toBe(true);
+      expect(
+        evaluateItemCondition(condition, item('pizza'), {
+          winCounts: { pizza: '2' as unknown as number },
+        }),
+      ).toBe(true);
     });
 
     it('enforces minimum weight on the evaluated item', () => {
@@ -73,6 +88,23 @@ describe('itemConditions', () => {
 
       expect(evaluateItemCondition(condition, item('rare', 2), {})).toBe(false);
       expect(evaluateItemCondition(condition, item('rare', 3), {})).toBe(true);
+    });
+
+    it('accepts a selected-id Set and fails closed for unknown kinds', () => {
+      const condition = createRequiresSelectedItemCondition('bank', 'fpx');
+
+      expect(
+        evaluateItemCondition(condition, item('bank'), {
+          selectedItemIds: new Set(['fpx']),
+        }),
+      ).toBe(true);
+
+      expect(
+        evaluateItemCondition(
+          { id: 'future', itemId: 'bank', kind: 'future_kind' } as ItemCondition,
+          item('bank'),
+        ),
+      ).toBe(false);
     });
   });
 
@@ -147,6 +179,17 @@ describe('itemConditions', () => {
       expect(filtered).toEqual(items);
       expect(filtered).not.toBe(items);
     });
+
+    it('keeps items that have no matching conditions while filtering others', () => {
+      const free = item('free');
+      const bank = item('bank');
+
+      expect(
+        filterItemsByConditions([free, bank], [createRequiresSelectedItemCondition('bank', 'fpx')], {
+          selectedItemIds: [],
+        }).map((entry) => entry.id),
+      ).toEqual(['free']);
+    });
   });
 
   describe('indexConditionsByItemId', () => {
@@ -177,6 +220,12 @@ describe('itemConditions', () => {
         kind: ITEM_CONDITION_KIND.requiresAnySelectedItem,
         requiredItemIds: ['a', 'b'],
       });
+
+      expect(createAlwaysCondition('auto').id).toEqual(expect.any(String));
+      expect(createRequiresSelectedItemCondition('a', 'b').requiredItemId).toBe('b');
+      expect(createRequiresAnySelectedItemCondition('a', ['b']).requiredItemIds).toEqual(['b']);
+      expect(createMaxWinsCondition('a', 3).limit).toBe(3);
+      expect(createMinWeightCondition('a', 4).minWeight).toBe(4);
     });
   });
 });

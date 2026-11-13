@@ -426,3 +426,10 @@ describe('findItemLocation and descendants', () => {
     expect(collectDescendantIds(sushi)).toEqual([]);
   });
 });
+
+describe('canMoveItem', () => {
+  it('allows moving to the root when the item exists', () => {
+    const items = [item('Pizza', { children: [item('Chicken')] }), item('Burger')];
+    expect(canMoveItem(items, 'chicken', null)).toBe(true);
+  });
+});

@@ -375,10 +375,6 @@ function replaceChildren(
 }
 
 function moveIndex<T>(list: T[], fromIndex: number, toIndex: number): T[] {
-  if (fromIndex === toIndex) {
-    return list;
-  }
-
   const next = [...list];
   const [entry] = next.splice(fromIndex, 1);
   if (entry === undefined) {

@@ -11,6 +11,7 @@ import {
   defaultPersistedState,
   loadPersistedState,
   loadPersistedStateResult,
+  migrations,
   savePersistedState,
 } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
@@ -196,6 +197,55 @@ describe('persistedState', () => {
     window.localStorage.setItem(STORAGE_KEY, '{bad');
     expect(loadPersistedState()).toEqual(defaultPersistedState);
     expect(loadPersistedStateResult().status).toBe('recovered');
+  });
+
+  it('recovers when storage read throws', () => {
+    const spy = vi.spyOn(storageService, 'readJson').mockImplementation(() => {
+      throw new Error('storage unavailable');
+    });
+
+    expect(loadPersistedStateResult()).toEqual({
+      state: {
+        ...defaultPersistedState,
+        settings: { ...DEFAULT_APP_SETTINGS },
+      },
+      status: 'recovered',
+      hierarchyRepaired: false,
+    });
+
+    spy.mockRestore();
+  });
+
+  it('recovers when a migration throws', () => {
+    const original = migrations[0];
+    migrations[0] = () => {
+      throw new Error('migration failed');
+    };
+
+    try {
+      expect(loadFromEnvelope(0, { colorMode: COLOR_MODE.dark })).toEqual(defaultPersistedState);
+      expect(loadPersistedStateResult().status).toBe('recovered');
+    } finally {
+      if (original) {
+        migrations[0] = original;
+      } else {
+        delete migrations[0];
+      }
+    }
+  });
+
+  it('recovers when a migration path is missing for an older version', () => {
+    const original = migrations[0];
+    delete migrations[0];
+
+    try {
+      expect(loadFromEnvelope(0, { colorMode: COLOR_MODE.dark })).toEqual(defaultPersistedState);
+      expect(loadPersistedStateResult().status).toBe('recovered');
+    } finally {
+      if (original) {
+        migrations[0] = original;
+      }
+    }
   });
 
   it('returns defaults for an invalid payload', () => {

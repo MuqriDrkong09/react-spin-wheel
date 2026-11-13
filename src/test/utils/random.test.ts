@@ -99,4 +99,21 @@ describe('shuffle', () => {
 
     spy.mockRestore();
   });
+
+  it('skips sparse holes instead of writing undefined slots', () => {
+    const withMissingCurrent: Array<string | undefined> = ['A', 'B', 'C'];
+    delete withMissingCurrent[2];
+    expect(shuffle(withMissingCurrent, 0)).toEqual(['B', 'A', undefined]);
+
+    const withMissingSwap: Array<string | undefined> = ['A', 'B', 'C'];
+    delete withMissingSwap[0];
+    expect(shuffle(withMissingSwap, 0)).toEqual([undefined, 'B', 'C']);
+  });
+});
+
+describe('assertFiniteBounds via public helpers', () => {
+  it('rejects a non-finite maximum', () => {
+    expect(() => randomFloat(0, Number.POSITIVE_INFINITY, 0.5)).toThrow(RANDOM_ERRORS.invalidBound);
+    expect(() => randomInt(0, Number.NaN, 0.5)).toThrow(RANDOM_ERRORS.invalidBound);
+  });
 });

@@ -43,7 +43,11 @@ describe('toCreateWheelInputFromShare', () => {
 describe('uniqueCopyName', () => {
   it('keeps a unique name and suffixes collisions as copies', () => {
     expect(uniqueCopyName('Food Picker', [])).toBe('Food Picker');
+    expect(uniqueCopyName(' Food Picker ', ['Other Wheel'])).toBe('Food Picker');
     expect(uniqueCopyName('Food Picker', ['Food Picker'])).toBe('Food Picker (copy)');
     expect(uniqueCopyName('Food Picker', ['Food Picker', 'Food Picker (copy)'])).toBe('Food Picker (copy 2)');
+    expect(
+      uniqueCopyName('Food Picker', ['Food Picker', 'Food Picker (copy)', 'Food Picker (copy 2)']),
+    ).toBe('Food Picker (copy 3)');
   });
 });

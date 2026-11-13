@@ -10,8 +10,13 @@ import {
 describe('share urls', () => {
   it('builds encoded query paths that a backend path can replace later', () => {
     expect(buildEncodedSharePath('abc_def')).toBe(`${ROUTES.sharedWheel}?${SHARE_QUERY_PARAM}=abc_def`);
+    expect(buildEncodedSharePath('a/b+c')).toBe(
+      `${ROUTES.sharedWheel}?${SHARE_QUERY_PARAM}=${encodeURIComponent('a/b+c')}`,
+    );
     expect(buildRemoteSharePath('share-1')).toBe(`${ROUTES.sharedWheel}/share-1`);
+    expect(buildRemoteSharePath('share/1')).toBe(`${ROUTES.sharedWheel}/${encodeURIComponent('share/1')}`);
     expect(buildShareUrl('/share?s=abc', 'http://localhost:5173/')).toBe('http://localhost:5173/share?s=abc');
+    expect(buildShareUrl('/share?s=abc', 'http://localhost:5173')).toBe('http://localhost:5173/share?s=abc');
   });
 
   it('parses encoded query tokens and remote path ids', () => {
@@ -28,5 +33,8 @@ describe('share urls', () => {
       id: 'remote-1',
     });
     expect(parseShareLocation({ search: '' })).toBeNull();
+    expect(parseShareLocation({})).toBeNull();
+    expect(parseShareLocation({ shareId: '   ' })).toBeNull();
+    expect(parseShareLocation({ search: `?${SHARE_QUERY_PARAM}=%20` })).toBeNull();
   });
 });
