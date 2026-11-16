@@ -8,6 +8,7 @@ import {
   eligibleRootItems,
   hasSelectionCycle,
   SELECTION_DECISION,
+  seedSpinFromItem,
   selectionAfterWinner,
   selectionDecision,
   selectionPathWithItem,
@@ -292,5 +293,22 @@ describe('selectionFlow', () => {
     ).toBe(1250);
 
     now.mockRestore();
+  });
+});
+
+describe('seedSpinFromItem', () => {
+  it('seeds ancestors and eligible children for a nested item', () => {
+    const chicken = nested('Chicken');
+    const pizza = nested('Pizza', [chicken, nested('Beef')]);
+    const seeded = seedSpinFromItem([pizza, nested('Sushi')], 'pizza');
+
+    expect(seeded?.ancestors.map((step) => step.id)).toEqual(['pizza']);
+    expect(seeded?.items.map((entry) => entry.id)).toEqual(['chicken', 'beef']);
+  });
+
+  it('returns undefined for leaves and missing items', () => {
+    const pizza = nested('Pizza', [nested('Chicken')]);
+    expect(seedSpinFromItem([pizza], 'chicken')).toBeUndefined();
+    expect(seedSpinFromItem([pizza], 'missing')).toBeUndefined();
   });
 });

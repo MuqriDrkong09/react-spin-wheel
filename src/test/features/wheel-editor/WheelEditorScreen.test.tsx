@@ -861,6 +861,28 @@ describe('WheelEditorScreen', () => {
       'f-spicy': false,
     });
   });
+
+  it('opens item details from a tree click and supports actions', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    const { router } = await renderEditor();
+
+    await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.viewDetails('Pizza') }));
+
+    const details = await screen.findByRole('dialog', { name: EDITOR_MESSAGES.detailsTitle });
+    expect(within(details).getByText(EDITOR_MESSAGES.childCount(2))).toBeInTheDocument();
+    expect(within(details).getByText('🍗 Chicken Pepperoni')).toBeInTheDocument();
+    expect(within(details).getByText('🥩 Beef Pepperoni')).toBeInTheDocument();
+
+    await user.click(within(details).getByRole('button', { name: EDITOR_MESSAGES.actionSpinFromItem }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(ROUTES.spin);
+    });
+    expect(router.state.location.search).toContain('wheelId=food');
+    expect(router.state.location.search).toContain('fromItemId=pizza');
+    expect(await screen.findByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
+  });
 });
 
 

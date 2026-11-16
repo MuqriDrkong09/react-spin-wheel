@@ -1,11 +1,12 @@
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Box, Chip, IconButton, Stack, Typography } from '@mui/material';
+import { Box, ButtonBase, Chip, IconButton, Stack, Typography } from '@mui/material';
 import { memo, type ReactNode } from 'react';
 
 import { ItemCustomFieldsDetails } from '@/features/wheel-editor/components/ItemCustomFieldsDetails';
 import { TreeItemActions, type TreeItemHandlers } from '@/features/wheel-editor/components/TreeItemActions';
+import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { TREE_NODE_KIND, type EditorTreeNode } from '@/features/wheel-editor/utils/toEditorTree';
 import type { CustomFieldDefinition } from '@/types/customFields';
 import { CSS, useSortable } from '@/utils/dnd';
@@ -141,18 +142,47 @@ function TreeItemRowLayout({
               }}
             />
           ) : null}
-          <Typography
-            variant={isWheel ? 'subtitle1' : 'body1'}
-            component={isWheel ? 'h2' : 'span'}
-            sx={{
-              fontWeight: isWheel ? 700 : 500,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {node.icon ? `${node.icon} ${node.name}` : node.name}
-          </Typography>
+          {isWheel ? (
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              sx={{
+                fontWeight: 700,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {node.icon ? `${node.icon} ${node.name}` : node.name}
+            </Typography>
+          ) : (
+            <ButtonBase
+              onClick={() => handlers.onViewDetails(node.id)}
+              aria-label={EDITOR_MESSAGES.viewDetails(node.name)}
+              sx={{
+                borderRadius: 1,
+                px: 0.5,
+                py: 0.25,
+                minWidth: 0,
+                maxWidth: '100%',
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+              }}
+            >
+              <Typography
+                variant="body1"
+                component="span"
+                sx={{
+                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {node.icon ? `${node.icon} ${node.name}` : node.name}
+              </Typography>
+            </ButtonBase>
+          )}
           {!node.enabled ? <Chip label="Disabled" size="small" variant="outlined" /> : null}
         </Stack>
         {!isWheel && fieldDefinitions.length > 0 ? (

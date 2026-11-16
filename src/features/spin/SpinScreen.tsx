@@ -31,6 +31,7 @@ import type { Wheel } from '@/types/wheel';
 export function SpinScreen() {
   const {
     wheel,
+    fromItemId,
     availableWheels,
     needsWheelChoice,
     isMissingWheel,
@@ -96,8 +97,9 @@ export function SpinScreen() {
         />
         {wheel ? (
           <ActiveWheelSpin
-            key={wheel.id}
+            key={`${wheel.id}:${fromItemId ?? ''}`}
             wheel={wheel}
+            fromItemId={fromItemId}
             onControlsLockedChange={setControlsLocked}
             onRemoveWinnersChange={setRemoveWinner}
           />
@@ -144,14 +146,16 @@ export function SpinScreen() {
 
 function ActiveWheelSpin({
   wheel,
+  fromItemId,
   onControlsLockedChange,
   onRemoveWinnersChange,
 }: {
   wheel: Wheel;
+  fromItemId?: string | null;
   onControlsLockedChange: (locked: boolean) => void;
   onRemoveWinnersChange: (enabled: boolean) => void;
 }) {
-  const session = useSpinSession(wheel);
+  const session = useSpinSession(wheel, { fromItemId });
   const addSpinSession = useHistoryStore((state) => state.addSpinSession);
   const [saved, setSaved] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');

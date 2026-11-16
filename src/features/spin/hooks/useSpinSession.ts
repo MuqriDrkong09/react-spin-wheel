@@ -8,15 +8,29 @@ import {
   canContinueSelection,
   createHierarchicalSelectionResult,
   eligibleRootItems,
+  seedSpinFromItem,
   selectionAfterWinner,
   shouldAutoAdvanceSelection,
   type HierarchicalSelectionResult,
   type SelectionConditionOptions,
+  type SelectionLevel,
 } from '@/features/spin/utils/selectionFlow';
 import { selectionPathNames, type SelectionStep } from '@/features/spin/utils/selectionPath';
 import type { SpinLifecycleState } from '@/features/spin/utils/spinLifecycle';
 import { SELECTION_MODE, type Wheel, type WheelItem, type WheelItemId } from '@/types/wheel';
 import { createId, elapsedMs, nowMs } from '@/utils/id';
+
+export interface UseSpinSessionOptions {
+  fromItemId?: string | null;
+}
+
+function resolveSpinSeed(wheel: Wheel, fromItemId?: string | null): SelectionLevel | undefined {
+  if (!fromItemId) {
+    return undefined;
+  }
+
+  return seedSpinFromItem(wheel.items, fromItemId, { conditions: wheel.conditions });
+}
 
 interface PendingAutomaticSpin {
   ancestors: SelectionStep[];
@@ -35,10 +49,15 @@ function scheduleAfterPaint(onPainted: () => void): () => void {
   };
 }
 
-export function useSpinSession(wheel: Wheel) {
+export function useSpinSession(wheel: Wheel, options: UseSpinSessionOptions = {}) {
+  const fromItemId = options.fromItemId ?? null;
+  const initialSeed = useMemo(
+    () => resolveSpinSeed(wheel, fromItemId),
+    [fromItemId, wheel],
+  );
   const [sessionId, setSessionId] = useState(() => createId());
-  const [spinItems, setSpinItems] = useState<WheelItem[] | null>(null);
-  const [ancestors, setAncestors] = useState<SelectionStep[]>([]);
+  const [spinItems, setSpinItems] = useState<WheelItem[] | null>(() => initialSeed?.items ?? null);
+  const [ancestors, setAncestors] = useState<SelectionStep[]>(() => initialSeed?.ancestors ?? []);
   const [winnerDismissed, setWinnerDismissed] = useState(false);
   const [autoHandoff, setAutoHandoff] = useState(false);
   const [finalOpen, setFinalOpen] = useState(false);
@@ -49,10 +68,30 @@ export function useSpinSession(wheel: Wheel) {
   const pendingResumeSpinRef = useRef(false);
   const startPendingAutomaticSpinRef = useRef<() => void>(() => undefined);
   const selectionStartedAtRef = useRef<number | null>(null);
+  const seedKeyRef = useRef(`${wheel.id}:${fromItemId ?? ''}`);
   const conditionOptions = useMemo<SelectionConditionOptions>(
     () => ({ conditions: wheel.conditions }),
     [wheel.conditions],
   );
+
+  useEffect(() => {
+    const nextKey = `${wheel.id}:${fromItemId ?? ''}`;
+    if (seedKeyRef.current === nextKey) {
+      return;
+    }
+
+    seedKeyRef.current = nextKey;
+    const seed = resolveSpinSeed(wheel, fromItemId);
+    selectionStartedAtRef.current = null;
+    setSessionId(createId());
+    setSpinItems(seed?.items ?? null);
+    setAncestors(seed?.ancestors ?? []);
+    setWinnerDismissed(false);
+    setAutoHandoff(false);
+    setFinalOpen(false);
+    setFinishedResult(undefined);
+    setRemovedWinnerIds([]);
+  }, [fromItemId, wheel]);
   const sourceItems =
     spinItems ?? eligibleRootItems(wheel.items, conditionOptions);
   const items = excludeRemovedWinners(sourceItems, new Set(removedWinnerIds));

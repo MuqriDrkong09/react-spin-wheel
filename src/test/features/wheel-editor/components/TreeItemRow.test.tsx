@@ -52,6 +52,7 @@ function handlers(): TreeItemHandlers {
     onAddChild: vi.fn(),
     onToggleEnabled: vi.fn(),
     onDuplicate: vi.fn(),
+    onViewDetails: vi.fn(),
   };
 }
 
@@ -98,13 +99,17 @@ describe('TreeItemRow', () => {
   });
 
   it('renders a sortable item with icon, color, and reorder handle', async () => {
-    const { container } = renderRow();
+    const user = userEvent.setup();
+    const { container, props } = renderRow();
 
-    expect(screen.getByText('🍕 Pizza')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View details for Pizza' })).toHaveTextContent('🍕 Pizza');
     expect(screen.queryByRole('heading', { name: '🍕 Pizza' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reorder Pizza' })).toBeInTheDocument();
     expect(container.querySelector('div[aria-hidden="true"]')).toBeInTheDocument();
     expect(sortableHarness.id).toBe('pizza');
+
+    await user.click(screen.getByRole('button', { name: 'View details for Pizza' }));
+    expect(props.handlers.onViewDetails).toHaveBeenCalledWith('pizza');
   });
 
   it('shows the plain name, expand control, and disabled chip', async () => {

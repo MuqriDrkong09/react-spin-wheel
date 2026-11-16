@@ -62,6 +62,27 @@ export function findItem(items: WheelItem[], itemId: WheelItemId): WheelItem | u
   return undefined;
 }
 
+/** Path from a root item down to `itemId` (inclusive), or undefined if not found. */
+export function findItemPath(
+  items: readonly WheelItem[],
+  itemId: WheelItemId,
+): WheelItem[] | undefined {
+  for (const item of items) {
+    if (item.id === itemId) {
+      return [item];
+    }
+
+    if (item.children?.length) {
+      const nested = findItemPath(item.children, itemId);
+      if (nested) {
+        return [item, ...nested];
+      }
+    }
+  }
+
+  return undefined;
+}
+
 export function mapItemTree(
   items: WheelItem[],
   itemId: WheelItemId,

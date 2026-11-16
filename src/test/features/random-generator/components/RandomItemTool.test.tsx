@@ -192,10 +192,15 @@ describe('RandomItemTool', () => {
 
   it('surfaces a generator error and clears any previous result', async () => {
     const user = userEvent.setup();
-    const generateSpy = vi.spyOn(generateRandomItem, 'generateRandomItem').mockReturnValue({
-      ok: true,
-      value: { name: 'Pizza', weight: 1 },
-    });
+    vi.spyOn(generateRandomItem, 'generateRandomItem')
+      .mockReturnValueOnce({
+        ok: true,
+        value: { name: 'Pizza', weight: 1 },
+      })
+      .mockReturnValueOnce({
+        ok: false,
+        error: GENERATOR_MESSAGES.itemsRequired,
+      });
     renderWithProviders(<RandomItemTool />);
 
     const form = screen.getByRole('form', { name: GENERATOR_MESSAGES.itemTab });
@@ -203,18 +208,14 @@ describe('RandomItemTool', () => {
     await user.type(within(form).getByLabelText('Item 2'), 'Burger');
     await user.click(within(form).getByRole('button', { name: GENERATOR_MESSAGES.generateItem }));
 
-    expect(within(form).getByRole('status')).toHaveTextContent('Pizza');
+    expect(await within(form).findByRole('status')).toHaveTextContent('Pizza');
     expect(
       within(form).getByRole('button', { name: GENERATOR_MESSAGES.generateAgain }),
     ).toBeInTheDocument();
 
-    generateSpy.mockReturnValue({
-      ok: false,
-      error: GENERATOR_MESSAGES.itemsRequired,
-    });
     await user.click(within(form).getByRole('button', { name: GENERATOR_MESSAGES.generateAgain }));
 
-    expect(within(form).getByRole('alert')).toHaveTextContent(GENERATOR_MESSAGES.itemsRequired);
+    expect(await within(form).findByRole('alert')).toHaveTextContent(GENERATOR_MESSAGES.itemsRequired);
     expect(within(form).queryByLabelText(GENERATOR_MESSAGES.resultLabel)).not.toBeInTheDocument();
     expect(
       within(form).getByRole('button', { name: GENERATOR_MESSAGES.generateItem }),

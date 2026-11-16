@@ -17,6 +17,8 @@ export interface EditorTreeNode {
   enabled: boolean;
   weight: number;
   customFields?: CustomFieldValues;
+  createdAt?: string;
+  updatedAt?: string;
   kind: TreeNodeKind;
   children: EditorTreeNode[];
 }
@@ -81,6 +83,8 @@ function toItemNode(item: WheelItem): EditorTreeNode {
     enabled: item.enabled,
     weight: item.weight,
     customFields: item.customFields,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
     kind: TREE_NODE_KIND.item,
     children: (item.children ?? []).map(toItemNode),
   };

@@ -1,4 +1,4 @@
-import type { WheelId } from '@/types/wheel';
+import type { WheelId, WheelItemId } from '@/types/wheel';
 
 export const ROUTES = {
   dashboard: '/',
@@ -16,4 +16,13 @@ export const ROUTES = {
 
 export function withWheelId(path: string, wheelId: WheelId): string {
   return `${path}?wheelId=${encodeURIComponent(wheelId)}`;
+}
+
+/** Open spin for a wheel, optionally starting under a specific item's children. */
+export function withSpinFromItem(wheelId: WheelId, fromItemId: WheelItemId): string {
+  const params = new URLSearchParams({
+    wheelId,
+    fromItemId,
+  });
+  return `${ROUTES.spin}?${params.toString()}`;
 }

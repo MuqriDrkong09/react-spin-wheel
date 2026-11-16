@@ -23,6 +23,7 @@ import {
   type WheelItemId,
   type WheelItemPath,
 } from '@/types/wheel';
+import { findItemPath } from '@/utils/wheelTree';
 
 export const SELECTION_DECISION = {
   continue: 'continue',
@@ -167,6 +168,41 @@ export function eligibleRootItems(
     selectedItemIds: [],
     winCounts: options?.winCounts,
   });
+}
+
+/**
+ * Seed a spin session under `fromItemId`: ancestors are the path to that item,
+ * and items are its eligible children. Returns undefined when the item is missing
+ * or has no eligible children.
+ */
+export function seedSpinFromItem(
+  items: readonly WheelItem[],
+  fromItemId: WheelItemId,
+  options?: SelectionConditionOptions,
+): SelectionLevel | undefined {
+  const path = findItemPath(items, fromItemId);
+  if (!path?.length) {
+    return undefined;
+  }
+
+  const item = path[path.length - 1];
+  if (!item) {
+    return undefined;
+  }
+
+  const ancestorIds = path.slice(0, -1).map((entry) => entry.id);
+  const children = eligibleChildItems(item, {
+    ...options,
+    ancestorIds,
+  });
+  if (!children?.length) {
+    return undefined;
+  }
+
+  return {
+    ancestors: path.map(toSelectionStep),
+    items: children,
+  };
 }
 
 export function createHierarchicalSelectionResult(input: {

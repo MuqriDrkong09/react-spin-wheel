@@ -9,6 +9,7 @@ import { AddMainDataCard } from '@/features/wheel-editor/components/AddMainDataC
 import { CustomFieldDefinitionsPanel } from '@/features/wheel-editor/components/CustomFieldDefinitionsPanel';
 import { DeleteItemDialog } from '@/features/wheel-editor/components/DeleteItemDialog';
 import { EditorWheelPicker } from '@/features/wheel-editor/components/EditorWheelPicker';
+import { ItemDetailsDrawer } from '@/features/wheel-editor/components/ItemDetailsDrawer';
 import { ItemFormDialog } from '@/features/wheel-editor/components/ItemFormDialog';
 import { WheelTree } from '@/features/wheel-editor/components/WheelTree';
 import { WheelCustomizationPanel } from '@/features/wheel-customization/components/WheelCustomizationPanel';
@@ -141,6 +142,39 @@ export function WheelEditorScreen() {
         fieldDefinitions={editor.fieldDefinitions}
         onClose={editor.closeDialog}
         onSubmit={editor.submitDialog}
+      />
+      <ItemDetailsDrawer
+        node={editor.detailsNode}
+        fieldDefinitions={editor.fieldDefinitions}
+        canSpinFromItem={editor.canSpinFromDetails}
+        actions={{
+          onEdit: () => {
+            if (editor.detailsNode) {
+              editor.openEdit(editor.detailsNode.id);
+            }
+          },
+          onAddChild: () => {
+            if (editor.detailsNode) {
+              editor.openAddChild(editor.detailsNode.id);
+            }
+          },
+          onDuplicate: () => {
+            if (editor.detailsNode) {
+              editor.duplicate(editor.detailsNode.id);
+            }
+          },
+          onDelete: () => {
+            if (editor.detailsNode) {
+              editor.requestDelete(editor.detailsNode.id);
+            }
+          },
+          onSpinFromItem: () => {
+            if (editor.detailsNode) {
+              editor.spinFromItem(editor.detailsNode.id);
+            }
+          },
+          onClose: editor.closeDetails,
+        }}
       />
       <DeleteItemDialog
         node={editor.pendingDelete}

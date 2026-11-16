@@ -105,6 +105,7 @@ function handlers(): TreeItemHandlers {
     onAddChild: vi.fn(),
     onToggleEnabled: vi.fn(),
     onDuplicate: vi.fn(),
+    onViewDetails: vi.fn(),
   };
 }
 

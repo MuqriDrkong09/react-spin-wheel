@@ -15,6 +15,7 @@ export interface TreeItemHandlers {
   onAddChild: (id: string) => void;
   onToggleEnabled: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onViewDetails: (id: string) => void;
 }
 
 interface TreeItemActionsProps {

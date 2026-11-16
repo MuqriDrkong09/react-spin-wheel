@@ -8,6 +8,7 @@ import {
   duplicateItemInTree,
   findItem,
   findItemLocation,
+  findItemPath,
   mapItemTree,
   materializeItem,
   moveItemInTree,
@@ -317,6 +318,23 @@ describe('findItem', () => {
     expect(findItem(items, extra.id)).toBe(extra);
     expect(findItem(items, 'missing')).toBeUndefined();
     expect(findItem([], 'pizza')).toBeUndefined();
+  });
+});
+
+describe('findItemPath', () => {
+  it('returns the path from root to a nested item', () => {
+    const extra = item('Extra cheese');
+    const chicken = item('Chicken', { children: [extra] });
+    const pizza = item('Pizza', { children: [chicken] });
+    const items = [pizza, item('Sushi')];
+
+    expect(findItemPath(items, extra.id)?.map((entry) => entry.id)).toEqual([
+      'pizza',
+      'chicken',
+      'extra-cheese',
+    ]);
+    expect(findItemPath(items, pizza.id)?.map((entry) => entry.id)).toEqual(['pizza']);
+    expect(findItemPath(items, 'missing')).toBeUndefined();
   });
 });
 

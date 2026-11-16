@@ -11,6 +11,7 @@ export function useSpinScreen() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedId = searchParams.get('wheelId');
+  const fromItemId = searchParams.get('fromItemId');
   const wheels = useWheelStore((state) => state.wheels);
   const activeWheelId = useWheelStore((state) => state.activeWheelId);
   const setActiveWheel = useWheelStore((state) => state.setActiveWheel);
@@ -37,6 +38,7 @@ export function useSpinScreen() {
 
   return {
     wheel,
+    fromItemId,
     availableWheels,
     needsWheelChoice,
     isMissingWheel: Boolean(requestedId && !foundWheel),

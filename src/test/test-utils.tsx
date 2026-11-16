@@ -30,7 +30,7 @@ export async function renderApp(options: AppRenderOptions = {}) {
     { timeout: 10_000 },
   );
 
-  return view;
+  return { ...view, router };
 }
 
 export function renderWithProviders(ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) {

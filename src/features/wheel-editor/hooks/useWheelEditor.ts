@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { ROUTES, withWheelId } from '@/constants/routes';
+import { ROUTES, withSpinFromItem, withWheelId } from '@/constants/routes';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import type { ItemFormValues } from '@/features/wheel-editor/schema';
 import { defaultItemFormValues } from '@/features/wheel-editor/schema';
@@ -13,6 +13,7 @@ import {
   TREE_NODE_KIND,
 } from '@/features/wheel-editor/utils/toEditorTree';
 import { APP_ERROR_MESSAGES } from '@/constants/errorMessages';
+import { seedSpinFromItem } from '@/features/spin/utils/selectionFlow';
 import { persistStores } from '@/services/storage/storePersistence';
 import { useWheelStore } from '@/stores/wheelStore';
 import type { CustomFieldDefinition } from '@/types/customFields';
@@ -61,6 +62,7 @@ export function useWheelEditor() {
     null,
   );
   const [dialog, setDialog] = useState<EditorDialog | null>(null);
+  const [detailsItemId, setDetailsItemId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -104,6 +106,25 @@ export function useWheelEditor() {
 
     return findTreeNode(tree, dialog.nodeId);
   }, [tree, dialog]);
+
+  const detailsNode = useMemo(() => {
+    if (!tree || !detailsItemId) {
+      return undefined;
+    }
+
+    const node = findTreeNode(tree, detailsItemId);
+    return node?.kind === TREE_NODE_KIND.item ? node : undefined;
+  }, [detailsItemId, tree]);
+
+  const canSpinFromDetails = useMemo(() => {
+    if (!wheel || !detailsItemId) {
+      return false;
+    }
+
+    return Boolean(
+      seedSpinFromItem(wheel.items, detailsItemId, { conditions: wheel.conditions }),
+    );
+  }, [detailsItemId, wheel]);
 
   const fieldDefinitions = wheel?.customFieldDefinitions ?? [];
 
@@ -171,11 +192,22 @@ export function useWheelEditor() {
   );
 
   const openAddChild = useCallback((parentId: string) => {
+    setDetailsItemId(null);
     setDialog({ type: 'add', parentId });
   }, []);
 
   const openEdit = useCallback((nodeId: string) => {
+    setDetailsItemId(null);
     setDialog({ type: 'edit', nodeId });
+  }, []);
+
+  const openDetails = useCallback((nodeId: string) => {
+    setDialog(null);
+    setDetailsItemId(nodeId);
+  }, []);
+
+  const closeDetails = useCallback(() => {
+    setDetailsItemId(null);
   }, []);
 
   const closeDialog = useCallback(() => {
@@ -274,6 +306,7 @@ export function useWheelEditor() {
         return;
       }
 
+      setDetailsItemId(null);
       setPendingDeleteId(itemId);
     },
     [wheel],
@@ -282,6 +315,7 @@ export function useWheelEditor() {
   const confirmDelete = useCallback(() => {
     if (pendingDeleteId) {
       deleteChildItem(pendingDeleteId);
+      setDetailsItemId((current) => (current === pendingDeleteId ? null : current));
       persistStores();
     }
     setPendingDeleteId(null);
@@ -311,6 +345,23 @@ export function useWheelEditor() {
       duplicateItem(wheel.id, itemId);
     },
     [duplicateItem, wheel],
+  );
+
+  const spinFromItem = useCallback(
+    (itemId: WheelItemId) => {
+      if (!wheel) {
+        return;
+      }
+
+      const seed = seedSpinFromItem(wheel.items, itemId, { conditions: wheel.conditions });
+      if (!seed) {
+        return;
+      }
+
+      setDetailsItemId(null);
+      void navigate(withSpinFromItem(wheel.id, itemId));
+    },
+    [navigate, wheel],
   );
 
   const moveItem = useCallback(
@@ -357,8 +408,9 @@ export function useWheelEditor() {
       onAddChild: openAddChild,
       onToggleEnabled: toggleEnabled,
       onDuplicate: duplicate,
+      onViewDetails: openDetails,
     }),
-    [duplicate, openAddChild, openEdit, requestDelete, toggleEnabled],
+    [duplicate, openAddChild, openDetails, openEdit, requestDelete, toggleEnabled],
   );
 
   return {
@@ -374,6 +426,8 @@ export function useWheelEditor() {
     dialog,
     dialogParent,
     dialogNode,
+    detailsNode,
+    canSpinFromDetails,
     formDefaults,
     mainFormDefaults,
     fieldDefinitions,
@@ -384,6 +438,8 @@ export function useWheelEditor() {
     clearSuccessMessage,
     openAddChild,
     openEdit,
+    openDetails,
+    closeDetails,
     closeDialog,
     submitDialog,
     setCustomFieldDefinitions,
@@ -392,6 +448,7 @@ export function useWheelEditor() {
     cancelDelete,
     toggleEnabled,
     duplicate,
+    spinFromItem,
     moveItem,
     treeHandlers,
     goToCreate,

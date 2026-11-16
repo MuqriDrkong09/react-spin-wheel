@@ -170,6 +170,17 @@ describe('useSpinSession', () => {
     expect(result.current.items.map((entry) => entry.name)).toEqual(['Card Number']);
   });
 
+  it('starts under a seeded fromItemId path', () => {
+    const wheel = foodWheel();
+    const { result } = renderHook(() => useSpinSession(wheel, { fromItemId: 'pizza' }));
+
+    expect(result.current.ancestors.map((step) => step.id)).toEqual(['pizza']);
+    expect(result.current.items.map((entry) => entry.id)).toEqual([
+      'chicken-pepperoni',
+      'beef-pepperoni',
+    ]);
+  });
+
   it('tracks the name path through a child spin without mutating the parent items', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = foodWheel();
