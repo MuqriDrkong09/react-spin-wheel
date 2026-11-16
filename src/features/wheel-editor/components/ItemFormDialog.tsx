@@ -2,12 +2,14 @@ import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 
 import { ItemForm } from '@/features/wheel-editor/components/ItemForm';
 import type { ItemFormValues } from '@/features/wheel-editor/schema';
+import type { CustomFieldDefinition } from '@/types/customFields';
 
 interface ItemFormDialogProps {
   open: boolean;
   title: string;
   submitLabel: string;
   defaultValues: ItemFormValues;
+  fieldDefinitions?: readonly CustomFieldDefinition[];
   onClose: () => void;
   onSubmit: (values: ItemFormValues) => void;
 }
@@ -17,6 +19,7 @@ export function ItemFormDialog({
   title,
   submitLabel,
   defaultValues,
+  fieldDefinitions = [],
   onClose,
   onSubmit,
 }: ItemFormDialogProps) {
@@ -48,6 +51,8 @@ export function ItemFormDialog({
           defaultValues={defaultValues}
           submitLabel={submitLabel}
           ariaLabel={title}
+          fieldDefinitions={fieldDefinitions}
+          showDetailsPreview
           onSubmit={onSubmit}
           onCancel={onClose}
         />

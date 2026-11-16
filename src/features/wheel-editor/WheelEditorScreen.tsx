@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { AddChildDataDialog } from '@/features/wheel-editor/components/AddChildDataDialog';
 import { AddMainDataCard } from '@/features/wheel-editor/components/AddMainDataCard';
+import { CustomFieldDefinitionsPanel } from '@/features/wheel-editor/components/CustomFieldDefinitionsPanel';
 import { DeleteItemDialog } from '@/features/wheel-editor/components/DeleteItemDialog';
 import { EditorWheelPicker } from '@/features/wheel-editor/components/EditorWheelPicker';
 import { ItemFormDialog } from '@/features/wheel-editor/components/ItemFormDialog';
@@ -72,7 +73,15 @@ export function WheelEditorScreen() {
         {tree && editor.wheel ? (
           <>
             <WheelCustomizationPanel wheel={editor.wheel} />
-            <AddMainDataCard onSubmit={editor.addMainItem} />
+            <CustomFieldDefinitionsPanel
+              definitions={editor.fieldDefinitions}
+              onChange={editor.setCustomFieldDefinitions}
+            />
+            <AddMainDataCard
+              onSubmit={editor.addMainItem}
+              defaultValues={editor.mainFormDefaults}
+              fieldDefinitions={editor.fieldDefinitions}
+            />
             <Card variant="outlined">
               <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                 <WheelTree
@@ -81,6 +90,7 @@ export function WheelEditorScreen() {
                   handlers={editor.treeHandlers}
                   onToggleExpand={editor.toggleExpand}
                   onMove={editor.moveItem}
+                  fieldDefinitions={editor.fieldDefinitions}
                 />
               </CardContent>
             </Card>
@@ -119,6 +129,7 @@ export function WheelEditorScreen() {
         open={editor.dialog?.type === 'add'}
         parentName={editor.dialogParent?.name}
         defaultValues={editor.formDefaults}
+        fieldDefinitions={editor.fieldDefinitions}
         onClose={editor.closeDialog}
         onSubmit={editor.submitDialog}
       />
@@ -127,6 +138,7 @@ export function WheelEditorScreen() {
         title={editTitle}
         submitLabel="Save item"
         defaultValues={editor.formDefaults}
+        fieldDefinitions={editor.fieldDefinitions}
         onClose={editor.closeDialog}
         onSubmit={editor.submitDialog}
       />

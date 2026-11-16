@@ -13,6 +13,13 @@ export {
 export { wheelItemSchema } from './wheelItem';
 
 export {
+  customFieldDefinitionSchema,
+  customFieldDefinitionsSchema,
+  customFieldValueSchema,
+  customFieldValuesSchema,
+} from './customFields';
+
+export {
   defaultWheelSettings,
   selectionModeSchema,
   wheelAppearanceSchema,

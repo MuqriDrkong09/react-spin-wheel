@@ -5,6 +5,7 @@ import type { TreeItemHandlers } from '@/features/wheel-editor/components/TreeIt
 import { TreeItemRow } from '@/features/wheel-editor/components/TreeItemRow';
 import { toDroppableId } from '@/features/wheel-editor/utils/dndTree';
 import type { EditorTreeNode } from '@/features/wheel-editor/utils/toEditorTree';
+import type { CustomFieldDefinition } from '@/types/customFields';
 import { useDroppable } from '@/utils/dnd';
 
 export interface TreeItemProps {
@@ -13,6 +14,7 @@ export interface TreeItemProps {
   handlers: TreeItemHandlers;
   onToggleExpand: (id: string) => void;
   blockedParentIds?: ReadonlySet<string>;
+  fieldDefinitions?: readonly CustomFieldDefinition[];
 }
 
 export function TreeItem({
@@ -21,6 +23,7 @@ export function TreeItem({
   handlers,
   onToggleExpand,
   blockedParentIds,
+  fieldDefinitions = [],
 }: TreeItemProps) {
   const isExpanded = expandedIds.has(node.id);
   const { setNodeRef, isOver } = useDroppable({
@@ -35,6 +38,7 @@ export function TreeItem({
         isExpanded={isExpanded}
         handlers={handlers}
         onToggleExpand={onToggleExpand}
+        fieldDefinitions={fieldDefinitions}
       />
       {isExpanded ? (
         <Box
@@ -63,6 +67,7 @@ export function TreeItem({
                   handlers={handlers}
                   onToggleExpand={onToggleExpand}
                   blockedParentIds={blockedParentIds}
+                  fieldDefinitions={fieldDefinitions}
                 />
               ))}
             </Box>

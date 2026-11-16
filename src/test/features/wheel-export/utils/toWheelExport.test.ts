@@ -109,4 +109,46 @@ describe('toWheelExportDocument', () => {
       wheel.settings.appearance.segmentColors,
     );
   });
+
+  it('exports custom field definitions and item values', () => {
+    const document = toWheelExportDocument(
+      createWheel({
+        customFieldDefinitions: [
+          {
+            id: 'f-cuisine',
+            key: 'cuisine',
+            label: 'Cuisine',
+            type: 'text',
+          },
+          {
+            id: 'f-price',
+            key: 'price',
+            label: 'Price',
+            type: 'number',
+          },
+        ],
+        items: [
+          createItem({
+            id: 'pizza',
+            name: 'Pizza',
+            customFields: {
+              'f-cuisine': 'Italian',
+              'f-price': 25,
+              'f-spicy': false,
+            },
+          }),
+        ],
+      }),
+    );
+
+    expect(document.customFieldDefinitions).toEqual([
+      { id: 'f-cuisine', key: 'cuisine', label: 'Cuisine', type: 'text' },
+      { id: 'f-price', key: 'price', label: 'Price', type: 'number' },
+    ]);
+    expect(document.items[0]?.customFields).toEqual({
+      'f-cuisine': 'Italian',
+      'f-price': 25,
+      'f-spicy': false,
+    });
+  });
 });

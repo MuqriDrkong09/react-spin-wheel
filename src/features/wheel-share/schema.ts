@@ -33,6 +33,7 @@ export function parseShareWheel(value: unknown): { ok: true; wheel: WheelShareWh
     icon: record.icon,
     items: record.items,
     settings: record.settings,
+    customFieldDefinitions: record.customFieldDefinitions,
   });
 
   if (!result.success) {

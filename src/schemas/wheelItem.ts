@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type { WheelItem } from '@/types/wheel';
 
+import { customFieldValuesSchema } from './customFields';
 import { entityIdSchema, hexColorSchema, isoDateTimeSchema } from './primitives';
 import { softArraySchema } from './soft';
 
@@ -9,6 +10,7 @@ import { softArraySchema } from './soft';
  * Recursive persisted WheelItem schema.
  * Compile-time shape lives in `@/types/wheel`; this validates unknown storage/import data.
  * Invalid nested children are dropped instead of failing the parent.
+ * Legacy items without `customFields` remain valid.
  */
 export const wheelItemSchema: z.ZodType<WheelItem> = z.lazy(() =>
   z.object({
@@ -22,6 +24,7 @@ export const wheelItemSchema: z.ZodType<WheelItem> = z.lazy(() =>
       (value) => (typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 1),
       z.number(),
     ),
+    customFields: customFieldValuesSchema.optional(),
     createdAt: isoDateTimeSchema,
     updatedAt: isoDateTimeSchema,
     children: softArraySchema(wheelItemSchema).optional(),

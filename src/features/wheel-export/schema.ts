@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 import { WHEEL_EXPORT_FORMAT, WHEEL_EXPORT_VERSION } from '@/features/wheel-export/constants';
 import type { WheelExportDocument, WheelExportItem } from '@/features/wheel-export/types';
+import {
+  customFieldDefinitionSchema,
+  customFieldValuesSchema,
+} from '@/schemas/customFields';
 import { hexColorSchema } from '@/schemas/primitives';
 import { wheelSettingsStrictSchema } from '@/schemas/wheelSettings';
 
@@ -13,6 +17,7 @@ export const wheelExportItemSchema: z.ZodType<WheelExportItem> = z.lazy(() =>
     color: hexColorSchema,
     enabled: z.boolean(),
     weight: z.number().min(1),
+    customFields: customFieldValuesSchema.optional(),
     children: z.array(wheelExportItemSchema).min(1).optional(),
   }),
 );
@@ -26,4 +31,5 @@ export const wheelExportDocumentSchema: z.ZodType<WheelExportDocument> = z.objec
   icon: z.string().trim().min(1).max(32).optional(),
   items: z.array(wheelExportItemSchema).min(1),
   settings: wheelSettingsStrictSchema,
+  customFieldDefinitions: z.array(customFieldDefinitionSchema).optional(),
 });

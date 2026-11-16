@@ -1,4 +1,5 @@
 import type { WHEEL_EXPORT_FORMAT, WHEEL_EXPORT_VERSION } from '@/features/wheel-export/constants';
+import type { CustomFieldDefinition, CustomFieldValues } from '@/types/customFields';
 import type { HexColor, WheelSettings, Weight } from '@/types/wheel';
 
 export interface WheelExportItem {
@@ -8,6 +9,7 @@ export interface WheelExportItem {
   color: HexColor;
   enabled: boolean;
   weight: Weight;
+  customFields?: CustomFieldValues;
   children?: WheelExportItem[];
 }
 
@@ -20,6 +22,7 @@ export interface WheelExportDocument {
   icon?: string;
   items: WheelExportItem[];
   settings: WheelSettings;
+  customFieldDefinitions?: CustomFieldDefinition[];
 }
 
 export type WheelExportStatus = {

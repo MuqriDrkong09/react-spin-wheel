@@ -40,7 +40,10 @@ export type CreateWheelInput = Omit<WheelDraft, 'items' | 'settings'> & {
 };
 
 export type WheelPatch = Partial<
-  Pick<Wheel, 'name' | 'description' | 'category' | 'icon' | 'conditions'>
+  Pick<
+    Wheel,
+    'name' | 'description' | 'category' | 'icon' | 'conditions' | 'customFieldDefinitions'
+  >
 >;
 
 interface WheelStoreState {
@@ -115,6 +118,12 @@ function createSnapshot(wheel: Wheel): WheelSnapshot {
       },
     },
     conditions: wheel.conditions ? [...wheel.conditions] : undefined,
+    customFieldDefinitions: wheel.customFieldDefinitions
+      ? wheel.customFieldDefinitions.map((definition) => ({
+          ...definition,
+          options: definition.options ? [...definition.options] : undefined,
+        }))
+      : undefined,
   };
 }
 
@@ -154,6 +163,7 @@ export const useWheelStore = create<WheelStore>((set, get) => ({
       items: (input.items ?? []).map(materializeItem),
       settings: mergeWheelSettings(DEFAULT_WHEEL_SETTINGS, input.settings ?? {}),
       conditions: input.conditions,
+      customFieldDefinitions: input.customFieldDefinitions,
       createdAt: timestamp,
       updatedAt: timestamp,
     };

@@ -40,6 +40,7 @@ export function toCreateWheelInputFromShare(
       icon: document.wheel.icon,
       items: document.wheel.items,
       settings: document.wheel.settings,
+      customFieldDefinitions: document.wheel.customFieldDefinitions,
     },
     name,
     takenIds,

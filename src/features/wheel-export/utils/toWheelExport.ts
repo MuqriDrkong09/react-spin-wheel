@@ -18,6 +18,9 @@ export function toWheelExportDocument(wheel: Wheel): WheelExportDocument {
         segmentColors: [...wheel.settings.appearance.segmentColors],
       },
     },
+    ...(wheel.customFieldDefinitions?.length
+      ? { customFieldDefinitions: wheel.customFieldDefinitions }
+      : {}),
   };
 }
 
@@ -31,6 +34,9 @@ export function toWheelExportItem(item: WheelItem): WheelExportItem {
     color: item.color,
     enabled: item.enabled,
     weight: item.weight,
+    ...(item.customFields && Object.keys(item.customFields).length > 0
+      ? { customFields: item.customFields }
+      : {}),
     ...(children && children.length > 0 ? { children } : {}),
   };
 }

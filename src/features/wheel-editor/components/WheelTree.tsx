@@ -24,11 +24,13 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@/utils/dnd';
+import type { CustomFieldDefinition } from '@/types/customFields';
 import type { ItemMove } from '@/utils/wheelTree';
 
 interface WheelTreeProps extends Omit<TreeItemProps, 'node' | 'blockedParentIds'> {
   root: TreeItemProps['node'];
   onMove: (move: ItemMove) => void;
+  fieldDefinitions?: readonly CustomFieldDefinition[];
 }
 
 export function WheelTree({
@@ -37,6 +39,7 @@ export function WheelTree({
   handlers,
   onToggleExpand,
   onMove,
+  fieldDefinitions = [],
 }: WheelTreeProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const visibleItemIds = useMemo(
@@ -124,6 +127,7 @@ export function WheelTree({
             handlers={handlers}
             onToggleExpand={onToggleExpand}
             blockedParentIds={blockedIds}
+            fieldDefinitions={fieldDefinitions}
           />
         </Box>
       </SortableContext>

@@ -1,3 +1,5 @@
+import type { CustomFieldDefinition, CustomFieldValues } from '@/types/customFields';
+
 export type EntityId = string;
 export type IsoDateTime = string;
 export type HexColor = `#${string}`;
@@ -86,6 +88,8 @@ export interface WheelItem extends Identifiable<WheelItemId>, Timestamps {
   color: HexColor;
   enabled: boolean;
   weight: Weight;
+  /** Values keyed by custom field definition id. Omitted on legacy items. */
+  customFields?: CustomFieldValues;
   children?: WheelItem[];
 }
 
@@ -192,12 +196,15 @@ export interface Wheel extends Identifiable<WheelId>, Timestamps {
   items: WheelItem[];
   settings: WheelSettings;
   conditions?: ItemCondition[];
+  /** User-defined item fields for this wheel. Omitted on legacy wheels. */
+  customFieldDefinitions?: CustomFieldDefinition[];
 }
 
 export interface WheelSnapshot {
   items: WheelItem[];
   settings: WheelSettings;
   conditions?: Wheel['conditions'];
+  customFieldDefinitions?: CustomFieldDefinition[];
 }
 
 export type WheelDraft = Draft<Wheel>;

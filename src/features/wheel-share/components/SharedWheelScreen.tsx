@@ -78,7 +78,10 @@ export function SharedWheelScreen() {
               <Typography variant="subtitle2" component="h3">
                 {SHARE_MESSAGES.optionsHeading}
               </Typography>
-              <ShareItemTree items={shared.resolved.document.wheel.items} />
+              <ShareItemTree
+                items={shared.resolved.document.wheel.items}
+                fieldDefinitions={shared.resolved.document.wheel.customFieldDefinitions}
+              />
             </Stack>
           </Stack>
         ) : (

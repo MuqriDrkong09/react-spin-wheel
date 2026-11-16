@@ -12,6 +12,7 @@ import { loadPersistedState } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
 import { resetSettingsStore } from '@/stores/settingsStore';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
+import { CUSTOM_FIELD_TYPE } from '@/types/customFields';
 import { renderApp, screen, userEvent, waitFor, within } from '@/test/test-utils';
 import { findItem } from '@/utils/wheelTree';
 
@@ -823,6 +824,42 @@ describe('WheelEditorScreen', () => {
     expect(useWheelStore.getState().getWheel('food')?.settings.appearance.pointerColor).toBe('#abcdef');
     expect(useWheelStore.getState().getWheel('food')?.settings.appearance.theme).toBe('custom');
     expect(screen.getByRole('button', { name: CUSTOMIZATION_MESSAGES.pointerColor })).toBe(swatch);
+  });
+
+  it('persists custom field values on items and shows them in details', async () => {
+    seedFoodWheel();
+    useWheelStore.getState().updateWheel('food', {
+      customFieldDefinitions: [
+        { id: 'f-cuisine', key: 'cuisine', label: 'Cuisine', type: CUSTOM_FIELD_TYPE.text },
+        { id: 'f-price', key: 'price', label: 'Price', type: CUSTOM_FIELD_TYPE.number },
+        { id: 'f-spicy', key: 'spicy', label: 'Spicy', type: CUSTOM_FIELD_TYPE.boolean },
+      ],
+    });
+    await renderEditor();
+
+    expect(screen.getByText(/cuisine · Text/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^cuisine/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Pizza' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Pizza' });
+    fireEvent.change(within(dialog).getByLabelText(/^cuisine/i), { target: { value: 'Italian' } });
+    fireEvent.change(within(dialog).getByLabelText(/^price/i), { target: { value: '25' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save item' }));
+
+    await waitFor(() => {
+      expect(foodItem('pizza')?.customFields).toEqual({
+        'f-cuisine': 'Italian',
+        'f-price': 25,
+        'f-spicy': false,
+      });
+    });
+
+    expect(screen.getByText(/cuisine: Italian/i)).toBeInTheDocument();
+    expect(loadPersistedState().wheels.find((wheel) => wheel.id === 'food')?.items[0]?.customFields).toEqual({
+      'f-cuisine': 'Italian',
+      'f-price': 25,
+      'f-spicy': false,
+    });
   });
 });
 

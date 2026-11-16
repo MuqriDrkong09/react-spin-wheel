@@ -2,12 +2,19 @@ import { Card, CardContent, Typography } from '@mui/material';
 
 import { ItemForm } from '@/features/wheel-editor/components/ItemForm';
 import type { ItemFormValues } from '@/features/wheel-editor/schema';
+import type { CustomFieldDefinition } from '@/types/customFields';
 
 interface AddMainDataCardProps {
   onSubmit: (values: ItemFormValues) => void;
+  defaultValues?: ItemFormValues;
+  fieldDefinitions?: readonly CustomFieldDefinition[];
 }
 
-export function AddMainDataCard({ onSubmit }: AddMainDataCardProps) {
+export function AddMainDataCard({
+  onSubmit,
+  defaultValues,
+  fieldDefinitions = [],
+}: AddMainDataCardProps) {
   return (
     <Card variant="outlined">
       <CardContent>
@@ -19,6 +26,8 @@ export function AddMainDataCard({ onSubmit }: AddMainDataCardProps) {
           ariaLabel="Add Main Data"
           submitLabel="Add item"
           resetOnSubmit
+          defaultValues={defaultValues}
+          fieldDefinitions={fieldDefinitions}
           onSubmit={onSubmit}
         />
       </CardContent>

@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 import { WHEEL_EXPORT_FORMAT, WHEEL_EXPORT_VERSION } from '@/features/wheel-export/constants';
 import type { WheelImportDocument, WheelImportItem } from '@/features/wheel-import/types';
+import {
+  customFieldDefinitionSchema,
+  customFieldValuesSchema,
+} from '@/schemas/customFields';
 import { hexColorSchema } from '@/schemas/primitives';
 import { wheelSettingsStrictSchema } from '@/schemas/wheelSettings';
 
@@ -23,6 +27,7 @@ export const wheelImportItemSchema: z.ZodType<WheelImportItem> = z.lazy(() =>
     color: hexColorSchema,
     enabled: z.boolean(),
     weight: z.number().finite().min(1),
+    customFields: customFieldValuesSchema.optional(),
     children: z.array(wheelImportItemSchema).min(1).optional(),
   }),
 );
@@ -38,6 +43,7 @@ export const wheelImportDocumentSchema: z.ZodType<WheelImportDocument> = z
     icon: z.string().trim().min(1).max(32).optional(),
     items: z.array(wheelImportItemSchema).min(1),
     settings: wheelSettingsStrictSchema,
+    customFieldDefinitions: z.array(customFieldDefinitionSchema).optional(),
   })
   .superRefine((document, context) => {
     const ids = collectImportedIds(document);

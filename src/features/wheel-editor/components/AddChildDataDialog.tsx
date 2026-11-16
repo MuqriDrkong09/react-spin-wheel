@@ -3,11 +3,13 @@ import { Box, Dialog, DialogContent, DialogTitle, Drawer, Stack, Typography } fr
 import { ItemForm } from '@/features/wheel-editor/components/ItemForm';
 import { childItemFormSchema, type ItemFormValues } from '@/features/wheel-editor/schema';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import type { CustomFieldDefinition } from '@/types/customFields';
 
 interface AddChildDataDialogProps {
   open: boolean;
   parentName?: string;
   defaultValues: ItemFormValues;
+  fieldDefinitions?: readonly CustomFieldDefinition[];
   onClose: () => void;
   onSubmit: (values: ItemFormValues) => void;
 }
@@ -16,6 +18,7 @@ export function AddChildDataDialog({
   open,
   parentName,
   defaultValues,
+  fieldDefinitions = [],
   onClose,
   onSubmit,
 }: AddChildDataDialogProps) {
@@ -42,6 +45,7 @@ export function AddChildDataDialog({
         ariaLabel="Add Child Data"
         schema={childItemFormSchema}
         defaultValues={defaultValues}
+        fieldDefinitions={fieldDefinitions}
         onSubmit={onSubmit}
         onCancel={onClose}
       />

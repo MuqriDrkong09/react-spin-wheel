@@ -73,6 +73,36 @@ describe('toCreateWheelInputFromImport', () => {
     expect(input.items[0]?.children?.[0]?.id).toBe('pepperoni-id');
     expect(createIdMock).toHaveBeenCalledTimes(4);
   });
+
+  it('preserves custom field definitions and item values', () => {
+    const withFields: WheelImportDocument = {
+      ...document,
+      customFieldDefinitions: [
+        { id: 'f-cuisine', key: 'cuisine', label: 'Cuisine', type: 'text' },
+        { id: 'f-price', key: 'price', label: 'Price', type: 'number' },
+      ],
+      items: [
+        {
+          name: 'Pizza',
+          color: '#ea580c',
+          enabled: true,
+          weight: 1,
+          customFields: {
+            'f-cuisine': 'Italian',
+            'f-price': 25,
+          },
+        },
+      ],
+    };
+
+    const input = toCreateWheelInputFromImport(withFields, 'Dinner Wheel', new Set());
+
+    expect(input.customFieldDefinitions).toEqual(withFields.customFieldDefinitions);
+    expect(input.items[0]?.customFields).toEqual({
+      'f-cuisine': 'Italian',
+      'f-price': 25,
+    });
+  });
 });
 
 describe('uniqueImportedName', () => {

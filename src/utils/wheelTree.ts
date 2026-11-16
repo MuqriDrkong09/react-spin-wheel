@@ -18,6 +18,7 @@ export function materializeItem(input: NewWheelItemInput): WheelItem {
     color: input.color,
     enabled: input.enabled,
     weight: input.weight,
+    customFields: input.customFields,
     createdAt: timestamp,
     updatedAt: timestamp,
     children: input.children?.map(materializeItem),

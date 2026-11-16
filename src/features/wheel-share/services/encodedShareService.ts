@@ -55,6 +55,7 @@ export function createEncodedShareService(
           icon: validated.data.icon,
           items: validated.data.items,
           settings: validated.data.settings,
+          customFieldDefinitions: validated.data.customFieldDefinitions,
         },
       });
 
@@ -80,6 +81,7 @@ export function createEncodedShareService(
             icon: validated.data.icon,
             items: validated.data.items,
             settings: validated.data.settings,
+            customFieldDefinitions: validated.data.customFieldDefinitions,
           },
         },
       };

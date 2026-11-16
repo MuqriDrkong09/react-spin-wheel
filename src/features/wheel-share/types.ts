@@ -1,5 +1,6 @@
 import type { WheelExportItem } from '@/features/wheel-export/types';
 import type { WHEEL_SHARE_FORMAT, WHEEL_SHARE_VERSION } from '@/features/wheel-share/constants';
+import type { CustomFieldDefinition } from '@/types/customFields';
 import type { Wheel, WheelSettings } from '@/types/wheel';
 
 export interface WheelShareWheel {
@@ -9,6 +10,7 @@ export interface WheelShareWheel {
   icon?: string;
   items: WheelExportItem[];
   settings: WheelSettings;
+  customFieldDefinitions?: CustomFieldDefinition[];
 }
 
 export interface WheelShareDocument {

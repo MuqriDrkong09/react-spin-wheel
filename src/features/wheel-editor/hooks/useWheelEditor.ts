@@ -15,7 +15,9 @@ import {
 import { APP_ERROR_MESSAGES } from '@/constants/errorMessages';
 import { persistStores } from '@/services/storage/storePersistence';
 import { useWheelStore } from '@/stores/wheelStore';
+import type { CustomFieldDefinition } from '@/types/customFields';
 import type { Wheel, WheelId, WheelItemId } from '@/types/wheel';
+import { defaultCustomFieldFormValues } from '@/utils/customFields';
 import { isUsableWheel } from '@/utils/isUsableWheel';
 import { findItem, type ItemMove } from '@/utils/wheelTree';
 
@@ -103,6 +105,16 @@ export function useWheelEditor() {
     return findTreeNode(tree, dialog.nodeId);
   }, [tree, dialog]);
 
+  const fieldDefinitions = wheel?.customFieldDefinitions ?? [];
+
+  const mainFormDefaults = useMemo(
+    (): ItemFormValues => ({
+      ...defaultItemFormValues,
+      customFields: defaultCustomFieldFormValues(fieldDefinitions),
+    }),
+    [fieldDefinitions],
+  );
+
   const formDefaults = useMemo((): ItemFormValues => {
     if (dialog?.type === 'edit' && dialogNode) {
       return {
@@ -112,6 +124,7 @@ export function useWheelEditor() {
         color: dialogNode.color ?? defaultItemFormValues.color,
         weight: dialogNode.weight,
         enabled: dialogNode.enabled,
+        customFields: defaultCustomFieldFormValues(fieldDefinitions, dialogNode.customFields),
       };
     }
 
@@ -119,11 +132,12 @@ export function useWheelEditor() {
       return {
         ...defaultItemFormValues,
         color: colorForIndex(siblingCount(wheel, dialog.parentId)),
+        customFields: defaultCustomFieldFormValues(fieldDefinitions),
       };
     }
 
-    return defaultItemFormValues;
-  }, [dialog, dialogNode, wheel]);
+    return mainFormDefaults;
+  }, [dialog, dialogNode, fieldDefinitions, mainFormDefaults, wheel]);
 
   const toggleExpand = useCallback(
     (id: string) => {
@@ -178,15 +192,19 @@ export function useWheelEditor() {
         return;
       }
 
-      const created = addItem(wheel.id, toItemDraft(values, wheel.items.length));
+      const created = addItem(
+        wheel.id,
+        toItemDraft(values, wheel.items.length, fieldDefinitions),
+      );
       if (!created) {
         return;
       }
 
       ensureExpanded(wheel.id);
       setSuccessMessage(EDITOR_MESSAGES.itemAdded(created.name));
+      persistStores();
     },
-    [addItem, ensureExpanded, wheel],
+    [addItem, ensureExpanded, fieldDefinitions, wheel],
   );
 
   const submitDialog = useCallback(
@@ -199,13 +217,14 @@ export function useWheelEditor() {
         const parent = findTreeNode(toEditorTree(wheel), dialog.parentId);
         const created = addChildItem(
           dialog.parentId,
-          toItemDraft(values, siblingCount(wheel, dialog.parentId)),
+          toItemDraft(values, siblingCount(wheel, dialog.parentId), fieldDefinitions),
         );
         ensureExpanded(dialog.parentId);
         if (created && parent) {
           setSuccessMessage(EDITOR_MESSAGES.childAdded(created.name, parent.name));
         }
         setDialog(null);
+        persistStores();
         return;
       }
 
@@ -216,22 +235,37 @@ export function useWheelEditor() {
       }
 
       if (node.kind === TREE_NODE_KIND.wheel) {
-        const patch = toItemPatch(values);
+        const patch = toItemPatch(values, fieldDefinitions);
         updateWheel(wheel.id, {
           name: patch.name,
           icon: patch.icon,
           description: patch.description,
         });
       } else {
-        const updated = updateChildItem(dialog.nodeId, toItemPatch(values));
+        const updated = updateChildItem(dialog.nodeId, toItemPatch(values, fieldDefinitions));
         if (updated) {
           setSuccessMessage(EDITOR_MESSAGES.itemUpdated(updated.name));
         }
       }
 
       setDialog(null);
+      persistStores();
     },
-    [addChildItem, dialog, ensureExpanded, updateChildItem, updateWheel, wheel],
+    [addChildItem, dialog, ensureExpanded, fieldDefinitions, updateChildItem, updateWheel, wheel],
+  );
+
+  const setCustomFieldDefinitions = useCallback(
+    (definitions: CustomFieldDefinition[]) => {
+      if (!wheel) {
+        return;
+      }
+
+      updateWheel(wheel.id, {
+        customFieldDefinitions: definitions.length > 0 ? definitions : undefined,
+      });
+      persistStores();
+    },
+    [updateWheel, wheel],
   );
 
   const requestDelete = useCallback(
@@ -341,6 +375,8 @@ export function useWheelEditor() {
     dialogParent,
     dialogNode,
     formDefaults,
+    mainFormDefaults,
+    fieldDefinitions,
     successMessage,
     pendingDelete,
     toggleExpand,
@@ -350,6 +386,7 @@ export function useWheelEditor() {
     openEdit,
     closeDialog,
     submitDialog,
+    setCustomFieldDefinitions,
     requestDelete,
     confirmDelete,
     cancelDelete,

@@ -68,6 +68,7 @@ export function toCreateWheelInputFromImport(
         segmentColors: [...document.settings.appearance.segmentColors],
       },
     },
+    customFieldDefinitions: document.customFieldDefinitions,
   };
 }
 
@@ -80,6 +81,7 @@ function toNewItem(item: WheelImportItem, takenIds: Set<string>): NewWheelItemIn
     color: item.color,
     enabled: item.enabled,
     weight: item.weight,
+    customFields: item.customFields,
     children: item.children?.map((child) => toNewItem(child, takenIds)),
   };
 }

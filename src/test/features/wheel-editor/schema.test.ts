@@ -125,6 +125,7 @@ describe('defaultItemFormValues', () => {
       color: ITEM_COLORS[0],
       weight: 1,
       enabled: true,
+      customFields: {},
     });
   });
 

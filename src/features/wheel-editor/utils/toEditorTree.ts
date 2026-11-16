@@ -1,3 +1,4 @@
+import type { CustomFieldValues } from '@/types/customFields';
 import type { HexColor, Wheel, WheelItem, WheelItemId } from '@/types/wheel';
 
 export const TREE_NODE_KIND = {
@@ -15,6 +16,7 @@ export interface EditorTreeNode {
   color?: HexColor;
   enabled: boolean;
   weight: number;
+  customFields?: CustomFieldValues;
   kind: TreeNodeKind;
   children: EditorTreeNode[];
 }
@@ -78,6 +80,7 @@ function toItemNode(item: WheelItem): EditorTreeNode {
     color: item.color,
     enabled: item.enabled,
     weight: item.weight,
+    customFields: item.customFields,
     kind: TREE_NODE_KIND.item,
     children: (item.children ?? []).map(toItemNode),
   };

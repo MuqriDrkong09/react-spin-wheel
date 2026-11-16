@@ -7,6 +7,7 @@ import {
   type WheelSnapshot,
 } from '@/types/wheel';
 
+import { customFieldDefinitionsSchema } from './customFields';
 import { entityIdSchema, isoDateTimeSchema } from './primitives';
 import { softArraySchema } from './soft';
 import { wheelItemSchema } from './wheelItem';
@@ -53,6 +54,7 @@ export const wheelSchema: z.ZodType<Wheel> = z.object({
   items: softArraySchema(wheelItemSchema),
   settings: wheelSettingsSchema,
   conditions: softArraySchema(itemConditionSchema).optional(),
+  customFieldDefinitions: customFieldDefinitionsSchema.optional(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 });
@@ -61,4 +63,5 @@ export const wheelSnapshotSchema: z.ZodType<WheelSnapshot> = z.object({
   items: softArraySchema(wheelItemSchema),
   settings: wheelSettingsSchema,
   conditions: softArraySchema(itemConditionSchema).optional(),
+  customFieldDefinitions: customFieldDefinitionsSchema.optional(),
 });

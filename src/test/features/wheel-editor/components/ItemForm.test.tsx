@@ -3,8 +3,32 @@ import type { ComponentProps } from 'react';
 import { ITEM_COLORS } from '@/constants/wheel';
 import { ItemForm } from '@/features/wheel-editor/components/ItemForm';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
+import { CUSTOM_FIELD_MESSAGES } from '@/features/wheel-editor/constants/customFields';
 import { childItemFormSchema, defaultItemFormValues } from '@/features/wheel-editor/schema';
+import { CUSTOM_FIELD_TYPE, type CustomFieldDefinition } from '@/types/customFields';
 import { renderWithProviders, screen, userEvent, waitFor, within } from '@/test/test-utils';
+
+const pizzaFields: CustomFieldDefinition[] = [
+  {
+    id: 'f-cuisine',
+    key: 'cuisine',
+    label: 'Cuisine',
+    type: CUSTOM_FIELD_TYPE.text,
+  },
+  {
+    id: 'f-price',
+    key: 'price',
+    label: 'Price',
+    type: CUSTOM_FIELD_TYPE.number,
+    required: true,
+  },
+  {
+    id: 'f-spicy',
+    key: 'spicy',
+    label: 'Spicy',
+    type: CUSTOM_FIELD_TYPE.boolean,
+  },
+];
 
 function renderForm(overrides: Partial<ComponentProps<typeof ItemForm>> = {}) {
   const props = {
@@ -109,6 +133,7 @@ describe('ItemForm', () => {
       color: ITEM_COLORS[1],
       weight: 3,
       enabled: false,
+      customFields: {},
     });
   });
 
@@ -137,6 +162,63 @@ describe('ItemForm', () => {
     await user.click(screen.getByRole('button', { name: 'Save item' }));
 
     expect(await screen.findByText(EDITOR_MESSAGES.weightMin)).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('submits custom field values for defined fields', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm({
+      fieldDefinitions: pizzaFields,
+      defaultValues: {
+        ...defaultItemFormValues,
+        customFields: {
+          'f-cuisine': '',
+          'f-price': '',
+          'f-spicy': false,
+        },
+      },
+    });
+
+    expect(screen.getByRole('heading', { name: CUSTOM_FIELD_MESSAGES.detailsHeading })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^cuisine/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^price/i)).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Spicy' })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/^name/i), 'Pizza');
+    await user.type(screen.getByLabelText(/^cuisine/i), 'Italian');
+    await user.type(screen.getByLabelText(/^price/i), '25');
+    await user.click(screen.getByRole('button', { name: 'Save item' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Pizza',
+        customFields: {
+          'f-cuisine': 'Italian',
+          'f-price': '25',
+          'f-spicy': false,
+        },
+      }),
+    );
+  });
+
+  it('blocks submit when a required custom field is empty', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm({
+      fieldDefinitions: pizzaFields,
+      defaultValues: {
+        ...defaultItemFormValues,
+        customFields: {
+          'f-cuisine': '',
+          'f-price': '',
+          'f-spicy': false,
+        },
+      },
+    });
+
+    await user.type(screen.getByLabelText(/^name/i), 'Pizza');
+    await user.click(screen.getByRole('button', { name: 'Save item' }));
+
+    expect(await screen.findByText('Price is required')).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });
