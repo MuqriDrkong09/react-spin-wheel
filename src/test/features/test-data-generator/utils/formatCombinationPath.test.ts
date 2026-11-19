@@ -1,4 +1,7 @@
-import { formatCombinationPath } from '@/features/test-data-generator/utils/formatCombinationPath';
+import {
+  combinationPathParts,
+  formatCombinationPath,
+} from '@/features/test-data-generator/utils/formatCombinationPath';
 
 describe('formatCombinationPath', () => {
   it('joins values in field order with arrows', () => {
@@ -29,5 +32,18 @@ describe('formatCombinationPath', () => {
         ],
       ),
     ).toBe('Login → Staging');
+  });
+
+  it('exposes ordered path parts for csv flattening', () => {
+    expect(
+      combinationPathParts(
+        { Category: 'Pizza', Topping: 'Chicken Pepperoni', Size: 'Large' },
+        [
+          { name: 'Category', enabled: true },
+          { name: 'Topping', enabled: true },
+          { name: 'Size', enabled: true },
+        ],
+      ),
+    ).toEqual(['Pizza', 'Chicken Pepperoni', 'Large']);
   });
 });

@@ -6,8 +6,8 @@ import type {
 } from '@/features/test-data-generator/types';
 import { downloadFile } from '@/features/test-data-generator/utils/downloadFile';
 import {
-  formatCombinationPath,
-  orderedFieldNames,
+  combinationPathParts,
+  hierarchyCsvHeaders,
 } from '@/features/test-data-generator/utils/formatCombinationPath';
 import { nowIso } from '@/utils/id';
 
@@ -39,29 +39,37 @@ export function slugifyFilename(name: string): string {
   return slug || 'test-data';
 }
 
-function escapeCsvCell(value: string): string {
+/** Escape a CSV cell per RFC-style rules (quotes, commas, newlines). */
+export function escapeCsvCell(value: string): string {
   if (/[",\n\r]/.test(value)) {
     return `"${value.replaceAll('"', '""')}"`;
   }
   return value;
 }
 
+/**
+ * Flatten hierarchical combination paths into dynamic depth columns.
+ * Example (depth 3): Parent,Child,Grandchild / Pizza,Chicken Pepperoni,Large
+ */
 export function toCsvContents(
   dataset: TestDataset,
   results: readonly GeneratedCombination[],
 ): string {
-  const columns = orderedFieldNames(dataset.fields);
-  const header = ['Record', 'Combination', ...columns].map(escapeCsvCell).join(',');
-  const lines = results.map((row, index) => {
-    const path = formatCombinationPath(row, dataset.fields);
-    const cells = [
-      String(index + 1),
-      path,
-      ...columns.map((column) => row[column] ?? ''),
-    ].map(escapeCsvCell);
+  const paths = results.map((row) => combinationPathParts(row, dataset.fields));
+  const maxDepth = paths.reduce((max, parts) => Math.max(max, parts.length), 0);
+  const headers = hierarchyCsvHeaders(maxDepth);
+
+  if (headers.length === 0) {
+    return '\n';
+  }
+
+  const headerLine = headers.map(escapeCsvCell).join(',');
+  const lines = paths.map((parts) => {
+    const cells = headers.map((_, index) => escapeCsvCell(parts[index] ?? ''));
     return cells.join(',');
   });
-  return `${[header, ...lines].join('\n')}\n`;
+
+  return `${[headerLine, ...lines].join('\n')}\n`;
 }
 
 export function exportGeneratedData(

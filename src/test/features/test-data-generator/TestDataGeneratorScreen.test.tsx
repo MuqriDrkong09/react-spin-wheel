@@ -77,7 +77,7 @@ describe('TestDataGeneratorScreen', () => {
     await user.click(screen.getByRole('button', { name: TEST_DATA_MESSAGES.exportCsv }));
     expect(downloadFileMock).toHaveBeenCalledWith(
       'qa-matrix-results.csv',
-      expect.stringContaining('Record,Combination,Category'),
+      expect.stringMatching(/^Parent\n(?:Login|Legacy)\n$/),
       'text/csv;charset=utf-8',
     );
 
