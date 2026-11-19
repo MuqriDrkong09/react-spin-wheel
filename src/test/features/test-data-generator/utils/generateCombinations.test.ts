@@ -2,6 +2,7 @@ import { TEST_DATA_MESSAGES } from '@/features/test-data-generator/constants';
 import type { TestDataset, TestField, TestValue } from '@/features/test-data-generator/types';
 import {
   generateCombinations,
+  generateCombinationsBatch,
   generateOneCombination,
   pickFieldValue,
 } from '@/features/test-data-generator/utils/generateCombinations';
@@ -69,7 +70,6 @@ describe('generateCombinations', () => {
       field('Notes', [value('A')], { optional: true }),
     ]);
 
-    // First field: pick Login. Second field: omit token wins at low random.
     const sequence = [0.1, 0];
     let index = 0;
     const random = () => sequence[index++] ?? 0;
@@ -108,6 +108,23 @@ describe('generateCombinations', () => {
     expect(keys.size).toBe(4);
   });
 
+  it('allows duplicate combinations when unique is false', () => {
+    const source = dataset([field('Category', [value('Login')])]);
+    const result = generateCombinations({
+      dataset: source,
+      count: 5,
+      unique: false,
+      random: () => 0,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value).toHaveLength(5);
+    expect(result.value.every((row) => row.Category === 'Login')).toBe(true);
+  });
+
   it('returns a clear error when no enabled values exist', () => {
     const source = dataset([field('Category', [value('Login', { enabled: false })])]);
     expect(generateCombinations({ dataset: source, count: 1 })).toEqual({
@@ -122,5 +139,60 @@ describe('generateCombinations', () => {
       ok: false,
       error: TEST_DATA_MESSAGES.countInvalid,
     });
+  });
+});
+
+describe('generateCombinationsBatch', () => {
+  it('reports progress and supports cancel', async () => {
+    const source = dataset([
+      field('Category', [value('Login'), value('Payment')]),
+      field('User Type', [value('Admin'), value('Customer')]),
+    ]);
+    const progress: Array<{ completed: number; total: number }> = [];
+    const controller = new AbortController();
+
+    const pending = generateCombinationsBatch({
+      dataset: source,
+      count: 100,
+      unique: false,
+      chunkSize: 10,
+      signal: controller.signal,
+      onProgress: (entry) => {
+        progress.push(entry);
+        if (entry.completed >= 20) {
+          controller.abort();
+        }
+      },
+      random: Math.random,
+    });
+
+    const result = await pending;
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.cancelled).toBe(true);
+    expect(result.value.length).toBeGreaterThan(0);
+    expect(result.value.length).toBeLessThan(100);
+    expect(progress[0]).toEqual({ completed: 0, total: 100 });
+    expect(progress.at(-1)?.completed).toBe(result.value.length);
+  });
+
+  it('marks uniqueExhausted when the space is smaller than requested', async () => {
+    const source = dataset([field('Category', [value('Login'), value('Payment')])]);
+    const result = await generateCombinationsBatch({
+      dataset: source,
+      count: 10,
+      unique: true,
+      random: Math.random,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value).toHaveLength(2);
+    expect(result.uniqueExhausted).toBe(true);
+    expect(result.cancelled).toBe(false);
   });
 });

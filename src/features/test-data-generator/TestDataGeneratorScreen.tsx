@@ -39,6 +39,11 @@ export function TestDataGeneratorScreen() {
             dataset={editor.dataset}
             results={editor.results}
             generateError={editor.generateError}
+            infoMessage={editor.infoMessage}
+            recordCount={editor.recordCount}
+            unique={editor.unique}
+            generating={editor.generating}
+            progress={editor.progress}
             onChangeDataset={editor.clearDatasetSelection}
             onDeleteDataset={() => {
               if (
@@ -53,9 +58,14 @@ export function TestDataGeneratorScreen() {
             onAddValue={editor.addValue}
             onToggleValue={editor.toggleValueEnabled}
             onDeleteValue={editor.deleteValue}
-            onGenerateOne={() => editor.generate(1, true)}
-            onGenerateMultiple={editor.generate}
-            onExport={editor.exportResults}
+            onRecordCountChange={editor.setRecordCount}
+            onUniqueChange={editor.setUnique}
+            onGenerate={() => {
+              void editor.generate();
+            }}
+            onCancelGeneration={editor.cancelGeneration}
+            onExportJson={editor.exportJson}
+            onExportCsv={editor.exportCsv}
           />
         ) : editor.needsDatasetChoice ? (
           <DatasetPicker

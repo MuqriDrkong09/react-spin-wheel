@@ -2,9 +2,15 @@ import { Button, Card, CardContent, Stack, Typography } from '@mui/material';
 
 import { AddFieldForm } from '@/features/test-data-generator/components/AddFieldForm';
 import { FieldCard } from '@/features/test-data-generator/components/FieldCard';
-import { GeneratePanel } from '@/features/test-data-generator/components/GeneratePanel';
+import {
+  GeneratePanel,
+  type GenerationProgress,
+} from '@/features/test-data-generator/components/GeneratePanel';
 import { GeneratedResults } from '@/features/test-data-generator/components/GeneratedResults';
-import { TEST_DATA_MESSAGES } from '@/features/test-data-generator/constants';
+import {
+  TEST_DATA_MESSAGES,
+  type TestDataRecordCount,
+} from '@/features/test-data-generator/constants';
 import type { FieldFormValues, ValueFormValues } from '@/features/test-data-generator/schema';
 import type { GeneratedCombination, TestDataset } from '@/features/test-data-generator/types';
 
@@ -12,6 +18,11 @@ interface DatasetEditorProps {
   dataset: TestDataset;
   results: readonly GeneratedCombination[];
   generateError: string | null;
+  infoMessage: string | null;
+  recordCount: TestDataRecordCount;
+  unique: boolean;
+  generating: boolean;
+  progress: GenerationProgress | null;
   onChangeDataset: () => void;
   onDeleteDataset: () => void;
   onAddField: (values: FieldFormValues) => void;
@@ -20,15 +31,23 @@ interface DatasetEditorProps {
   onAddValue: (fieldId: string, values: ValueFormValues) => void;
   onToggleValue: (fieldId: string, valueId: string) => void;
   onDeleteValue: (fieldId: string, valueId: string) => void;
-  onGenerateOne: () => void;
-  onGenerateMultiple: (count: number, unique: boolean) => void;
-  onExport: () => void;
+  onRecordCountChange: (count: TestDataRecordCount) => void;
+  onUniqueChange: (unique: boolean) => void;
+  onGenerate: () => void;
+  onCancelGeneration: () => void;
+  onExportJson: () => void;
+  onExportCsv: () => void;
 }
 
 export function DatasetEditor({
   dataset,
   results,
   generateError,
+  infoMessage,
+  recordCount,
+  unique,
+  generating,
+  progress,
   onChangeDataset,
   onDeleteDataset,
   onAddField,
@@ -37,20 +56,24 @@ export function DatasetEditor({
   onAddValue,
   onToggleValue,
   onDeleteValue,
-  onGenerateOne,
-  onGenerateMultiple,
-  onExport,
+  onRecordCountChange,
+  onUniqueChange,
+  onGenerate,
+  onCancelGeneration,
+  onExportJson,
+  onExportCsv,
 }: DatasetEditorProps) {
   return (
     <Stack spacing={3}>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-        <Button variant="outlined" onClick={onChangeDataset}>
+        <Button variant="outlined" onClick={onChangeDataset} disabled={generating}>
           {TEST_DATA_MESSAGES.changeDataset}
         </Button>
         <Button
           variant="outlined"
           color="error"
           onClick={onDeleteDataset}
+          disabled={generating}
           aria-label={TEST_DATA_MESSAGES.deleteDataset}
         >
           {TEST_DATA_MESSAGES.deleteDataset}
@@ -94,13 +117,25 @@ export function DatasetEditor({
         <CardContent>
           <GeneratePanel
             error={generateError}
-            onGenerateOne={onGenerateOne}
-            onGenerateMultiple={onGenerateMultiple}
+            infoMessage={infoMessage}
+            count={recordCount}
+            unique={unique}
+            generating={generating}
+            progress={progress}
+            onCountChange={onRecordCountChange}
+            onUniqueChange={onUniqueChange}
+            onGenerate={onGenerate}
+            onCancel={onCancelGeneration}
           />
         </CardContent>
       </Card>
 
-      <GeneratedResults results={results} onExport={onExport} />
+      <GeneratedResults
+        fields={dataset.fields}
+        results={results}
+        onExportJson={onExportJson}
+        onExportCsv={onExportCsv}
+      />
     </Stack>
   );
 }

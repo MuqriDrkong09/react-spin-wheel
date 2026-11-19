@@ -1,30 +1,59 @@
 import {
   exportGeneratedData,
   slugifyFilename,
+  toCsvContents,
   toTestDataExportDocument,
 } from '@/features/test-data-generator/utils/exportGeneratedData';
-import { downloadJsonFile } from '@/features/wheel-export/utils/downloadJsonFile';
-import type { TestDataset } from '@/features/test-data-generator/types';
+import { downloadFile } from '@/features/test-data-generator/utils/downloadFile';
+import type { TestDataset, TestField, TestValue } from '@/features/test-data-generator/types';
 
-vi.mock('@/features/wheel-export/utils/downloadJsonFile', () => ({
-  downloadJsonFile: vi.fn(),
+vi.mock('@/features/test-data-generator/utils/downloadFile', () => ({
+  downloadFile: vi.fn(),
 }));
 
-const downloadJsonFileMock = vi.mocked(downloadJsonFile);
+const downloadFileMock = vi.mocked(downloadFile);
+
+function value(name: string): TestValue {
+  return {
+    id: name.toLowerCase(),
+    name,
+    weight: 1,
+    enabled: true,
+    optional: false,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+}
+
+function field(name: string, values: TestValue[]): TestField {
+  return {
+    id: name.toLowerCase(),
+    name,
+    weight: 1,
+    enabled: true,
+    optional: false,
+    values,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+}
 
 const sampleDataset: TestDataset = {
   id: 'ds-1',
   name: 'QA Matrix',
   description: 'Core flows',
-  fields: [],
+  fields: [
+    field('Category', [value('Login'), value('Payment')]),
+    field('Environment', [value('Staging')]),
+  ],
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
 describe('exportGeneratedData', () => {
   beforeEach(() => {
-    downloadJsonFileMock.mockReset();
-    downloadJsonFileMock.mockReturnValue(true);
+    downloadFileMock.mockReset();
+    downloadFileMock.mockReturnValue(true);
   });
 
   it('builds an export document and downloads json', () => {
@@ -35,19 +64,38 @@ describe('exportGeneratedData', () => {
     expect(document.dataset.name).toBe('QA Matrix');
     expect(document.results).toEqual(results);
 
-    expect(exportGeneratedData(sampleDataset, results)).toEqual({
+    expect(exportGeneratedData(sampleDataset, results, 'json')).toEqual({
       ok: true,
       filename: 'qa-matrix-results.json',
     });
-    expect(downloadJsonFileMock).toHaveBeenCalledWith(
+    expect(downloadFileMock).toHaveBeenCalledWith(
       'qa-matrix-results.json',
       expect.stringContaining('"Category": "Login"'),
+      'application/json',
+    );
+  });
+
+  it('exports csv with record and combination path columns', () => {
+    const results = [{ Category: 'Login', Environment: 'Staging' }];
+    const csv = toCsvContents(sampleDataset, results);
+
+    expect(csv).toContain('Record,Combination,Category,Environment');
+    expect(csv).toContain('1,Login → Staging,Login,Staging');
+
+    expect(exportGeneratedData(sampleDataset, results, 'csv')).toEqual({
+      ok: true,
+      filename: 'qa-matrix-results.csv',
+    });
+    expect(downloadFileMock).toHaveBeenCalledWith(
+      'qa-matrix-results.csv',
+      expect.stringContaining('Login → Staging'),
+      'text/csv;charset=utf-8',
     );
   });
 
   it('reports download failures', () => {
-    downloadJsonFileMock.mockReturnValue(false);
-    expect(exportGeneratedData(sampleDataset, [{ Category: 'Login' }])).toEqual({
+    downloadFileMock.mockReturnValue(false);
+    expect(exportGeneratedData(sampleDataset, [{ Category: 'Login' }], 'json')).toEqual({
       ok: false,
       error: 'download-failed',
     });

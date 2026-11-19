@@ -29,18 +29,26 @@ export const TEST_DATA_MESSAGES = {
   noFieldsDescription: 'Add a parent field such as Category, then add child values under it.',
   noValues: (field: string) => `No child values under ${field} yet.`,
   generateTitle: 'Generate combinations',
-  generateHint: 'Each result picks one enabled child per enabled parent (optional parents may be skipped).',
-  generateOne: 'Generate one',
-  generateMultiple: 'Generate multiple',
-  resultCount: 'Number of results',
-  uniqueResults: 'Prefer unique combinations',
+  generateHint:
+    'Each record picks one enabled child per enabled parent (optional parents may be skipped), shown as a hierarchical path.',
+  generateBatch: 'Generate',
+  cancelGeneration: 'Cancel',
+  resultCount: 'Number of records',
+  uniqueResults: 'Avoid duplicate combinations',
+  allowDuplicates: 'Allow duplicates',
+  progressLabel: (completed: number, total: number) => `Generating ${completed} of ${total}…`,
+  cancelledPartial: (count: number) => `Generation cancelled after ${count} record${count === 1 ? '' : 's'}.`,
+  uniqueExhausted: (count: number, requested: number) =>
+    `Generated ${count} unique record${count === 1 ? '' : 's'} (requested ${requested}).`,
   resultsTitle: 'Generated results',
+  pathColumn: 'Combination',
   noResults: 'Generate a combination to see results here.',
-  exportResults: 'Export results',
+  exportJson: 'Export JSON',
+  exportCsv: 'Export CSV',
   exportSuccess: (filename: string) => `Exported ${filename}`,
   exportFailed: 'Could not download the export file.',
   nameRequired: 'Name is required.',
-  countInvalid: 'Enter a whole number between 1 and 100.',
+  countInvalid: 'Choose 1, 10, 50, 100, or 1000 records.',
   noEnabledFields: 'Add at least one enabled parent field with an enabled child value.',
   emptyGeneration: 'No combinations could be generated from the current dataset.',
   fieldAdded: (name: string) => `Added parent “${name}”.`,
@@ -54,12 +62,17 @@ export const TEST_DATA_MESSAGES = {
   toggleValue: (name: string, enabled: boolean) => (enabled ? `Disable ${name}` : `Enable ${name}`),
 } as const;
 
+export const TEST_DATA_RECORD_COUNTS = [1, 10, 50, 100, 1000] as const;
+
+export type TestDataRecordCount = (typeof TEST_DATA_RECORD_COUNTS)[number];
+
 export const TEST_DATA_LIMITS = {
-  maxResults: 100,
+  maxResults: 1000,
   maxDatasets: 50,
   maxFields: 40,
   maxValuesPerField: 100,
   omitTokenWeight: 1,
+  batchChunkSize: 50,
 } as const;
 
 export const TEST_DATA_EXPORT_FORMAT = 'spinflow.test-data' as const;

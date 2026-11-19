@@ -1,23 +1,23 @@
 import { ROUTES } from '@/constants/routes';
 import { TEST_DATA_MESSAGES } from '@/features/test-data-generator/constants';
-import { downloadJsonFile } from '@/features/wheel-export/utils/downloadJsonFile';
+import { downloadFile } from '@/features/test-data-generator/utils/downloadFile';
 import { resetTestDataStore, useTestDataStore } from '@/stores/testDataStore';
-import { renderApp, screen, userEvent, waitFor, within } from '@/test/test-utils';
+import { renderApp, screen, userEvent, within } from '@/test/test-utils';
 
-vi.mock('@/features/wheel-export/utils/downloadJsonFile', () => ({
-  downloadJsonFile: vi.fn(),
+vi.mock('@/features/test-data-generator/utils/downloadFile', () => ({
+  downloadFile: vi.fn(),
 }));
 
-const downloadJsonFileMock = vi.mocked(downloadJsonFile);
+const downloadFileMock = vi.mocked(downloadFile);
 
 describe('TestDataGeneratorScreen', () => {
   beforeEach(() => {
     resetTestDataStore();
-    downloadJsonFileMock.mockReset();
-    downloadJsonFileMock.mockReturnValue(true);
+    downloadFileMock.mockReset();
+    downloadFileMock.mockReturnValue(true);
   });
 
-  it('creates a dataset, adds hierarchy, and generates a combination', async () => {
+  it('creates a dataset, adds hierarchy, and batch-generates a combination', async () => {
     const user = userEvent.setup();
     await renderApp({ initialEntries: [ROUTES.testDataGenerator] });
 
@@ -55,22 +55,31 @@ describe('TestDataGeneratorScreen', () => {
     expect(screen.getByText('Legacy')).toBeInTheDocument();
     expect(screen.getByText(TEST_DATA_MESSAGES.optionalValue)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: TEST_DATA_MESSAGES.generateOne }));
+    await user.click(screen.getByRole('button', { name: '1 records' }));
+    await user.click(screen.getByRole('button', { name: TEST_DATA_MESSAGES.generateBatch }));
 
     const resultsTable = await screen.findByRole('table', { name: TEST_DATA_MESSAGES.resultsTitle });
-    expect(within(resultsTable).getByRole('columnheader', { name: 'Category' })).toBeInTheDocument();
+    expect(within(resultsTable).getByRole('columnheader', { name: TEST_DATA_MESSAGES.pathColumn })).toBeInTheDocument();
     expect(
       within(resultsTable).getByText((content) => content === 'Login' || content === 'Legacy'),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: TEST_DATA_MESSAGES.exportResults }));
-    expect(downloadJsonFileMock).toHaveBeenCalledWith(
+    await user.click(screen.getByRole('button', { name: TEST_DATA_MESSAGES.exportJson }));
+    expect(downloadFileMock).toHaveBeenCalledWith(
       'qa-matrix-results.json',
       expect.stringContaining('"format": "spinflow.test-data"'),
+      'application/json',
     );
     expect(
       await screen.findByText(TEST_DATA_MESSAGES.exportSuccess('qa-matrix-results.json')),
     ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: TEST_DATA_MESSAGES.exportCsv }));
+    expect(downloadFileMock).toHaveBeenCalledWith(
+      'qa-matrix-results.csv',
+      expect.stringContaining('Record,Combination,Category'),
+      'text/csv;charset=utf-8',
+    );
 
     expect(useTestDataStore.getState().datasets[0]?.fields[0]?.values).toHaveLength(2);
   }, 30_000);

@@ -1,22 +1,28 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ROUTES, withTestDatasetId } from '@/constants/routes';
-import { TEST_DATA_MESSAGES } from '@/features/test-data-generator/constants';
-import type {
-  CreateDatasetInput,
-  CreateFieldInput,
-  CreateValueInput,
-} from '@/stores/testDataStore';
-import { useTestDataStore } from '@/stores/testDataStore';
+import {
+  TEST_DATA_MESSAGES,
+  type TestDataRecordCount,
+} from '@/features/test-data-generator/constants';
 import type {
   GeneratedCombination,
   TestDatasetId,
   TestFieldId,
   TestValueId,
 } from '@/features/test-data-generator/types';
-import { exportGeneratedData } from '@/features/test-data-generator/utils/exportGeneratedData';
-import { generateCombinations } from '@/features/test-data-generator/utils/generateCombinations';
+import {
+  exportGeneratedData,
+  type ExportFormat,
+} from '@/features/test-data-generator/utils/exportGeneratedData';
+import { generateCombinationsBatch } from '@/features/test-data-generator/utils/generateCombinations';
+import type {
+  CreateDatasetInput,
+  CreateFieldInput,
+  CreateValueInput,
+} from '@/stores/testDataStore';
+import { useTestDataStore } from '@/stores/testDataStore';
 
 export function useTestDataGenerator() {
   const navigate = useNavigate();
@@ -44,8 +50,21 @@ export function useTestDataGenerator() {
 
   const [results, setResults] = useState<GeneratedCombination[]>([]);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [recordCount, setRecordCount] = useState<TestDataRecordCount>(10);
+  const [unique, setUnique] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [progress, setProgress] = useState<{ completed: number; total: number } | null>(null);
+
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const openCreate = useCallback(() => setCreateOpen(true), []);
   const closeCreate = useCallback(() => setCreateOpen(false), []);
@@ -60,9 +79,13 @@ export function useTestDataGenerator() {
   );
 
   const clearDatasetSelection = useCallback(() => {
+    abortRef.current?.abort();
     setActiveDataset(null);
     setResults([]);
     setGenerateError(null);
+    setInfoMessage(null);
+    setProgress(null);
+    setGenerating(false);
     void navigate(ROUTES.testDataGenerator);
   }, [navigate, setActiveDataset]);
 
@@ -85,6 +108,7 @@ export function useTestDataGenerator() {
       deleteDatasetInStore(id);
       setResults([]);
       setGenerateError(null);
+      setInfoMessage(null);
       if (target) {
         setSuccessMessage(TEST_DATA_MESSAGES.datasetDeleted(target.name));
       }
@@ -169,39 +193,72 @@ export function useTestDataGenerator() {
     [dataset, deleteValueInStore],
   );
 
-  const generate = useCallback(
-    (count: number, unique: boolean) => {
-      if (!dataset) {
-        return;
-      }
-      const outcome = generateCombinations({
-        dataset,
-        count,
-        unique,
-        random: Math.random,
-      });
-      if (!outcome.ok) {
-        setResults([]);
-        setGenerateError(outcome.error);
-        return;
-      }
-      setGenerateError(null);
-      setResults(outcome.value);
-    },
-    [dataset],
-  );
+  const cancelGeneration = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
-  const exportResults = useCallback(() => {
-    if (!dataset || results.length === 0) {
+  const generate = useCallback(async () => {
+    if (!dataset || generating) {
       return;
     }
-    const outcome = exportGeneratedData(dataset, results);
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setGenerating(true);
+    setGenerateError(null);
+    setInfoMessage(null);
+    setProgress({ completed: 0, total: recordCount });
+
+    const outcome = await generateCombinationsBatch({
+      dataset,
+      count: recordCount,
+      unique,
+      random: Math.random,
+      signal: controller.signal,
+      onProgress: setProgress,
+    });
+
+    if (abortRef.current === controller) {
+      abortRef.current = null;
+    }
+
+    setGenerating(false);
+    setProgress(null);
+
     if (!outcome.ok) {
-      setGenerateError(TEST_DATA_MESSAGES.exportFailed);
+      setResults([]);
+      setGenerateError(outcome.error);
       return;
     }
-    setSuccessMessage(TEST_DATA_MESSAGES.exportSuccess(outcome.filename));
-  }, [dataset, results]);
+
+    setResults(outcome.value);
+
+    if (outcome.cancelled) {
+      setInfoMessage(TEST_DATA_MESSAGES.cancelledPartial(outcome.value.length));
+      return;
+    }
+
+    if (outcome.uniqueExhausted) {
+      setInfoMessage(TEST_DATA_MESSAGES.uniqueExhausted(outcome.value.length, recordCount));
+    }
+  }, [dataset, generating, recordCount, unique]);
+
+  const exportResults = useCallback(
+    (format: ExportFormat) => {
+      if (!dataset || results.length === 0) {
+        return;
+      }
+      const outcome = exportGeneratedData(dataset, results, format);
+      if (!outcome.ok) {
+        setGenerateError(TEST_DATA_MESSAGES.exportFailed);
+        return;
+      }
+      setSuccessMessage(TEST_DATA_MESSAGES.exportSuccess(outcome.filename));
+    },
+    [dataset, results],
+  );
 
   return {
     datasets,
@@ -210,8 +267,13 @@ export function useTestDataGenerator() {
     isMissingDataset,
     results,
     generateError,
+    infoMessage,
     successMessage,
     createOpen,
+    recordCount,
+    unique,
+    generating,
+    progress,
     openCreate,
     closeCreate,
     clearSuccessMessage,
@@ -225,7 +287,11 @@ export function useTestDataGenerator() {
     addValue,
     toggleValueEnabled,
     deleteValue,
+    setRecordCount,
+    setUnique,
     generate,
-    exportResults,
+    cancelGeneration,
+    exportJson: () => exportResults('json'),
+    exportCsv: () => exportResults('csv'),
   };
 }

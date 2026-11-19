@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-import { TEST_DATA_LIMITS, TEST_DATA_MESSAGES } from '@/features/test-data-generator/constants';
+import {
+  TEST_DATA_MESSAGES,
+  TEST_DATA_RECORD_COUNTS,
+} from '@/features/test-data-generator/constants';
 
 export const datasetFormSchema = z.object({
   name: z.string().trim().min(1, TEST_DATA_MESSAGES.nameRequired),
@@ -46,18 +49,25 @@ export const defaultValueFormValues: ValueFormValues = {
   enabled: true,
 };
 
+const recordCountSchema = z.union([
+  z.literal(1),
+  z.literal(10),
+  z.literal(50),
+  z.literal(100),
+  z.literal(1000),
+]);
+
 export const generateFormSchema = z.object({
-  count: z.coerce
-    .number()
-    .int(TEST_DATA_MESSAGES.countInvalid)
-    .min(1, TEST_DATA_MESSAGES.countInvalid)
-    .max(TEST_DATA_LIMITS.maxResults, TEST_DATA_MESSAGES.countInvalid),
+  count: recordCountSchema.refine(
+    (value) => (TEST_DATA_RECORD_COUNTS as readonly number[]).includes(value),
+    TEST_DATA_MESSAGES.countInvalid,
+  ),
   unique: z.boolean(),
 });
 
 export type GenerateFormValues = z.infer<typeof generateFormSchema>;
 
 export const defaultGenerateFormValues: GenerateFormValues = {
-  count: 5,
+  count: 10,
   unique: true,
 };

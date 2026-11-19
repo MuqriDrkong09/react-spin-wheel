@@ -53,7 +53,27 @@ export interface GenerateCombinationsInput {
 }
 
 export type GenerateCombinationsResult =
-  | { ok: true; value: GeneratedCombination[] }
+  | { ok: true; value: GeneratedCombination[]; uniqueExhausted?: boolean }
+  | { ok: false; error: string };
+
+export interface BatchGenerateProgress {
+  completed: number;
+  total: number;
+}
+
+export interface BatchGenerateInput extends GenerateCombinationsInput {
+  signal?: AbortSignal;
+  chunkSize?: number;
+  onProgress?: (progress: BatchGenerateProgress) => void;
+}
+
+export type BatchGenerateResult =
+  | {
+      ok: true;
+      value: GeneratedCombination[];
+      cancelled: boolean;
+      uniqueExhausted: boolean;
+    }
   | { ok: false; error: string };
 
 export interface TestDataExportDocument {
