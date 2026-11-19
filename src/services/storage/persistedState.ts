@@ -5,6 +5,8 @@ import {
   TOURNAMENT_STATUS,
 } from '@/features/random-generator/constants';
 import type { TeamGeneratorHistoryEntry, TournamentBracket } from '@/features/random-generator/types';
+import { testDatasetSchema } from '@/features/test-data-generator/schemas/testDatasetSchema';
+import type { TestDataset, TestDatasetId } from '@/features/test-data-generator/types';
 import {
   softArraySchema,
   softRecordSchema,
@@ -38,6 +40,8 @@ export interface PersistedState {
   tournamentHistory: TournamentBracket[];
   settings: AppSettings;
   favoriteWheelIds: WheelId[];
+  testDatasets: TestDataset[];
+  activeTestDatasetId: TestDatasetId | null;
 }
 
 export const defaultPersistedState: PersistedState = {
@@ -51,6 +55,8 @@ export const defaultPersistedState: PersistedState = {
   tournamentHistory: [],
   settings: { ...DEFAULT_APP_SETTINGS },
   favoriteWheelIds: [],
+  testDatasets: [],
+  activeTestDatasetId: null,
 };
 
 const teamSchema: z.ZodType<{ name: string; members: string[] }> = z.object({
@@ -139,6 +145,14 @@ const persistedStateSchema = z.object({
     confirmBeforeDelete: z.boolean(),
   }),
   favoriteWheelIds: z.array(z.string()),
+  testDatasets: softArraySchema(testDatasetSchema)
+    .optional()
+    .transform((value) => value ?? []),
+  activeTestDatasetId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
 });
 
 const envelopeSchema = z.object({
@@ -217,6 +231,12 @@ function sanitizePersistedState(state: PersistedState): {
       }),
   );
 
+  const datasetIds = new Set(state.testDatasets.map((dataset) => dataset.id));
+  const activeTestDatasetId =
+    state.activeTestDatasetId !== null && datasetIds.has(state.activeTestDatasetId)
+      ? state.activeTestDatasetId
+      : null;
+
   return {
     state: {
       ...state,
@@ -224,6 +244,7 @@ function sanitizePersistedState(state: PersistedState): {
       activeWheelId,
       favoriteWheelIds: state.favoriteWheelIds.filter((id) => wheelIds.has(id)),
       snapshots,
+      activeTestDatasetId,
     },
     hierarchyRepaired: wheelsResult.repaired || snapshotRepaired,
   };

@@ -1,3 +1,4 @@
+import type { TestDatasetId } from '@/features/test-data-generator/types';
 import type { WheelId, WheelItemId } from '@/types/wheel';
 
 export const ROUTES = {
@@ -11,11 +12,16 @@ export const ROUTES = {
   presets: '/presets',
   settings: '/settings',
   randomGenerator: '/random-generator',
+  testDataGenerator: '/test-data',
   sharedWheel: '/share',
 } as const;
 
 export function withWheelId(path: string, wheelId: WheelId): string {
   return `${path}?wheelId=${encodeURIComponent(wheelId)}`;
+}
+
+export function withTestDatasetId(path: string, datasetId: TestDatasetId): string {
+  return `${path}?datasetId=${encodeURIComponent(datasetId)}`;
 }
 
 /** Open spin for a wheel, optionally starting under a specific item's children. */

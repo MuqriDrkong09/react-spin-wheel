@@ -19,6 +19,10 @@ const RandomGeneratorPage = lazyPage(
   () => import('@/pages/RandomGeneratorPage'),
   'RandomGeneratorPage',
 );
+const TestDataGeneratorPage = lazyPage(
+  () => import('@/pages/TestDataGeneratorPage'),
+  'TestDataGeneratorPage',
+);
 const SharedWheelPage = lazyPage(() => import('@/pages/SharedWheelPage'), 'SharedWheelPage');
 
 export const appRoutes: RouteObject[] = [
@@ -37,6 +41,7 @@ export const appRoutes: RouteObject[] = [
       { path: 'presets', element: <PresetsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'random-generator', element: <RandomGeneratorPage /> },
+      { path: 'test-data', element: <TestDataGeneratorPage /> },
       { path: 'share', element: <SharedWheelPage /> },
       { path: 'share/:shareId', element: <SharedWheelPage /> },
       { path: '*', element: <NotFoundPage /> },

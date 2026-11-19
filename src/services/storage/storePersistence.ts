@@ -5,6 +5,7 @@ import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useGeneratorHistoryStore } from '@/stores/generatorHistoryStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useTestDataStore } from '@/stores/testDataStore';
 import { useTournamentStore } from '@/stores/tournamentStore';
 import { useWheelStore } from '@/stores/wheelStore';
 
@@ -22,6 +23,7 @@ export function collectPersistedState(): PersistedState {
   const { activeTournament, tournamentHistory } = useTournamentStore.getState();
   const { settings } = useSettingsStore.getState();
   const { favoriteWheelIds } = useFavoritesStore.getState();
+  const { datasets, activeDatasetId } = useTestDataStore.getState();
 
   return {
     colorMode,
@@ -34,6 +36,8 @@ export function collectPersistedState(): PersistedState {
     tournamentHistory,
     settings,
     favoriteWheelIds,
+    testDatasets: datasets,
+    activeTestDatasetId: activeDatasetId,
   };
 }
 
@@ -55,6 +59,10 @@ export function hydrateStoresFromStorage(): PersistedState {
   });
   useSettingsStore.setState({ settings: state.settings });
   useFavoritesStore.setState({ favoriteWheelIds: state.favoriteWheelIds });
+  useTestDataStore.setState({
+    datasets: state.testDatasets,
+    activeDatasetId: state.activeTestDatasetId,
+  });
 
   if (!storageService.isAvailable()) {
     reportRuntimeNotice('storageUnavailable');
@@ -83,6 +91,7 @@ export function subscribeStoresToStorage(): () => void {
     useTournamentStore.subscribe(persistNow),
     useSettingsStore.subscribe(persistNow),
     useFavoritesStore.subscribe(persistNow),
+    useTestDataStore.subscribe(persistNow),
   ];
 
   return () => {

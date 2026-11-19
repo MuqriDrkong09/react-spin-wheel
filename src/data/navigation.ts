@@ -1,3 +1,4 @@
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
@@ -19,5 +20,6 @@ export const NAV_ITEMS = [
   { label: 'Statistics', path: ROUTES.statistics, icon: BarChartOutlinedIcon },
   { label: 'Presets', path: ROUTES.presets, icon: BookmarkBorderOutlinedIcon },
   { label: 'Generator', path: ROUTES.randomGenerator, icon: ShuffleOutlinedIcon },
+  { label: 'Test data', path: ROUTES.testDataGenerator, icon: AccountTreeOutlinedIcon },
   { label: 'Settings', path: ROUTES.settings, icon: SettingsOutlinedIcon },
 ] as const;
