@@ -181,6 +181,82 @@ describe('useSpinSession', () => {
     ]);
   });
 
+  it('reseeds when fromItemId changes and falls back to roots for invalid seeds', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const wheel = foodWheel();
+    const { result, rerender } = renderHook(
+      ({ fromItemId }: { fromItemId: string | null }) => useSpinSession(wheel, { fromItemId }),
+      { initialProps: { fromItemId: null as string | null } },
+    );
+
+    expect(result.current.ancestors).toEqual([]);
+    expect(result.current.items.map((entry) => entry.id)).toEqual(['pizza', 'burger']);
+
+    act(() => {
+      result.current.startSpin();
+    });
+    expect(result.current.winner?.name).toBe('Pizza');
+    const firstSessionId = result.current.sessionId;
+
+    rerender({ fromItemId: 'pizza' });
+
+    expect(result.current.sessionId).not.toBe(firstSessionId);
+    expect(result.current.ancestors.map((step) => step.id)).toEqual(['pizza']);
+    expect(result.current.items.map((entry) => entry.id)).toEqual([
+      'chicken-pepperoni',
+      'beef-pepperoni',
+    ]);
+    expect(result.current.finalOpen).toBe(false);
+
+    rerender({ fromItemId: 'burger' });
+
+    expect(result.current.ancestors).toEqual([]);
+    expect(result.current.items.map((entry) => entry.id)).toEqual(['pizza', 'burger']);
+
+    rerender({ fromItemId: 'missing' });
+
+    expect(result.current.ancestors).toEqual([]);
+    expect(result.current.items.map((entry) => entry.id)).toEqual(['pizza', 'burger']);
+  });
+
+  it('reseeds when the wheel changes while keeping fromItemId', () => {
+    const food = foodWheel();
+    const night = pizzaNightWheel();
+    const { result, rerender } = renderHook(
+      ({ wheel }: { wheel: Wheel }) => useSpinSession(wheel, { fromItemId: 'pizza' }),
+      { initialProps: { wheel: food } },
+    );
+
+    expect(result.current.items.map((entry) => entry.id)).toEqual([
+      'chicken-pepperoni',
+      'beef-pepperoni',
+    ]);
+    const firstSessionId = result.current.sessionId;
+
+    rerender({ wheel: night });
+
+    expect(result.current.sessionId).not.toBe(firstSessionId);
+    expect(result.current.ancestors.map((step) => step.id)).toEqual(['pizza']);
+    expect(result.current.items.map((entry) => entry.id)).toEqual([
+      'chicken-pepperoni',
+      'beef-pepperoni',
+    ]);
+  });
+
+  it('clears a fromItemId seed when starting a new selection', () => {
+    const wheel = foodWheel();
+    const { result } = renderHook(() => useSpinSession(wheel, { fromItemId: 'pizza' }));
+
+    expect(result.current.ancestors.map((step) => step.id)).toEqual(['pizza']);
+
+    act(() => {
+      result.current.startNewSelection();
+    });
+
+    expect(result.current.ancestors).toEqual([]);
+    expect(result.current.items.map((entry) => entry.id)).toEqual(['pizza', 'burger']);
+  });
+
   it('tracks the name path through a child spin without mutating the parent items', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const wheel = foodWheel();

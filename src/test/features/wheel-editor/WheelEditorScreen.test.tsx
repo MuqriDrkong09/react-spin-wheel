@@ -883,6 +883,47 @@ describe('WheelEditorScreen', () => {
     expect(router.state.location.search).toContain('fromItemId=pizza');
     expect(await screen.findByRole('heading', { name: 'Spin', level: 1 })).toBeInTheDocument();
   });
+
+  it('runs edit, add child, duplicate, and delete from item details', async () => {
+    const user = userEvent.setup();
+    seedFoodWheel();
+    await renderEditor();
+
+    await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.viewDetails('Sushi') }));
+    let details = await screen.findByRole('dialog', { name: EDITOR_MESSAGES.detailsTitle });
+    await user.click(within(details).getByRole('button', { name: EDITOR_MESSAGES.actionEdit }));
+
+    const editDialog = await screen.findByRole('dialog', { name: 'Edit Sushi' });
+    expect(within(editDialog).getByLabelText(/^name/i)).toHaveValue('Sushi');
+    await user.click(within(editDialog).getByRole('button', { name: 'Cancel' }));
+
+    await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.viewDetails('Sushi') }));
+    details = await screen.findByRole('dialog', { name: EDITOR_MESSAGES.detailsTitle });
+    await user.click(within(details).getByRole('button', { name: EDITOR_MESSAGES.actionAddChild }));
+
+    const addDialog = await screen.findByRole('dialog', { name: 'Add Child Data' });
+    expect(within(addDialog).getByText('Sushi')).toBeInTheDocument();
+    await user.click(within(addDialog).getByRole('button', { name: 'Cancel' }));
+
+    await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.viewDetails('Sushi') }));
+    details = await screen.findByRole('dialog', { name: EDITOR_MESSAGES.detailsTitle });
+    await user.click(within(details).getByRole('button', { name: EDITOR_MESSAGES.actionDuplicate }));
+
+    expect(await screen.findByText('🍣 Sushi copy')).toBeInTheDocument();
+    await user.click(within(details).getByRole('button', { name: EDITOR_MESSAGES.actionClose }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: EDITOR_MESSAGES.detailsTitle })).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: EDITOR_MESSAGES.viewDetails('Sushi copy') }));
+    details = await screen.findByRole('dialog', { name: EDITOR_MESSAGES.detailsTitle });
+    await user.click(within(details).getByRole('button', { name: EDITOR_MESSAGES.actionDelete }));
+
+    expect(deleteDialog()).toBeInTheDocument();
+    expect(within(deleteDialog()).getByText(EDITOR_MESSAGES.deleteItem('Sushi copy'))).toBeInTheDocument();
+    await user.click(within(deleteDialog()).getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByText('🍣 Sushi copy')).toBeInTheDocument();
+  });
 });
 
 

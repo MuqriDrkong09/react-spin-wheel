@@ -22,6 +22,7 @@ import {
   createMaxWinsCondition,
   createRequiresSelectedItemCondition,
 } from '@/utils/itemConditions';
+import * as wheelTree from '@/utils/wheelTree';
 
 function item(name: string, extra?: Partial<WheelItem>): WheelItem {
   return {
@@ -193,6 +194,7 @@ describe('selectionFlow', () => {
     const roots = [item('Open'), item('Limited', { weight: 2 })];
     const conditions = [createMaxWinsCondition('limited', 1, 'max-1')];
 
+    expect(eligibleRootItems(roots).map((entry) => entry.name)).toEqual(['Open', 'Limited']);
     expect(eligibleRootItems(roots, { conditions }).map((entry) => entry.name)).toEqual([
       'Open',
       'Limited',
@@ -306,9 +308,43 @@ describe('seedSpinFromItem', () => {
     expect(seeded?.items.map((entry) => entry.id)).toEqual(['chicken', 'beef']);
   });
 
+  it('seeds from a deeply nested branch with the full ancestor path', () => {
+    const crust = nested('Thin Crust');
+    const size = nested('Large', [crust, nested('Thick Crust')]);
+    const topping = nested('Chicken', [size]);
+    const pizza = nested('Pizza', [topping]);
+
+    const seeded = seedSpinFromItem([pizza], 'large');
+
+    expect(seeded?.ancestors.map((step) => step.id)).toEqual(['pizza', 'chicken', 'large']);
+    expect(seeded?.items.map((entry) => entry.id)).toEqual(['thin-crust', 'thick-crust']);
+  });
+
+  it('returns undefined when conditions leave no eligible children', () => {
+    const gated = nested('Gated Child');
+    const parent = nested('Parent', [gated]);
+    const roots = [nested('Root', [parent])];
+
+    expect(
+      seedSpinFromItem(roots, 'parent', {
+        conditions: [createRequiresSelectedItemCondition('gated-child', 'missing', 'c1')],
+      }),
+    ).toBeUndefined();
+  });
+
   it('returns undefined for leaves and missing items', () => {
     const pizza = nested('Pizza', [nested('Chicken')]);
     expect(seedSpinFromItem([pizza], 'chicken')).toBeUndefined();
     expect(seedSpinFromItem([pizza], 'missing')).toBeUndefined();
+  });
+
+  it('returns undefined when the resolved path has no item', () => {
+    const findPath = vi
+      .spyOn(wheelTree, 'findItemPath')
+      .mockReturnValue([undefined as unknown as WheelItem]);
+
+    expect(seedSpinFromItem([pizza], 'pizza')).toBeUndefined();
+
+    findPath.mockRestore();
   });
 });
