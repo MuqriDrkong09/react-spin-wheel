@@ -2,8 +2,25 @@ import type { ComponentProps } from 'react';
 
 import type { TreeItemHandlers } from '@/features/wheel-editor/components/TreeItemActions';
 import { TreeItemRow } from '@/features/wheel-editor/components/TreeItemRow';
+import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { TREE_NODE_KIND, type EditorTreeNode } from '@/features/wheel-editor/utils/toEditorTree';
+import { CUSTOM_FIELD_TYPE, type CustomFieldDefinition } from '@/types/customFields';
 import { renderWithProviders, screen, userEvent } from '@/test/test-utils';
+
+const fieldDefinitions: CustomFieldDefinition[] = [
+  {
+    id: 'f-cuisine',
+    key: 'cuisine',
+    label: 'Cuisine',
+    type: CUSTOM_FIELD_TYPE.text,
+  },
+  {
+    id: 'f-price',
+    key: 'price',
+    label: 'Price',
+    type: CUSTOM_FIELD_TYPE.number,
+  },
+];
 
 const sortableHarness = vi.hoisted(() => ({
   isDragging: false,
@@ -144,5 +161,84 @@ describe('TreeItemRow', () => {
     const dragged = container.firstElementChild as HTMLElement;
     expect(window.getComputedStyle(dragged).opacity).toBe('0.5');
     expect(window.getComputedStyle(dragged).transition).toContain('transform');
+  });
+
+  it('renders a wheel heading without an icon', () => {
+    renderRow({
+      node: node({
+        id: 'food',
+        name: 'Food Wheel',
+        icon: undefined,
+        color: undefined,
+        kind: TREE_NODE_KIND.wheel,
+      }),
+    });
+
+    expect(screen.getByRole('heading', { name: 'Food Wheel', level: 2 })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: EDITOR_MESSAGES.viewDetails('Food Wheel') })).not.toBeInTheDocument();
+  });
+
+  it('collapses an expanded item when the toggle is clicked', async () => {
+    const user = userEvent.setup();
+    const { props } = renderRow({ isExpanded: true });
+
+    await user.click(screen.getByRole('button', { name: 'Collapse Pizza' }));
+
+    expect(props.onToggleExpand).toHaveBeenCalledWith('pizza');
+  });
+
+  it('shows a compact custom fields summary for items', () => {
+    renderRow({
+      fieldDefinitions,
+      node: node({
+        customFields: {
+          'f-cuisine': 'Italian',
+          'f-price': 18,
+        },
+      }),
+    });
+
+    expect(screen.getByText('cuisine: Italian · price: 18')).toBeInTheDocument();
+  });
+
+  it('hides the compact summary when every custom field value is empty', () => {
+    renderRow({
+      fieldDefinitions,
+      node: node({
+        customFields: {
+          'f-cuisine': '',
+          'f-price': '',
+        },
+      }),
+    });
+
+    expect(screen.queryByText(/cuisine:/)).not.toBeInTheDocument();
+  });
+
+  it('does not show custom fields under a wheel row', () => {
+    renderRow({
+      fieldDefinitions,
+      node: node({
+        id: 'food',
+        name: 'Food Wheel',
+        icon: '📁',
+        kind: TREE_NODE_KIND.wheel,
+        customFields: { 'f-cuisine': 'Italian' },
+      }),
+    });
+
+    expect(screen.queryByText(/cuisine:/)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '📁 Food Wheel', level: 2 })).toBeInTheDocument();
+  });
+
+  it('treats an empty icon as missing on an item row', () => {
+    renderRow({
+      node: node({ icon: '', color: undefined }),
+    });
+
+    expect(screen.getByRole('button', { name: EDITOR_MESSAGES.viewDetails('Pizza') })).toHaveTextContent(
+      'Pizza',
+    );
+    expect(screen.queryByText(/🍕/)).not.toBeInTheDocument();
   });
 });
