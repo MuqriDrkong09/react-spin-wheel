@@ -174,32 +174,38 @@ describe('TeamGeneratorTool', () => {
 
   it('surfaces a generator error and clears any previous result', async () => {
     const user = userEvent.setup();
-    const generateSpy = vi.spyOn(generateTeams, 'generateTeams').mockReturnValue({
-      ok: true,
-      value: [
-        { name: 'Team A', members: ['Ahmad'] },
-        { name: 'Team B', members: ['Ali'] },
-      ],
-    });
+    const generateSpy = vi
+      .spyOn(generateTeams, 'generateTeams')
+      .mockReturnValueOnce({
+        ok: true,
+        value: [
+          { name: 'Team A', members: ['Ahmad'] },
+          { name: 'Team B', members: ['Ali'] },
+        ],
+      })
+      .mockReturnValueOnce({
+        ok: false,
+        error: GENERATOR_MESSAGES.participantsRequired,
+      });
     renderWithProviders(<TeamGeneratorTool />);
 
     const form = screen.getByRole('form', { name: GENERATOR_MESSAGES.teamTab });
     await user.click(within(form).getByRole('button', { name: GENERATOR_MESSAGES.generateTeams }));
 
-    expect(within(form).getByLabelText(GENERATOR_MESSAGES.teamResultLabel)).toHaveTextContent(
+    expect(await within(form).findByLabelText(GENERATOR_MESSAGES.teamResultLabel)).toHaveTextContent(
       'Team A',
     );
     expect(
       within(form).getByRole('button', { name: GENERATOR_MESSAGES.rerollTeams }),
     ).toBeInTheDocument();
     expect(useGeneratorHistoryStore.getState().generatorHistory).toHaveLength(1);
+    expect(generateSpy).toHaveBeenCalledTimes(1);
 
-    generateSpy.mockReturnValue({
-      ok: false,
-      error: GENERATOR_MESSAGES.participantsRequired,
-    });
     await user.click(within(form).getByRole('button', { name: GENERATOR_MESSAGES.rerollTeams }));
 
+    expect(
+      await within(form).findByText(GENERATOR_MESSAGES.participantsRequired),
+    ).toBeInTheDocument();
     expect(within(form).getByRole('status')).toHaveTextContent(
       GENERATOR_MESSAGES.participantsRequired,
     );
@@ -207,6 +213,7 @@ describe('TeamGeneratorTool', () => {
     expect(
       within(form).getByRole('button', { name: GENERATOR_MESSAGES.generateTeams }),
     ).toBeInTheDocument();
+    expect(generateSpy).toHaveBeenCalledTimes(2);
     expect(useGeneratorHistoryStore.getState().generatorHistory).toHaveLength(1);
   });
 

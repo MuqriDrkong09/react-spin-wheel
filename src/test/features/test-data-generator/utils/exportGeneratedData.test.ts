@@ -66,6 +66,7 @@ const sampleDataset: TestDataset = {
 
 describe('hierarchyCsvHeaders', () => {
   it('uses Parent/Child/Grandchild for shallow depths', () => {
+    expect(hierarchyCsvHeaders(0)).toEqual([]);
     expect(hierarchyCsvHeaders(1)).toEqual(['Parent']);
     expect(hierarchyCsvHeaders(2)).toEqual(['Parent', 'Child']);
     expect(hierarchyCsvHeaders(3)).toEqual(['Parent', 'Child', 'Grandchild']);
@@ -73,32 +74,57 @@ describe('hierarchyCsvHeaders', () => {
 
   it('uses Level N headers when depth exceeds three', () => {
     expect(hierarchyCsvHeaders(4)).toEqual(['Level 1', 'Level 2', 'Level 3', 'Level 4']);
+    expect(hierarchyCsvHeaders(5)).toEqual([
+      'Level 1',
+      'Level 2',
+      'Level 3',
+      'Level 4',
+      'Level 5',
+    ]);
   });
 });
 
-describe('exportGeneratedData', () => {
-  beforeEach(() => {
-    downloadFileMock.mockReset();
-    downloadFileMock.mockReturnValue(true);
+describe('escapeCsvCell', () => {
+  it('escapes commas, quotes, and line breaks', () => {
+    expect(escapeCsvCell('plain')).toBe('plain');
+    expect(escapeCsvCell('a,b')).toBe('"a,b"');
+    expect(escapeCsvCell('say "hi"')).toBe('"say ""hi"""');
+    expect(escapeCsvCell('line\nbreak')).toBe('"line\nbreak"');
+    expect(escapeCsvCell('line\rbreak')).toBe('"line\rbreak"');
   });
+});
 
-  it('builds an export document and downloads json', () => {
+describe('slugifyFilename', () => {
+  it('normalizes names and falls back for empty slugs', () => {
+    expect(slugifyFilename('QA Matrix')).toBe('qa-matrix');
+    expect(slugifyFilename('  Food / Menu!!  ')).toBe('food-menu');
+    expect(slugifyFilename('---Hello---')).toBe('hello');
+    expect(slugifyFilename('   ')).toBe('test-data');
+    expect(slugifyFilename('@@@')).toBe('test-data');
+  });
+});
+
+describe('toTestDataExportDocument', () => {
+  it('copies dataset metadata and results into a versioned document', () => {
     const results = [{ Category: 'Login', Environment: 'Staging' }];
     const document = toTestDataExportDocument(sampleDataset, results);
 
     expect(document.format).toBe('spinflow.test-data');
-    expect(document.dataset.name).toBe('QA Matrix');
-    expect(document.results).toEqual(results);
-
-    expect(exportGeneratedData(sampleDataset, results, 'json')).toEqual({
-      ok: true,
-      filename: 'qa-matrix-results.json',
+    expect(document.version).toBe(1);
+    expect(document.exportedAt).toEqual(expect.any(String));
+    expect(document.dataset).toEqual({
+      id: 'ds-1',
+      name: 'QA Matrix',
+      description: 'Core flows',
     });
-    expect(downloadFileMock).toHaveBeenCalledWith(
-      'qa-matrix-results.json',
-      expect.stringContaining('"Category": "Login"'),
-      'application/json',
-    );
+    expect(document.results).toEqual(results);
+    expect(document.results).not.toBe(results);
+  });
+});
+
+describe('toCsvContents', () => {
+  it('returns a lone newline when there are no path parts', () => {
+    expect(toCsvContents(sampleDataset, [])).toBe('\n');
   });
 
   it('flattens hierarchical paths into Parent/Child/Grandchild columns', () => {
@@ -120,6 +146,35 @@ describe('exportGeneratedData', () => {
     );
   });
 
+  it('uses Parent only for single-level paths', () => {
+    const dataset: TestDataset = {
+      ...sampleDataset,
+      fields: [field('Category', [value('Login'), value('Payment')])],
+    };
+
+    expect(toCsvContents(dataset, [{ Category: 'Login' }, { Category: 'Payment' }])).toBe(
+      'Parent\nLogin\nPayment\n',
+    );
+  });
+
+  it('skips disabled fields and pads shorter optional paths', () => {
+    const dataset: TestDataset = {
+      ...sampleDataset,
+      fields: [
+        field('Category', [value('Login')]),
+        { ...field('Notes', [value('Legacy')]), enabled: false },
+        { ...field('Environment', [value('Staging')]), optional: true },
+      ],
+    };
+    const csv = toCsvContents(dataset, [
+      { Category: 'Login', Environment: 'Staging' },
+      { Category: 'Login' },
+    ]);
+
+    expect(csv).toBe('Parent,Child\nLogin,Staging\nLogin,\n');
+    expect(csv).not.toContain('Legacy');
+  });
+
   it('pads shorter paths and uses Level N headers for deep hierarchies', () => {
     const deepDataset: TestDataset = {
       ...foodDataset,
@@ -137,23 +192,42 @@ describe('exportGeneratedData', () => {
     ];
     const csv = toCsvContents(deepDataset, results);
 
-    expect(csv).toContain('Level 1,Level 2,Level 3,Level 4');
-    expect(csv).toContain('A,B,C,D');
-    expect(csv).toContain('A,B,,');
+    expect(csv).toBe('Level 1,Level 2,Level 3,Level 4\nA,B,C,D\nA,B,,\n');
   });
 
-  it('escapes commas, quotes, and newlines in csv cells', () => {
-    expect(escapeCsvCell('plain')).toBe('plain');
-    expect(escapeCsvCell('a,b')).toBe('"a,b"');
-    expect(escapeCsvCell('say "hi"')).toBe('"say ""hi"""');
-    expect(escapeCsvCell('line\nbreak')).toBe('"line\nbreak"');
-
+  it('escapes special characters inside flattened csv cells', () => {
     const dataset: TestDataset = {
       ...sampleDataset,
       fields: [field('Category', [value('Login, "secure"')])],
     };
     const csv = toCsvContents(dataset, [{ Category: 'Login, "secure"' }]);
-    expect(csv).toContain('"Login, ""secure"""');
+    expect(csv).toBe('Parent\n"Login, ""secure"""\n');
+  });
+});
+
+describe('exportGeneratedData', () => {
+  beforeEach(() => {
+    downloadFileMock.mockReset();
+    downloadFileMock.mockReturnValue(true);
+  });
+
+  it('builds an export document and downloads json by default', () => {
+    const results = [{ Category: 'Login', Environment: 'Staging' }];
+
+    expect(exportGeneratedData(sampleDataset, results)).toEqual({
+      ok: true,
+      filename: 'qa-matrix-results.json',
+    });
+    expect(downloadFileMock).toHaveBeenCalledWith(
+      'qa-matrix-results.json',
+      expect.stringContaining('"format": "spinflow.test-data"'),
+      'application/json',
+    );
+    expect(downloadFileMock).toHaveBeenCalledWith(
+      'qa-matrix-results.json',
+      expect.stringContaining('"Category": "Login"'),
+      'application/json',
+    );
   });
 
   it('downloads flattened csv', () => {
@@ -169,7 +243,7 @@ describe('exportGeneratedData', () => {
     );
   });
 
-  it('reports download failures', () => {
+  it('reports json download failures', () => {
     downloadFileMock.mockReturnValue(false);
     expect(exportGeneratedData(sampleDataset, [{ Category: 'Login' }], 'json')).toEqual({
       ok: false,
@@ -177,8 +251,23 @@ describe('exportGeneratedData', () => {
     });
   });
 
-  it('slugifies filenames safely', () => {
-    expect(slugifyFilename('QA Matrix')).toBe('qa-matrix');
-    expect(slugifyFilename('   ')).toBe('test-data');
+  it('reports csv download failures', () => {
+    downloadFileMock.mockReturnValue(false);
+    expect(exportGeneratedData(sampleDataset, [{ Category: 'Login' }], 'csv')).toEqual({
+      ok: false,
+      error: 'download-failed',
+    });
+  });
+
+  it('slugifies awkward dataset names in download filenames', () => {
+    const dataset: TestDataset = {
+      ...sampleDataset,
+      name: '  Food / Menu!!  ',
+    };
+
+    expect(exportGeneratedData(dataset, [{ Category: 'Login' }], 'csv')).toEqual({
+      ok: true,
+      filename: 'food-menu-results.csv',
+    });
   });
 });
