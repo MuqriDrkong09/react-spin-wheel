@@ -1,7 +1,15 @@
 import { DEFAULT_WHEEL_SETTINGS } from '@/constants/wheel';
+import { CUSTOM_FIELD_TYPE } from '@/types/customFields';
 import { ITEM_CONDITION_KIND, type WheelItem, type WheelItemDraft } from '@/types/wheel';
 
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
+
+const cuisineField = {
+  id: 'f-cuisine',
+  key: 'cuisine',
+  label: 'Cuisine',
+  type: CUSTOM_FIELD_TYPE.text,
+};
 
 function draft(name: string, extra?: Partial<WheelItemDraft>): WheelItemDraft {
   return {
@@ -635,13 +643,170 @@ describe('useWheelStore', () => {
     expect(useWheelStore.getState().toggleItem('pizza', 'missing')).toBeUndefined();
     expect(useWheelStore.getState().updateWheelSettings('missing', { soundEnabled: false })).toBeUndefined();
     expect(useWheelStore.getState().resetWheel('missing')).toBeUndefined();
+    expect(
+      useWheelStore.getState().moveItem('missing', 'chicken', null, 0),
+    ).toBeUndefined();
 
     useWheelStore.getState().deleteItem('pizza', 'missing');
     useWheelStore.getState().deleteChildItem('missing');
     useWheelStore.getState().reorderItems('pizza', 'missing-parent', ['chicken']);
+    useWheelStore.getState().reorderItems('missing', null, ['chicken']);
     useWheelStore.getState().addChildItem('missing', draft('Small'));
 
     expect(useWheelStore.getState().getWheel('pizza')?.items).toBe(before?.items);
     expect(useWheelStore.getState().getWheel('pizza')?.updatedAt).toBe(before?.updatedAt);
+  });
+
+  it('creates a wheel with metadata, custom fields, and a snapshot', () => {
+    const wheel = useWheelStore.getState().createWheel({
+      name: '  Food  ',
+      description: 'Dinner',
+      category: 'Food',
+      icon: '🍕',
+      customFieldDefinitions: [cuisineField],
+      items: [
+        {
+          ...draft('Pizza'),
+          customFields: { 'f-cuisine': 'Italian' },
+        },
+      ],
+      settings: { durationMs: 2500 },
+    });
+
+    expect(wheel.id).toBeTruthy();
+    expect(wheel).toMatchObject({
+      name: '  Food  ',
+      description: 'Dinner',
+      category: 'Food',
+      icon: '🍕',
+      customFieldDefinitions: [cuisineField],
+      settings: expect.objectContaining({ durationMs: 2500 }),
+    });
+    expect(wheel.items[0]?.customFields).toEqual({ 'f-cuisine': 'Italian' });
+
+    const snapshot = useWheelStore.getState().snapshots[wheel.id];
+    expect(snapshot?.items[0]?.name).toBe('Pizza');
+    expect(snapshot?.items[0]?.customFields).toEqual({ 'f-cuisine': 'Italian' });
+    expect(snapshot?.customFieldDefinitions).toEqual([cuisineField]);
+    expect(snapshot?.customFieldDefinitions).not.toBe(wheel.customFieldDefinitions);
+    expect(snapshot?.customFieldDefinitions?.[0]).not.toBe(cuisineField);
+  });
+
+  it('updates and clears custom field definitions on a wheel', () => {
+    pizzaWheel();
+
+    const withFields = useWheelStore.getState().updateWheel('pizza', {
+      customFieldDefinitions: [cuisineField],
+      category: 'Food',
+      icon: '🍕',
+    });
+    expect(withFields?.customFieldDefinitions).toEqual([cuisineField]);
+    expect(withFields?.category).toBe('Food');
+    expect(withFields?.icon).toBe('🍕');
+
+    const cleared = useWheelStore.getState().updateWheel('pizza', {
+      customFieldDefinitions: undefined,
+    });
+    expect(cleared?.customFieldDefinitions).toBeUndefined();
+  });
+
+  it('removes snapshots when a wheel is deleted', () => {
+    const wheel = pizzaWheel();
+    expect(useWheelStore.getState().snapshots.pizza).toBeDefined();
+
+    useWheelStore.getState().deleteWheel(wheel.id);
+
+    expect(useWheelStore.getState().snapshots.pizza).toBeUndefined();
+    expect(useWheelStore.getState().snapshots).toEqual({});
+  });
+
+  it('duplicates custom field definitions onto the copy and its snapshot', () => {
+    const source = useWheelStore.getState().createWheel({
+      id: 'pizza',
+      name: 'Pizza',
+      customFieldDefinitions: [
+        {
+          ...cuisineField,
+          options: ['Italian', 'Mexican'],
+          type: CUSTOM_FIELD_TYPE.select,
+        },
+      ],
+      items: [draft('Chicken Pepperoni')],
+    });
+
+    const copy = useWheelStore.getState().duplicateWheel(source.id);
+    expect(copy?.customFieldDefinitions).toEqual(source.customFieldDefinitions);
+    expect(useWheelStore.getState().snapshots[copy!.id]?.customFieldDefinitions).toEqual([
+      {
+        ...cuisineField,
+        options: ['Italian', 'Mexican'],
+        type: CUSTOM_FIELD_TYPE.select,
+      },
+    ]);
+    expect(useWheelStore.getState().snapshots[copy!.id]?.customFieldDefinitions?.[0]?.options).not.toBe(
+      source.customFieldDefinitions?.[0]?.options,
+    );
+  });
+
+  it('keeps live custom field definitions when resetting from a snapshot', () => {
+    const wheel = useWheelStore.getState().createWheel({
+      id: 'pizza',
+      name: 'Pizza',
+      customFieldDefinitions: [cuisineField],
+      items: [draft('Chicken Pepperoni')],
+    });
+
+    useWheelStore.getState().updateWheel(wheel.id, {
+      customFieldDefinitions: [
+        {
+          id: 'f-price',
+          key: 'price',
+          label: 'Price',
+          type: CUSTOM_FIELD_TYPE.number,
+        },
+      ],
+    });
+    useWheelStore.getState().addItem(wheel.id, draft('Veggie'));
+
+    const reset = useWheelStore.getState().resetWheel(wheel.id);
+    expect(reset?.items.map((item) => item.name)).toEqual(['Chicken Pepperoni']);
+    expect(reset?.customFieldDefinitions).toEqual([
+      {
+        id: 'f-price',
+        key: 'price',
+        label: 'Price',
+        type: CUSTOM_FIELD_TYPE.number,
+      },
+    ]);
+    expect(useWheelStore.getState().snapshots.pizza?.customFieldDefinitions).toEqual([cuisineField]);
+  });
+
+  it('resets the store to an empty initial state', () => {
+    pizzaWheel();
+    useWheelStore.getState().setActiveWheel('pizza');
+
+    resetWheelStore();
+
+    expect(useWheelStore.getState()).toMatchObject({
+      wheels: [],
+      activeWheelId: null,
+      snapshots: {},
+    });
+  });
+
+  it('keeps sibling order when reorder receives the current id sequence', () => {
+    const wheel = pizzaWheel();
+    const chicken = wheel.items[0];
+    const beef = wheel.items[1];
+    expect(chicken && beef).toBeTruthy();
+
+    useWheelStore.getState().reorderItems('pizza', null, [chicken!.id, beef!.id]);
+
+    expect(
+      useWheelStore
+        .getState()
+        .getWheel('pizza')
+        ?.items.map((item) => item.name),
+    ).toEqual(['Chicken Pepperoni', 'Beef Pepperoni']);
   });
 });

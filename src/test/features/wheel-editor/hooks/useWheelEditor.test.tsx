@@ -2,14 +2,24 @@ import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 
-import { ROUTES, withWheelId } from '@/constants/routes';
+import { APP_ERROR_MESSAGES } from '@/constants/errorMessages';
+import { ROUTES, withSpinFromItem, withWheelId } from '@/constants/routes';
 import { ITEM_COLORS } from '@/constants/wheel';
 import { EDITOR_MESSAGES } from '@/features/wheel-editor/constants';
 import { useWheelEditor } from '@/features/wheel-editor/hooks/useWheelEditor';
 import { defaultItemFormValues, type ItemFormValues } from '@/features/wheel-editor/schema';
 import { persistStores } from '@/services/storage/storePersistence';
 import { resetWheelStore, useWheelStore } from '@/stores/wheelStore';
+import { CUSTOM_FIELD_TYPE, type CustomFieldDefinition } from '@/types/customFields';
 import type { Wheel, WheelItem } from '@/types/wheel';
+import { defaultCustomFieldFormValues } from '@/utils/customFields';
+
+const cuisineField: CustomFieldDefinition = {
+  id: 'f-cuisine',
+  key: 'cuisine',
+  label: 'Cuisine',
+  type: CUSTOM_FIELD_TYPE.text,
+};
 
 const treeHarness = vi.hoisted(() => ({
   passThrough: true,
@@ -117,8 +127,13 @@ describe('useWheelEditor', () => {
       result.current.toggleEnabled('pizza');
       result.current.duplicate('pizza');
       result.current.moveItem({ itemId: 'pizza', targetParentId: null, index: 0 });
+      result.current.setCustomFieldDefinitions([cuisineField]);
+      result.current.spinFromItem('pizza');
+      result.current.openDetails('pizza');
     });
 
+    expect(result.current.detailsNode).toBeUndefined();
+    expect(result.current.canSpinFromDetails).toBe(false);
     expect(persistStores).not.toHaveBeenCalled();
   });
 
@@ -513,5 +528,243 @@ describe('useWheelEditor', () => {
 
     expect(result.current.tree).toBeUndefined();
     expect(result.current.successMessage).toBe(EDITOR_MESSAGES.itemAdded('Taco'));
+  });
+
+  it('flags an invalid requested wheel and keeps it out of the picker', async () => {
+    seedFoodWheel();
+    useWheelStore.setState((state) => ({
+      wheels: [
+        ...state.wheels,
+        {
+          id: 'broken',
+          name: '   ',
+          items: [],
+          settings: undefined as unknown as Wheel['settings'],
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        } as Wheel,
+      ],
+    }));
+
+    const { result } = renderEditor(withWheelId(ROUTES.wheelEditor, 'broken'));
+
+    expect(result.current.wheel).toBeUndefined();
+    expect(result.current.isInvalidWheel).toBe(true);
+    expect(result.current.isMissingWheel).toBe(false);
+    expect(result.current.invalidWheelMessage).toBe(APP_ERROR_MESSAGES.invalidWheel);
+    expect(result.current.availableWheels.map((wheel) => wheel.id)).toEqual(['food']);
+  });
+
+  it('opens and closes item details, including spin availability', async () => {
+    seedFoodWheel();
+    const { result } = renderEditor();
+
+    act(() => {
+      result.current.openAddChild('sushi');
+      result.current.openDetails('pizza');
+    });
+
+    expect(result.current.dialog).toBeNull();
+    expect(result.current.detailsNode?.id).toBe('pizza');
+    expect(result.current.canSpinFromDetails).toBe(true);
+
+    act(() => {
+      result.current.openDetails('food');
+    });
+    expect(result.current.detailsNode).toBeUndefined();
+    expect(result.current.canSpinFromDetails).toBe(false);
+
+    act(() => {
+      result.current.openDetails('sushi');
+    });
+    expect(result.current.detailsNode?.id).toBe('sushi');
+    expect(result.current.canSpinFromDetails).toBe(false);
+
+    act(() => {
+      result.current.closeDetails();
+    });
+    expect(result.current.detailsNode).toBeUndefined();
+  });
+
+  it('clears details when opening edit, add, or delete flows', async () => {
+    seedFoodWheel();
+    const { result } = renderEditor();
+
+    act(() => {
+      result.current.openDetails('pizza');
+      result.current.openEdit('sushi');
+    });
+    expect(result.current.detailsNode).toBeUndefined();
+    expect(result.current.dialog).toEqual({ type: 'edit', nodeId: 'sushi' });
+
+    act(() => {
+      result.current.openDetails('pizza');
+      result.current.openAddChild('sushi');
+    });
+    expect(result.current.detailsNode).toBeUndefined();
+    expect(result.current.dialog).toEqual({ type: 'add', parentId: 'sushi' });
+
+    act(() => {
+      result.current.openDetails('pizza');
+      result.current.requestDelete('sushi');
+    });
+    expect(result.current.detailsNode).toBeUndefined();
+    expect(result.current.pendingDelete?.id).toBe('sushi');
+  });
+
+  it('keeps details closed after confirming a delete request', async () => {
+    seedFoodWheel();
+    const { result } = renderEditor();
+
+    act(() => {
+      result.current.openDetails('sushi');
+      result.current.requestDelete('sushi');
+    });
+    expect(result.current.detailsNode).toBeUndefined();
+    expect(result.current.pendingDelete?.id).toBe('sushi');
+
+    act(() => {
+      result.current.confirmDelete();
+    });
+    expect(result.current.detailsNode).toBeUndefined();
+    expect(result.current.pendingDelete).toBeUndefined();
+    expect(useWheelStore.getState().getWheel('food')?.items.map((item) => item.id)).toEqual([
+      'pizza',
+    ]);
+  });
+
+  it('spins from an item with children and ignores items that cannot seed', async () => {
+    seedFoodWheel();
+    const { result } = renderEditor();
+
+    act(() => {
+      result.current.openDetails('sushi');
+      result.current.spinFromItem('sushi');
+    });
+    expect(result.current.href).toBe(withWheelId(ROUTES.wheelEditor, 'food'));
+    expect(result.current.detailsNode?.id).toBe('sushi');
+
+    act(() => {
+      result.current.spinFromItem('pizza');
+    });
+    expect(result.current.detailsNode).toBeUndefined();
+    expect(result.current.href).toBe(withSpinFromItem('food', 'pizza'));
+  });
+
+  it('saves and clears custom field definitions', async () => {
+    seedFoodWheel();
+    const { result } = renderEditor();
+
+    act(() => {
+      result.current.setCustomFieldDefinitions([cuisineField]);
+    });
+    expect(persistStores).toHaveBeenCalledTimes(1);
+    expect(useWheelStore.getState().getWheel('food')?.customFieldDefinitions).toEqual([
+      cuisineField,
+    ]);
+    expect(result.current.fieldDefinitions).toEqual([cuisineField]);
+    expect(result.current.mainFormDefaults.customFields).toEqual(
+      defaultCustomFieldFormValues([cuisineField]),
+    );
+
+    act(() => {
+      result.current.setCustomFieldDefinitions([]);
+    });
+    expect(persistStores).toHaveBeenCalledTimes(2);
+    expect(useWheelStore.getState().getWheel('food')?.customFieldDefinitions).toBeUndefined();
+    expect(result.current.fieldDefinitions).toEqual([]);
+  });
+
+  it('builds add and edit form defaults from custom field definitions', async () => {
+    seedFoodWheel();
+    useWheelStore.getState().updateWheel('food', {
+      customFieldDefinitions: [cuisineField],
+    });
+    useWheelStore.getState().updateChildItem('pizza', {
+      customFields: { 'f-cuisine': 'Italian' },
+    });
+
+    const { result } = renderEditor();
+
+    expect(result.current.mainFormDefaults.customFields).toEqual(
+      defaultCustomFieldFormValues([cuisineField]),
+    );
+
+    act(() => {
+      result.current.openAddChild('food');
+    });
+    expect(result.current.formDefaults.customFields).toEqual(
+      defaultCustomFieldFormValues([cuisineField]),
+    );
+    expect(result.current.formDefaults.color).toBe(ITEM_COLORS[2]);
+
+    act(() => {
+      result.current.openEdit('pizza');
+    });
+    expect(result.current.formDefaults).toMatchObject({
+      name: 'Pizza',
+      icon: '🍕',
+      color: '#ea580c',
+      customFields: { 'f-cuisine': 'Italian' },
+    });
+  });
+
+  it('exposes tree handlers that mirror the editor actions', async () => {
+    seedFoodWheel();
+    const { result } = renderEditor();
+
+    act(() => {
+      result.current.treeHandlers.onViewDetails('pizza');
+    });
+    expect(result.current.detailsNode?.id).toBe('pizza');
+
+    act(() => {
+      result.current.treeHandlers.onEdit('sushi');
+    });
+    expect(result.current.dialog).toEqual({ type: 'edit', nodeId: 'sushi' });
+    expect(result.current.detailsNode).toBeUndefined();
+
+    act(() => {
+      result.current.treeHandlers.onAddChild('pizza');
+    });
+    expect(result.current.dialog).toEqual({ type: 'add', parentId: 'pizza' });
+
+    act(() => {
+      result.current.treeHandlers.onToggleEnabled('sushi');
+      result.current.treeHandlers.onDuplicate('sushi');
+      result.current.treeHandlers.onDelete('sushi');
+    });
+    expect(useWheelStore.getState().getWheel('food')?.items.find((item) => item.id === 'sushi')?.enabled).toBe(
+      false,
+    );
+    expect(
+      useWheelStore.getState().getWheel('food')?.items.some((item) => item.name === 'Sushi copy'),
+    ).toBe(true);
+    expect(result.current.pendingDelete?.id).toBe('sushi');
+  });
+
+  it('keeps expansion unchanged when ensureExpanded targets an already open node', async () => {
+    seedFoodWheel();
+    const { result } = renderEditor();
+
+    expect(result.current.expandedIds.has('pizza')).toBe(true);
+
+    act(() => {
+      result.current.moveItem({ itemId: 'sushi', targetParentId: 'pizza', index: 0 });
+    });
+
+    expect(result.current.expandedIds.has('pizza')).toBe(true);
+    expect(persistStores).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the first palette color when adding under a missing parent', async () => {
+    seedFoodWheel();
+    const { result } = renderEditor();
+
+    act(() => {
+      result.current.openAddChild('missing-parent');
+    });
+
+    expect(result.current.formDefaults.color).toBe(ITEM_COLORS[0]);
   });
 });

@@ -1,5 +1,10 @@
 import { DEFAULT_APP_SETTINGS } from '@/constants/settings';
 import { DEFAULT_WHEEL_APPEARANCE } from '@/constants/wheelAppearance';
+import {
+  MATCH_STATUS,
+  TOURNAMENT_ROUND,
+  TOURNAMENT_STATUS,
+} from '@/features/random-generator/constants';
 import { COLOR_MODE } from '@/types/colorMode';
 import { ITEM_CONDITION_KIND, SELECTION_MODE, SPIN_SESSION_STATUS } from '@/types/wheel';
 
@@ -16,6 +21,105 @@ import {
 } from '@/services/storage/persistedState';
 import { storageService } from '@/services/storage/storageService';
 
+const wheelSettings = {
+  durationMs: 4000,
+  minRotations: 4,
+  maxRotations: 8,
+  soundEnabled: true,
+  confettiEnabled: true,
+  eliminationMode: false,
+  selectionMode: SELECTION_MODE.manual,
+  removeWinner: false,
+  skipDisabledItems: true,
+  appearance: DEFAULT_WHEEL_APPEARANCE,
+};
+
+function sampleWheel(id = 'wheel-1', name = 'Pizza') {
+  return {
+    id,
+    name,
+    items: [
+      {
+        id: 'pizza',
+        name: 'Pizza',
+        color: '#ea580c' as const,
+        enabled: true,
+        weight: 1,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+    settings: wheelSettings,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+}
+
+function sampleTournament() {
+  return {
+    id: 't1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    status: TOURNAMENT_STATUS.ready,
+    participants: [
+      { id: 'p1', name: 'Alex' },
+      { id: 'p2', name: 'Blair' },
+    ],
+    rounds: [
+      {
+        index: 0,
+        kind: TOURNAMENT_ROUND.final,
+        label: 'Final',
+        matches: [
+          {
+            id: 'm1',
+            roundIndex: 0,
+            matchIndex: 0,
+            slots: [
+              { participantId: 'p1' },
+              { participantId: 'p2' },
+            ],
+            winnerId: null,
+            status: MATCH_STATUS.ready,
+          },
+        ],
+      },
+    ],
+    winnerId: null,
+    eliminatedIds: [],
+  };
+}
+
+function sampleTestDataset(id = 'ds-1') {
+  return {
+    id,
+    name: 'Menu',
+    fields: [
+      {
+        id: 'f-cuisine',
+        name: 'Cuisine',
+        weight: 1,
+        enabled: true,
+        optional: false,
+        values: [
+          {
+            id: 'v-italian',
+            name: 'Italian',
+            weight: 1,
+            enabled: true,
+            optional: false,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+}
+
 describe('persistedState', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -26,6 +130,14 @@ describe('persistedState', () => {
     expect(loadPersistedState()).toEqual({
       ...defaultPersistedState,
       settings: DEFAULT_APP_SETTINGS,
+    });
+    expect(loadPersistedStateResult()).toEqual({
+      state: {
+        ...defaultPersistedState,
+        settings: { ...DEFAULT_APP_SETTINGS },
+      },
+      status: 'empty',
+      hierarchyRepaired: false,
     });
   });
 
@@ -673,6 +785,228 @@ describe('persistedState', () => {
     expect(loaded.wheels[0]?.conditions).toHaveLength(4);
     expect(loaded.snapshots['wheel-1']?.conditions).toHaveLength(4);
     expect(loaded.snapshots.missing).toBeUndefined();
+  });
+
+  it('soft-drops invalid wheels and spin sessions while keeping valid ones', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          wheels: [sampleWheel(), { id: 'broken' }, sampleWheel('wheel-2', 'Sushi')],
+          spinHistory: [
+            {
+              id: 'session-1',
+              wheelId: 'wheel-1',
+              wheelName: 'Pizza',
+              status: SPIN_SESSION_STATUS.completed,
+              results: [],
+              path: ['pizza'],
+              startedAt: '2026-01-01T00:00:00.000Z',
+              completedAt: '2026-01-01T00:00:01.000Z',
+            },
+            { id: 'bad-session' },
+          ],
+        },
+      }),
+    );
+
+    const loaded = loadPersistedState();
+    expect(loaded.wheels.map((wheel) => wheel.id)).toEqual(['wheel-1', 'wheel-2']);
+    expect(loaded.spinHistory).toHaveLength(1);
+    expect(loaded.spinHistory[0]?.id).toBe('session-1');
+  });
+
+  it('round-trips generator history and tournament data', () => {
+    const tournament = sampleTournament();
+    const saved = {
+      ...defaultPersistedState,
+      generatorHistory: [
+        {
+          id: 'g1',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          teamCount: 2,
+          balanced: true,
+          random: false,
+          preventDuplicates: true,
+          teams: [
+            { name: 'A', members: ['Alex'] },
+            { name: 'B', members: ['Blair'] },
+          ],
+        },
+      ],
+      activeTournament: tournament,
+      tournamentHistory: [tournament],
+    };
+
+    expect(savePersistedState(saved)).toBe(true);
+    const loaded = loadPersistedState();
+    expect(loaded.generatorHistory).toEqual(saved.generatorHistory);
+    expect(loaded.activeTournament).toEqual(tournament);
+    expect(loaded.tournamentHistory).toEqual([tournament]);
+  });
+
+  it('defaults missing test dataset fields and clears a stale active dataset id', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          colorMode: COLOR_MODE.system,
+          wheels: [],
+          activeWheelId: null,
+          snapshots: {},
+          spinHistory: [],
+          favoriteWheelIds: [],
+          settings: DEFAULT_APP_SETTINGS,
+          activeTestDatasetId: 'missing',
+        },
+      }),
+    );
+
+    const loaded = loadPersistedState();
+    expect(loaded.testDatasets).toEqual([]);
+    expect(loaded.activeTestDatasetId).toBeNull();
+    expect(loaded.generatorHistory).toEqual([]);
+    expect(loaded.activeTournament).toBeNull();
+    expect(loaded.tournamentHistory).toEqual([]);
+  });
+
+  it('keeps valid test datasets, soft-drops invalid ones, and preserves the active id', () => {
+    savePersistedState({
+      ...defaultPersistedState,
+      testDatasets: [sampleTestDataset('ds-1'), { id: 'bad' } as never, sampleTestDataset('ds-2')],
+      activeTestDatasetId: 'ds-2',
+    });
+
+    const loaded = loadPersistedState();
+    expect(loaded.testDatasets.map((dataset) => dataset.id)).toEqual(['ds-1', 'ds-2']);
+    expect(loaded.activeTestDatasetId).toBe('ds-2');
+  });
+
+  it('reports repaired status when only snapshot hierarchy needs fixing', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          wheels: [sampleWheel()],
+          snapshots: {
+            'wheel-1': {
+              items: [
+                {
+                  id: 'same',
+                  name: 'One',
+                  color: '#ea580c',
+                  enabled: true,
+                  weight: 1,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+                {
+                  id: 'same',
+                  name: 'Two',
+                  color: '#0f766e',
+                  enabled: true,
+                  weight: 1,
+                  createdAt: '2026-01-01T00:00:00.000Z',
+                  updatedAt: '2026-01-01T00:00:00.000Z',
+                },
+              ],
+              settings: wheelSettings,
+            },
+          },
+        },
+      }),
+    );
+
+    const loaded = loadPersistedStateResult();
+    expect(loaded.status).toBe('repaired');
+    expect(loaded.hierarchyRepaired).toBe(true);
+    expect(loaded.state.snapshots['wheel-1']?.items).toHaveLength(2);
+    expect(loaded.state.snapshots['wheel-1']?.items[0]?.id).not.toBe(
+      loaded.state.snapshots['wheel-1']?.items[1]?.id,
+    );
+  });
+
+  it('soft-drops invalid snapshot entries for existing wheels', () => {
+    savePersistedState({
+      ...defaultPersistedState,
+      wheels: [sampleWheel()],
+      snapshots: {
+        'wheel-1': 'not-a-snapshot' as never,
+      },
+    });
+
+    const loaded = loadPersistedState();
+    expect(loaded.snapshots['wheel-1']).toBeUndefined();
+  });
+
+  it('recovers when settings fail validation', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          settings: {
+            ...DEFAULT_APP_SETTINGS,
+            masterVolume: 2,
+          },
+        },
+      }),
+    );
+
+    expect(loadPersistedStateResult().status).toBe('recovered');
+    expect(loadPersistedState()).toEqual(defaultPersistedState);
+  });
+
+  it('soft-drops invalid generator and tournament history entries', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          generatorHistory: [
+            {
+              id: 'g1',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              teamCount: 1,
+              balanced: false,
+              random: true,
+              preventDuplicates: false,
+              teams: [{ name: 'Solo', members: ['Alex'] }],
+            },
+            { id: 'bad-generator' },
+          ],
+          tournamentHistory: [sampleTournament(), { id: 'bad-tournament' }],
+          activeTournament: null,
+        },
+      }),
+    );
+
+    const loaded = loadPersistedState();
+    expect(loaded.generatorHistory).toHaveLength(1);
+    expect(loaded.tournamentHistory).toHaveLength(1);
+    expect(loaded.activeTournament).toBeNull();
+  });
+
+  it('recovers when active tournament data is invalid', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: PERSISTED_STATE_VERSION,
+        data: {
+          ...defaultPersistedState,
+          activeTournament: { id: 'bad-active' },
+        },
+      }),
+    );
+
+    expect(loadPersistedStateResult().status).toBe('recovered');
   });
 
   it('keeps provided spin result fields and ignores an invalid appearance payload', () => {
